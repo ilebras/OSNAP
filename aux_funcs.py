@@ -22,9 +22,12 @@ import csv
 
 from seabird import cnv
 
-rc('xtick',labelsize='X-Large')
-rc('ytick',labelsize='X-Large')
-rc('axes', labelsize='X-Large')
+
+matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
+
+# rc('xtick',labelsize='Large')
+# rc('ytick',labelsize='Large')
+# rc('axes', labelsize='Large')
 
 datadir='/home/isabela/Documents/OSNAP/data/'
 
@@ -63,11 +66,11 @@ def make_cmap(colors, position=None, bit=False):
     cmap = mpl.colors.LinearSegmentedColormap('my_colormap',cdict,256)
     return cmap
 
+#(35,139,69) 0.65,
+colors = [(44,127,184) ,(237,248,177),(254,196,79),(217,95,14)] # This example uses the 8-bit RGB
+sal_cmap = make_cmap(colors,position=[0,0.85,0.95,1],bit=True)
 
-colors = [(44,127,184),(35,139,69) ,(237,248,177),(254,196,79),(217,95,14)] # This example uses the 8-bit RGB
-sal_cmap = make_cmap(colors,position=[0,0.65,0.85,0.95,1],bit=True)
-
-colors = [(237,248,177),(127,205,187),(5,112,176),(110,1,107)]
+colors = [(37,52,148),(127,205,187),(5,112,176),(110,1,107)]
 pden_cmap=make_cmap(colors,position=[0,0.666666666666,0.833333333333,1],bit=True)
 
 univec={}
@@ -75,10 +78,13 @@ univec={}
 # univec['sal']=['salinity',linspace(32.5,35.5,31),cm.YlGnBu_r,array([ 32. ,  32.4,  32.8,  33.2,  33.6,  34. ,  34.4,  34.8, 34.9, 35, 35.1,35.2]),'']
 # univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
 univec['pden']=['potential density',linspace(26,28,41),pden_cmap,arange(26,28.1,0.3),'[kg/m$^3$]']
-univec['sal']=['salinity',linspace(33,35.5,31),sal_cmap,array([ 32. ,  32.4,  32.8,  33.2,  33.6,  34. ,  34.4,  34.8, 34.9, 35, 35.1,35.2]),'']
+univec['sal']=['salinity',arange(33.5,35.1,0.05),sal_cmap,array([33.6, 34. ,  34.4,  34.8, 34.9, 34.95, 35, 35.1,35.2]),'']
 univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
-univec['uacross']=['across track velocity',arange(-0.8,0.805,0.05),cm.RdBu_r,arange(-0.8,0.805,0.2),'[m/s]']
+univec['uacross']=['across track velocity',arange(-0.6,0.605,0.05),cm.RdBu_r,arange(-0.6,0.605,0.2),'[m/s]']
+
 univec['ualong']=['along track velocity',arange(-0.4,0.401,0.02),cm.RdBu_r,arange(-0.4,0.401,0.1),'[m/s]']
+univec['geostrophic velocity']=['geostrophic velocity',arange(-0.6,0.605,0.05),cm.RdBu_r,arange(-0.6,0.605,0.2),'[m/s]']
+univec['turner angle']=['turner angle',arange(-90,90,1),cm.RdBu_r,arange(-90,95,45),'$^\circ$']
 
 def plotcontour(field,colormap,vmi,vma,moorname):
     figure(figsize=(20,8))
@@ -155,7 +161,6 @@ def pivspline_ML(afield,datevec,prsvec,pdall):
 maxinstdpth=io.loadmat('../data/maxinstdpth.mat')
 
 
-matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 
 adcpdp=[160,160,160,340,90,90,90]
 

@@ -4,9 +4,6 @@ nclist=glob.glob('/media/isabela/Seagate Backup Plus Drive/NARR/*.nc')
 
 #For now, extract along ~60N from -45 to -40 ?
 
-
-
-
 #Use initial_time0_hours to get time from each, seems easiest to use. Build array that is lon x time.
 minlat=59.80
 maxlat=60.1

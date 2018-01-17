@@ -159,8 +159,8 @@ def Interp_vel(moornum):
 
     v_interp=pivspline_ML('v',datevec,prsvec,pdall)
 
-    u_interp[(u_interp<-2) | (u_interp>2)]=nan
-    v_interp[(v_interp<-2) | (v_interp>2)]=nan
+    u_interp[(u_interp<-2) | (u_interp>1.5)]=nan
+    v_interp[(v_interp<-2) | (v_interp>1.5)]=nan
 
     figure(figsize=(12,4))
     subplot(121)

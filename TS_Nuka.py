@@ -11,15 +11,9 @@ dat=io.loadmat(datadir+'aux_data/nuka/jamie/osnapsssfromnuka.mat')
 plot(dat['OSNAP_East'][:,0],dat['OSNAP_East'][:,1],'o')
 plot(CFlon,CFlat)
 
-
-plot(dat['osnapsi'].T);
-
-plot(dat['osnapti'].T);
-
-
 # Load all large TS dictionaries
 
-[date,month,prs,sal,tmp]=pickle.load(open('../pickles/TSinterp/TS_daily_dic_wcorr.pickle','rb'))
+[date,month,prs,sal,tmp]=pickle.load(open('../pickles/TSdailydic/TS_daily_dic_wcorr.pickle','rb'))
 
 
 # set up basic ts plotting framework
@@ -54,7 +48,6 @@ def TSall(col='grey',alf=0.5):
                  '.',color=col,alpha=alf,
                 mec=None)
 
-
 for key in range(1,8):
     figure(figsize=(12,8))
     TSall()
@@ -63,8 +56,8 @@ for key in range(1,8):
         plot(sal[key][key2],tmp[key][key2],'r.')
     plot(dat['osnapsi'][key,:],dat['osnapti'][key,:],'bo')
     title('CF'+str(key))
-    savefig('../figures/TS/CF'+str(key)+'TS_all.png')
-    savefig('../figures/TS/CF'+str(key)+'TS_all.pdf')
+    savefig('../figures/TS/CF'+str(key)+'_TS_all.png')
+    savefig('../figures/TS/CF'+str(key)+'_TS_all.pdf')
 
 for key in month:
     for key2 in month[key]:
@@ -172,7 +165,7 @@ barrier
 ################## Sermilik data #######################################
 ########################################################################
 
-
+#
 # sermlist=glob.glob(datadir+'/aux_data/sermilik2015ctds/*')
 #
 #

@@ -43,7 +43,7 @@ dmaxlist=[]
 
 for moor in range(1,9):
     sal,tmp,pden=pickle.load(open('../pickles/TSinterp/CF'+str(moor)+
-                                  '_saltmpinterp_ptcorr_notid.pickle','rb'))
+                                  '_saltmpinterp_SAtheta_notid.pickle','rb'))
 
     dminlist=hstack((dminlist,min(sal.columns)))
     dmaxlist=hstack((dmaxlist,max(sal.columns)))
@@ -51,7 +51,7 @@ for moor in range(1,9):
     sminlist=hstack((sminlist,min(sal.index)))
     smaxlist=hstack((smaxlist,max(sal.index)))
 
-    u,v=pd.read_pickle(open('../pickles/VELinterp/CF'+str(moor)+'_uvinterp.pickle','rb'))
+    u,v=pd.read_pickle(open('../pickles/VELinterp/CF'+str(moor)+'_uvinterp_SAtheta.pickle','rb'))
     u_across=u*cos(theta)+v*sin(theta)
     u_along=-u*sin(theta)+v*cos(theta)
 
@@ -107,4 +107,4 @@ daily=xr.Dataset({'temperature': (['distance', 'depth', 'date'],  tmpmat),
                         'depth': sw.dpth(sal.index.values,60),
                         'date': sal.columns[(sal.columns>=dmin)&(sal.columns<=dmax)].values})
 
-pickle.dump(daily,open('../pickles/CF_xarray_notid_newtheta.pickle','wb'))
+pickle.dump(daily,open('../pickles/xarray/CF_xarray_notid_SAtheta.pickle','wb'))

@@ -468,8 +468,6 @@ shape(oshelf)
 
 
 ii=0
-plot(,'go');
-
 plot(oshelf.salinity[:,:,ii],oshelf.temperature[:,:,ii].to_array(),'go');
 oshelf
 
