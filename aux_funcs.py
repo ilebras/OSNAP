@@ -66,6 +66,11 @@ def make_cmap(colors, position=None, bit=False):
     cmap = mpl.colors.LinearSegmentedColormap('my_colormap',cdict,256)
     return cmap
 
+egcol='#33a02c'
+ccol='#1f78b4'
+icol='#e31a1c'
+egicol='#ff7f00'
+
 #(35,139,69) 0.65,
 colors = [(44,127,184) ,(237,248,177),(254,196,79),(217,95,14)] # This example uses the 8-bit RGB
 sal_cmap = make_cmap(colors,position=[0,0.85,0.95,1],bit=True)

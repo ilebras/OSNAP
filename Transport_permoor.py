@@ -9,7 +9,7 @@
 from aux_funcs import *
 
 
-daily=pickle.load(open('../pickles/CF_xarray_notid.pickle','rb'))
+daily=pickle.load(open('../pickles/xarray/CF_xarray_notid_SAtheta.pickle','rb'))
 
 #################################################################################
 # Have a quick look at CF1 evolution in time
@@ -39,8 +39,6 @@ def plotmoortime(moornum):
     savefig('../figures/hovmueller/cf'+str(moornum)+'_vel.png',bbox_inches='tight')
     savefig('../figures/hovmueller/cf'+str(moornum)+'_vel.pdf',bbox_inches='tight')
 
-['salinity',linspace(32.5,35.5,31),cm.YlGnBu_r,arange(32,35.5,0.4),'']
-
 for rr in range(1,9):
     plotmoortime(rr)
 
@@ -49,73 +47,73 @@ for rr in range(1,9):
 ############# Get EGCC and EGC transports ####################################
 #################################################################################
 #################################################################################
-
-#################################################################################
-# Quick code for looking at monthly averages
-#################################################################################
-
-def monthplot(afield):
-    figure()
-    afield.resample('M',dim='date',how='mean')[:12,:,:].plot(x='distance', y='depth', col='date', col_wrap=4)
-
-monthplot(daily['across track velocity'])
-ylim([1000,0])
+#
+# #################################################################################
+# # Quick code for looking at monthly averages
+# #################################################################################
+#
+# def monthplot(afield):
+#     figure()
+#     afield.resample('M',dim='date',how='mean')[:12,:,:].plot(x='distance', y='depth', col='date', col_wrap=4)
+#
+# monthplot(daily['across track velocity'])
+# ylim([1000,0])
 
 
 #################################################################################
 ################ Find and examine isohalines ###################################
 #################################################################################
-#
-# def find_isohaline(which):
-#
-#     maxdepth=pd.DataFrame(index=daily.date, columns=daily.distance)
-#
-#     for j, m in enumerate(daily.distance):
-#         for i, d in enumerate(daily.date):
-#             thissal=daily.salinity[j,:,i]
-#             nanind=~isnan(thissal)
-#             if sum(nanind)==0:
-#                 maxdepth.iloc[i,j]=nan
-#             elif sum((thissal[nanind]>which))==0:
-#                 maxdepth.iloc[i,j]=max(daily.depth[nanind])
-#             else:
-#                 maxdepth.iloc[i,j]=float(daily.depth[nanind][(thissal[nanind]>which)].min())
-#
-#     maxdepth=maxdepth.astype('float')
-#     return maxdepth
-#
-#
-# max34depth=find_isohaline(34)
-# max348depth=find_isohaline(34.8)
-#
-# colors=pal.cubehelix.perceptual_rainbow_16.get_mpl_colormap()
-#
-# fig, ax = plt.subplots(1)
-# fig.set_size_inches(12,4)
-# max34depth.plot(ax=ax, cmap=colors, alpha=0.5,label=False)
-# g=max34depth.resample('M',closed='right').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2)
-# legend(loc=(1.05,0))
-# gca().invert_yaxis()
-# title('Depth of 34 isohaline along CF array')
-# savefig('../figures/isohalines/34tseries.png')
-#
-# fig, ax = plt.subplots(1)
-# fig.set_size_inches(12,4)
-# max348depth.plot(ax=ax, cmap=colors, alpha=0.5,label=False)
-# num=max348depth.resample('M').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2)
-# num.legend(loc=(1.05,0))
-# gca().invert_yaxis()
-# title('Depth of 34.8 isohaline along CF array')
-# savefig('../figures/isohalines/348tseries.png')
-#
-# fig, ax = plt.subplots(1)
-# fig.set_size_inches(12,4)
-# num=max34depth.resample('M').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2,linestyle='--')
-# max348depth.resample('M').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2)
-# num.legend(loc=(1.05,0))
-# title('Depths of 34 and 34.8 isohalines along CF array')
-# gca().invert_yaxis()
-# savefig('../figures/isohalines/34and348tseries.png')
+
+def find_isohaline(which):
+
+    maxdepth=pd.DataFrame(index=daily.date, columns=daily.distance)
+
+    for j, m in enumerate(daily.distance):
+        for i, d in enumerate(daily.date):
+            thissal=daily.salinity[j,:,i]
+            nanind=~isnan(thissal)
+            if sum(nanind)==0:
+                maxdepth.iloc[i,j]=nan
+            elif sum((thissal[nanind]>which))==0:
+                maxdepth.iloc[i,j]=max(daily.depth[nanind])
+            else:
+                maxdepth.iloc[i,j]=float(daily.depth[nanind][(thissal[nanind]>which)].min())
+
+    maxdepth=maxdepth.astype('float')
+    return maxdepth
+
+
+max34depth=find_isohaline(34)
+max348depth=find_isohaline(34.8)
+
+colors=pal.cubehelix.perceptual_rainbow_16.get_mpl_colormap()
+
+fig, ax = plt.subplots(1)
+fig.set_size_inches(12,4)
+max34depth.plot(ax=ax, cmap=colors, alpha=0.5,label=False)
+g=max34depth.resample('M',closed='right').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2)
+legend(loc=(1.05,0))
+gca().invert_yaxis()
+title('Depth of 34 isohaline along CF array')
+savefig('../figures/isohalines/34tseries.png')
+
+fig, ax = plt.subplots(1)
+fig.set_size_inches(12,4)
+max348depth.plot(ax=ax, cmap=colors, alpha=0.5,label=False)
+num=max348depth.resample('M').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2)
+num.legend(loc=(1.05,0))
+gca().invert_yaxis()
+title('Depth of 34.8 isohaline along CF array')
+savefig('../figures/isohalines/348tseries.png')
+
+fig, ax = plt.subplots(1)
+fig.set_size_inches(12,4)
+num=max34depth.resample('M').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2,linestyle='--')
+max348depth.resample('M').mean().plot(ax=ax, cmap=colors, alpha=1, lw=2)
+num.legend(loc=(1.05,0))
+title('Depths of 34 and 34.8 isohalines along CF array')
+gca().invert_yaxis()
+savefig('../figures/isohalines/34and348tseries.png')
 
 #################################################################################
 ###         Look at velocity magnitudes at different moorings

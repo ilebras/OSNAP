@@ -9,7 +9,7 @@
 from aux_funcs import *
 
 
-newgrid=pickle.load(open('../pickles/CF_xarray_gridplot_notid_newtheta.pickle','rb'))
+newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_SAtheta.pickle','rb'))
 
 # mask the fields based on bathymetry file (this version does not have extra fields on either side, thats just for plotting)
 
@@ -114,41 +114,42 @@ fulltrans=(daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat/1e3).
 fulltrans_south=(daily.where(daily['across track velocity']<0)['across track velocity'][:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
 
 
-fulltrans.plot(figsize=(14,3),label='sum all')
-fulltrans_south.plot(label='only sum southward transport')
+fulltrans.plot(figsize=(14,3),label='sum all',color='k')
+fulltrans_south.plot(label='only sum southward transport',color='grey')
 legend()
 savefig('../figures/newtrans/fulltrans_zerotest.png')
 
 
 
 figure(figsize=(12,3))
-plot(fulltrans.date,fulltrans,color='red')
-axhline(mean(fulltrans),color='red')
+plot(fulltrans.date,fulltrans,color='k')
+axhline(mean(fulltrans),color='k')
 # fulltrans.resample('M',how='mean',dim='date').plot(linewidth=2,color='red')
 ylabel('Sv')
 title('Transport across the full array')
-text(datetime.datetime(2016,3,1),-40,'-21.5 $\pm$ 4.8 Sv',fontsize=18,color='red')
+text(datetime.datetime(2016,3,1),-40,'-21.5 $\pm$ 4.8 Sv',fontsize=18,color='k')
 savefig('../figures/newtrans/fulltrans.png')
 savefig('../figures/newtrans/fulltrans.pdf')
 
-# Then, establish whether a min can be found to differentiate EGCC
-
-minpos=zeros(len(daily.date))
+# Then, establish min in abs vel to differentiate EGCC
 minind=zeros(len(daily.date))
 for tt,na in enumerate(daily.date):
-    minpos[tt]=float(daily.distance[2:15][max(daily['across track velocity'][2:15,0,tt])==daily['across track velocity'][2:15,0,tt]])
-    minind[tt]=int(where(max(daily['across track velocity'][2:15,0,tt])==daily['across track velocity'][2:15,0,tt])[0][0]+2)
+    minind[tt]=where(max(daily['across track velocity'][2:15,0,tt])==daily['across track velocity'][2:15,0,tt])[0][0]+2
 
 minind=[int(mm) for mm in minind]
 
-figure(figsize=(12,3))
-plot(minind)
+ccvel=daily['across track velocity'].copy()
+for tt,mm in enumerate(minind):
+        ccvel[mm:,:,tt]=NaN
 
+ccsal=daily['salinity'].copy()
+for tt,mm in enumerate(minind):
+        ccsal[mm:,:,tt]=NaN
 
 figure(figsize=(12,3))
-plot(minpos)
-axhline(mean(minpos))
-savefig('../figures/newtrans/minvel_btwn_cf1_cf5_new.png')
+plot(minind,color='k')
+axhline(mean(minind),color='k')
+savefig('../figures/newtrans/minvel_ind.png')
 
 #################################################################################
 ### Try using minpos as the barrier
@@ -159,100 +160,30 @@ ccvel=daily['across track velocity'].copy()
 for tt,mm in enumerate(minind):
         ccvel[mm:,:,tt]=NaN
 
+cctrans_nosal=(ccvel[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+cctrans=(ccvel.where(daily.salinity<34)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
 
-cctrans=(ccvel[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
-cctrans_sal=(ccvel.where(daily.salinity<34)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
-
-
-cctrans.plot(figsize=(12,3),label='Full CF1 water column')
-axhline(0)
-cctrans.resample('M',how='mean',dim='date').plot(linewidth=2,label='',)
-cctrans_sal.plot(label='Fresher than 34 at CF1')
-cctrans_sal.resample('M',how='mean',dim='date').plot(linewidth=2,label='',)
+cctrans_nosal.plot(figsize=(12,3),label='All transport west of vel min',color=ccol)
+axhline(0,color='grey')
+cctrans_nosal.resample('M',how='mean',dim='date').plot(linewidth=2,label='',color=ccol)
+cctrans.plot(label='Also fresher than 34',color='blue')
+cctrans.resample('M',how='mean',dim='date').plot(linewidth=2,label='',color='blue')
 legend()
 ylabel('Transport (Sv)')
-title('Transport at CF1 (EGCC)')
-savefig('../figures/newtrans/CF1trans_minpos.png')
-min(cctrans_sal.resample('M',dim='date'))
-max(cctrans_sal.resample('M',dim='date'))
-mean(cctrans)
-
-newcctrans=cctrans_sal.copy()
-
-#################################################################################
-### Coastal current transport
-#################################################################################
-
-# Use cf2 position as the division point
-curdiv=5
-
-cf1vel=daily['across track velocity'][:curdiv,:-1,:]
-
-cctrans=(cf1vel*depthdiffmat[:curdiv,:,:]*middistmat[:curdiv,:,:]/1e3).sum('depth').sum('distance')
-cctrans_sal=(daily.where(daily.salinity<34)['across track velocity'][:curdiv,:-1,:]*depthdiffmat[:curdiv,:,:]*middistmat[:curdiv,:,:]/1e3).sum('depth').sum('distance')
+title('EGCC transport')
+savefig('../figures/newtrans/CC_trans_wnosal.png')
 
 
-cctrans.plot(figsize=(12,3),label='Full CF1 water column')
-axhline(0)
-cctrans.resample('M',how='mean',dim='date').plot(linewidth=2,label='',)
-cctrans_sal.plot(label='Fresher than 34 at CF1')
-legend()
-ylabel('Transport (Sv)')
-title('Transport at CF1 (EGCC)')
-savefig('../figures/newtrans/CF1trans.png')
-
-cctrans.plot(figsize=(20,5),label='Fixed integration point')
-newcctrans.plot(label='Integrate to minimum in abs vel')
-legend()
-
-newcctrans[0]
-
-newcctrans[-1]
-
-mean(cctrans)
-cctrans.resample('W',how='mean',dim='date').plot(figsize=(12,3))
-
-
-EGtottrans=(daily['across track velocity'][curdiv:,:-1,:]*depthdiffmat[curdiv:,:,:]*middistmat[curdiv:,:,:]/1e3).sum('distance').sum('depth')
-EGtottrans_vel=(daily.where(daily['across track velocity']<0)['across track velocity'][curdiv:,:-1,:]*depthdiffmat[curdiv:,:,:]*middistmat[curdiv:,:,:]/1e3).sum('distance').sum('depth')
-
-EGtottrans.plot(figsize=(12,3),label='Full water columns')
-# axhline(0)
-EGtottrans.resample('M',how='mean',dim='date').plot(linewidth=2,label='',)
-EGtottrans_vel.plot(label='Only negative velocities')
-fulltrans.plot(label='full array transport')
-ylabel('Transport (Sv)')
-legend()
-title('Transport at CF2-M1 (EGC system)')
-savefig('../figures/newtrans/CF2-8trans.png')
-
-egtrans=(daily.where(daily.salinity<34.85)['across track velocity'][curdiv:,:-1,:]*depthdiffmat[curdiv:,:,:]*middistmat[curdiv:,:,:]/1e3).sum('distance').sum('depth')
-
-newegvel=daily['across track velocity'].copy()
+egvel=daily['across track velocity'].where(daily['potential density']<27.8)
 for tt,mm in enumerate(minind):
-        newegvel[:mm,:,tt]=NaN
-newegtrans=(newegvel.where(daily.salinity<34.85)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+        egvel[:mm,:,tt]=NaN
+egtrans=(egvel.where(daily.salinity<34.85)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+#note: similar as for cctrans, doesn't make much of a difference whether moving minvel is used or not, but using it for thoroughness here.
 
-egtrans.plot(figsize=(15,5),label='Fixed boundary')
-newegtrans.plot(label='Moving boundary')
-
-
-ictrans=(daily.where(daily.salinity>=34.85)['across track velocity'][curdiv:,:-1,:]*depthdiffmat[curdiv:,:,:]*middistmat[curdiv:,:,:]/1e3).sum('distance').sum('depth')
-cctrans.plot(figsize=(12,3),label='East Greenland COASTAL Current')
-egtrans.plot(label='East Greenlandic Current Waters')
-# axhline(0)
-# egtrans.resample('M',how='mean',dim='date').plot(linewidth=2,label='',)
-ictrans.plot(label='Irminger Current')
+egtrans.plot(figsize=(12,3),label='East Greenlandic Current Waters',color=egcol)
+egtrans.resample('M',how='mean',dim='date').plot(linewidth=2,color=egcol)
 ylabel('Transport (Sv)')
-legend()
-title('EGC system transports')
-savefig('../figures/newtrans/EGsystem_trans.png')
-
-
-egtrans.plot(figsize=(12,3),label='East Greenlandic Current Waters')
-egtrans.resample('M',how='mean',dim='date').plot(linewidth=2)
-ylabel('Transport (Sv)')
-title('East Greenlandic Current transport')
+title('East Greenland Current transport')
 savefig('../figures/newtrans/EGC_trans.png')
 
 
@@ -266,75 +197,75 @@ savefig('../figures/newtrans/EGC_trans.png')
 srefa=34
 srefb=34.8
 
-ccfresh=(cf1vel*(daily.salinity[:curdiv,:-1,:]-srefa)/srefa*depthdiffmat[:curdiv,:,:]*middistmat[:curdiv,:,:]).sum('depth').sum('distance')
-ccfresh_refb=(cf1vel*(daily.salinity[:curdiv,:-1,:]-srefb)/srefb*depthdiffmat[:curdiv,:,:]*middistmat[:curdiv,:,:]).sum('depth').sum('distance')
+ccfresh=(ccvel*(daily.salinity[:,:-1,:]-srefa)/srefa*depthdiffmat[:,:,:]*middistmat[:,:,:]).sum('depth').sum('distance')
+ccfresh_refb=(ccvel*(daily.salinity[:,:-1,:]-srefb)/srefb*depthdiffmat[:,:,:]*middistmat[:,:,:]).sum('depth').sum('distance')
 
 
 figure()
-ccfresh.plot(figsize=(12,3),color='orange')
-ccfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='orange')
+ccfresh.plot(figsize=(12,3),color=ccol)
+ccfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color=ccol)
 title('Freshwater transport in the EGCC referenced to 34')
 ylabel('mSv')
 savefig('../figures/newtrans/CC_fresh.png')
 
 figure()
-ccfresh_refb.plot(figsize=(12,3),color='orange')
-ccfresh_refb.resample('M',dim='date',how='mean').plot(linewidth=2,color='orange')
-title('Freshwater transport in the referenced to 35')
+ccfresh_refb.plot(figsize=(12,3),color=ccol)
+ccfresh_refb.resample('M',dim='date',how='mean').plot(linewidth=2,color=ccol)
+title('Freshwater transport in the EGCC referenced to 34.8')
 ylabel('mSv')
 savefig('../figures/newtrans/CC_fresh_refb.png')
 
-egfresh=(daily.where(daily.salinity<34.85)['across track velocity'][curdiv:,:-1,:]*(daily.where(daily.salinity<34.85)['salinity'][curdiv:,:-1,:]-srefb)/srefb*depthdiffmat[curdiv:,:,:]*middistmat[curdiv:,:,:]).sum('distance').sum('depth')
+egfresh=(egvel*(daily.where(daily.salinity<34.85)['salinity'][:,:-1,:]-srefb)/srefb*depthdiffmat*middistmat).sum('distance').sum('depth')
 
 figure()
-egfresh.plot(figsize=(12,3))
-egfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='b')
-title('Freshwater transport in the EGC')
+egfresh.plot(figsize=(12,3),color=egcol)
+egfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color=egcol)
+title('Freshwater transport in the EGC referenced to 34.8')
 ylabel('mSv')
 savefig('../figures/newtrans/EGC_fresh.png')
 
 
 
 fig, ax1 = plt.subplots(figsize=(12,3),)
-ccfresh.plot(alpha=0.5,ax=ax1,color='red')
-ccfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='red',ax=ax1,label='Coastal Current')
-egfresh.plot(alpha=0.5,ax=ax1)
-egfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='b',ax=ax1,label='East Greenland Current')
-ax1.set_ylabel('Freshwater transport [mSv]')
+ccfresh.plot(alpha=0.5,ax=ax1,color=ccol)
+ccfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color=ccol,ax=ax1,label='Coastal Current')
+egfresh.plot(alpha=0.5,ax=ax1,color=egcol)
+egfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color=egcol,ax=ax1,label='East Greenland Current')
+ax1.set_ylabel('Freshwater transport ref to 34.8 [mSv]')
 ax1.set_ylim([0,100])
 legend()
 savefig('../figures/newtrans/EGCboth_fresh_sameaxis.png')
+
 fig, ax1 = plt.subplots(figsize=(12,3),)
-egtrans.plot(alpha=0.5,ax=ax1)
-egtrans.resample('M',dim='date',how='mean').plot(linewidth=2,color='b',ax=ax1)
-ax1.set_ylabel('East Greenland Current',color='blue')
-ax1.tick_params('y', colors='b')
+egtrans.plot(alpha=0.5,ax=ax1,color=egcol)
+egtrans.resample('M',dim='date',how='mean').plot(linewidth=2,color=egcol,ax=ax1)
+ax1.set_ylabel('East Greenland Current',color=egcol)
+ax1.tick_params('y', colors=egcol)
 ax1.set_ylim([-8,0])
 ax2 = ax1.twinx()
-cctrans.plot(alpha=0.5,ax=ax2,color='red')
-cctrans.resample('M',dim='date',how='mean').plot(linewidth=2,color='red',ax=ax2)
+cctrans.plot(alpha=0.5,ax=ax2,color=ccol)
+cctrans.resample('M',dim='date',how='mean').plot(linewidth=2,color=ccol,ax=ax2)
 ax2.set_title('Transports in the EGC system [Sv]')
-ax2.set_ylabel('Coastal Current',color='red')
-ax2.tick_params('y', colors='r')
+ax2.set_ylabel('Coastal Current',color=ccol)
+ax2.tick_params('y', colors=ccol)
 ax2.set_ylim([-2.5,0])
 savefig('../figures/newtrans/EGCboth_trans.png')
 
 
 
 
-
 fig, ax1 = plt.subplots(figsize=(12,3),)
-egfresh.plot(alpha=0.5,ax=ax1)
-egfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='b',ax=ax1)
-ax1.set_ylabel('East Greenland Current',color='blue')
-ax1.tick_params('y', colors='b')
+egfresh.plot(alpha=0.5,ax=ax1,color=egcol)
+egfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color=egcol,ax=ax1)
+ax1.set_ylabel('East Greenland Current',color=egcol)
+ax1.tick_params('y', colors=egcol)
 ax1.set_ylim([0,100])
 ax2 = ax1.twinx()
-ccfresh.plot(alpha=0.5,ax=ax2,color='red')
-ccfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='red',ax=ax2)
+ccfresh.plot(alpha=0.5,ax=ax2,color=ccol)
+ccfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color=ccol,ax=ax2)
 ax2.set_title('Freshwater transport in the EGC system [mSv]')
-ax2.set_ylabel('Coastal Current',color='red')
-ax2.tick_params('y', colors='r')
+ax2.set_ylabel('Coastal Current',color=ccol)
+ax2.tick_params('y', colors=ccol)
 ax2.set_ylim([0,60])
 savefig('../figures/newtrans/EGCboth_fresh.png')
 
@@ -343,18 +274,21 @@ savefig('../figures/newtrans/EGCboth_fresh.png')
 #########################################################################
 winddat=pickle.load(open('../pickles/wind/NARR_linet_newtheta.pickle','rb'))
 
+wlcol='y'
+wccol='purple'
+
 fig, ax1 = plt.subplots(figsize=(12,3),)
-winddat['across track wind speed'][:,2].resample('D',dim='date',how='mean').plot(ax=ax1,color='green')
-winddat['across track wind speed'][:,2].resample('M',dim='date',how='mean').plot(ax=ax1,color='green')
+winddat['across track wind speed'][:,2].resample('D',dim='date',how='mean').plot(ax=ax1,color=wlcol)
+winddat['across track wind speed'][:,2].resample('M',dim='date',how='mean').plot(ax=ax1,color=wlcol)
 # winddat['along track wind speed'][:,2].resample('M',dim='date',how='mean').plot(ax=ax1)
-ax1.tick_params('y', colors='green')
-ax1.axhline(-10,color='green')
+ax1.tick_params('y', colors=wlcol)
+ax1.axhline(-10,color=wlcol)
 ax2 = ax1.twinx()
-ax2.tick_params('y', colors='r')
+ax2.tick_params('y', colors=ccol)
 ax2.set_ylabel('EGCC transport [Sv]')
-ax1.set_title('Across wind - Coastal current transport')
-cctrans.plot(alpha=0.5,color='red',ax=ax2)
-cctrans.resample('M',dim='date',how='mean').plot(linewidth=2,color='red',ax=ax2)
+ax1.set_title('Along flow wind - Coastal current transport')
+cctrans.plot(alpha=0.5,color=ccol,ax=ax2)
+cctrans.resample('M',dim='date',how='mean').plot(linewidth=2,color=ccol,ax=ax2)
 savefig('../figures/newtrans/cctrans_acrosswind.png')
 
 fig, ax1 = plt.subplots(figsize=(12,3),)
@@ -363,10 +297,10 @@ winddat['along track wind speed'][:,2].resample('3D',dim='date',how='mean').plot
 winddat['along track wind speed'][:,2].resample('M',dim='date',how='mean').plot(ax=ax1,color='purple')
 ax1.set_ylim([-15,0])
 ax2 = ax1.twinx()
-fulltrans.resample('3D',dim='date',how='mean').plot(linewidth=2,color='blue',ax=ax2,alpha=0.5)
-fulltrans.resample('M',dim='date',how='mean').plot(linewidth=2,color='blue',ax=ax2)
+fulltrans.resample('3D',dim='date',how='mean').plot(linewidth=2,color='k',ax=ax2,alpha=0.5)
+fulltrans.resample('M',dim='date',how='mean').plot(linewidth=2,color='k',ax=ax2)
 ax2.set_ylim([-30,-15])
-ax1.set_title('Full transport and along track wind speed')
+ax1.set_title('Full transport and across flow wind speed')
 ax2.set_ylabel('Full transport [Sv]')
 savefig('../figures/newtrans/fulltrans_alongwind.png')
 
@@ -379,42 +313,28 @@ ax2 = ax1.twinx()
 # fulltrans.resample('3D',dim='date',how='mean').plot(linewidth=2,color='blue',ax=ax2,alpha=0.5)
 # fulltrans.resample('M',dim='date',how='mean').plot(linewidth=2,color='blue',ax=ax2)
 # ax2.set_ylim([-30,-15])
-egtrans.resample('3D',dim='date',how='mean').plot(linewidth=2,color='blue',ax=ax2,alpha=0.5)
-egtrans.resample('M',dim='date',how='mean').plot(linewidth=2,color='blue',ax=ax2)
-# ax1.set_title('')
-ax1.set_title('EGC transport and along track wind speed')
+egtrans.resample('3D',dim='date',how='mean').plot(linewidth=2,color=egcol,ax=ax2,alpha=0.5)
+egtrans.resample('M',dim='date',how='mean').plot(linewidth=2,color=egcol,ax=ax2)
+
+ax1.set_title('EGC transport and across flow wind speed')
 ax2.set_ylabel('EGC transport [Sv]')
 savefig('../figures/newtrans/egc_alongwind.png')
 
 #########################################################################
 ## Freshwater trans for full/rest of array
 #########################################################################
-ax2_srefc=35
-
-icfresh=(daily.where(daily.salinity>=34.85)['across track velocity'][curdiv:,:-1,:]*(daily.where(daily.salinity>=34.8)['salinity'][curdiv:,:-1,:]-srefc)/srefc*depthdiffmat[curdiv:,:,:]*middistmat[curdiv:,:,:]/1e3).sum('distance').sum('depth')
-icfresh.plot(figsize=(12,3))
-icfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='b')
-title('Freshwater transport in the IC (ref to 35)')
-ylabel('mSv')
-savefig('../figures/newtrans/icfresh.png')
-
-egicfresh=(daily['across track velocity'][curdiv:,:-1,:]*(daily['salinity'][curdiv:,:-1,:]-srefc)/srefc*depthdiffmat[curdiv:,:,:]*middistmat[curdiv:,:,:]/1e3).sum('distance').sum('depth')
-egicfresh.plot(figsize=(12,3))
-egicfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color='b')
-title('Freshwater transport for full EGC/IC current (ref to 35)')
-ylabel('mSv')
-savefig('../figures/newtrans/egicfresh.png')
+srefc=35
 
 fullfresh_34=(daily['across track velocity'][:,:-1,:]*(daily['salinity'][:,:-1,:]-srefa)/srefa*depthdiffmat*middistmat/1e3).sum('distance').sum('depth')
-fullfresh_34.plot(figsize=(12,3))
-fullfresh_34.resample('M',dim='date',how='mean').plot(linewidth=2,color='b')
+fullfresh_34.plot(figsize=(12,3),color='k')
+fullfresh_34.resample('M',dim='date',how='mean').plot(linewidth=2,color='k')
 title('Freshwater transport for full array (ref to 34)')
 ylabel('mSv')
 savefig('../figures/newtrans/fullfresh_34.png')
 
 fullfresh_35=(daily['across track velocity'][:,:-1,:]*(daily['salinity'][:,:-1,:]-srefc)/srefc*depthdiffmat*middistmat/1e3).sum('distance').sum('depth')
-fullfresh_35.plot(figsize=(12,3))
-fullfresh_35.resample('M',dim='date',how='mean').plot(linewidth=2,color='b')
+fullfresh_35.plot(figsize=(12,3),color='k')
+fullfresh_35.resample('M',dim='date',how='mean').plot(linewidth=2,color='k')
 title('Freshwater transport for full array (ref to 35)')
 ylabel('mSv')
 savefig('../figures/newtrans/fullfresh_35.png')
@@ -422,13 +342,125 @@ srefmean=mean(daily['salinity'][:,:-1,:])
 
 fullfresh_mean=(daily['across track velocity'][:,:-1,:]*(daily['salinity'][:,:-1,:]-srefmean)/srefmean*depthdiffmat*middistmat/1e3).sum('distance').sum('depth')
 
-fullfresh_mean.plot(figsize=(12,3))
-fullfresh_mean.resample('M',dim='date',how='mean').plot(linewidth=2,color='b')
-axhline(mean(fullfresh_mean))
+fullfresh_mean.plot(figsize=(12,3),color='k')
+fullfresh_mean.resample('M',dim='date',how='mean').plot(linewidth=2,color='k')
+axhline(mean(fullfresh_mean),color='k')
 title('Freshwater transport for full array (ref to mean salinity)')
 ylabel('mSv')
 savefig('../figures/newtrans/fullfresh_mean.png')
 
 #########################################################################
-## Get transport time series for top 50% of vels east of shelf
+## Position of the currents? (velocity maxima and width of current)
 #########################################################################
+
+egictrans=(egvel[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+# egictrans_jneg=(egvel.where(egvel<0)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance') #Very little difference if I only addup the negative vels...
+# Tried defining EGIC based on a velocity criterion, but this ended up not really making sense to do -- may as well just use it all.
+# egvel_cond=egvel.copy()
+# for dd,kk in enumerate(daily.date.values):
+#     egvel_cond[:,:,dd]=egvel[:,:,dd].where(egvel[:,:,dd]<0.5*egvel[:,:,dd].min())
+#
+#
+# egvel_cond[:,:,20].plot()
+# egictrans_velcond=(egvel_cond[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+#
+# egictrans_velcond.plot(color='grey',label='only vels greater than 0.5 the max each day')
+# egictrans.plot(color=egicol,alpha=0.85,label='all vels off-shore of min')
+# ylabel('Transport (Sv)')
+# legend()
+# savefig('../figures/newtrans/EGIC_transcomp050.png')
+
+egvel[:,:,20].plot()
+
+figure(figsize=(10,3))
+egictrans.resample('M',dim='date').plot(color=egicol,label='EG-IC')
+egictrans.plot(color=egicol,alpha=0.5)
+axhline(mean(egictrans),color=egicol)
+ylabel('EGIC transport (Sv)')
+savefig('../figures/newtrans/EGIC_trans.png')
+egtrans.resample('M',dim='date').plot(color=egcol,label='EGC')
+ylabel('Transport (Sv)')
+egtrans.plot(color=egcol,alpha=0.5)
+axhline(mean(egtrans),color=egcol)
+legend()
+savefig('../figures/newtrans/EGCIC_bothtrans.png')
+
+
+
+figure(figsize=(10,3))
+(egictrans-egtrans).resample('M',dim='date').plot(color=icol,label='IC')
+(egictrans-egtrans).plot(color=icol,alpha=0.5)
+axhline(mean(egictrans-egtrans),color=icol)
+ylabel('IC transport (Sv)')
+savefig('../figures/newtrans/IC_trans.png')
+
+egicmaxvel=egvel.min('depth').min(dim='distance')
+
+figure(figsize=(10,3))
+egicmaxvel.plot(color=egicol,alpha=0.8)
+axhline(mean(egicmaxvel),color=egicol)
+title('Maximum velocity in EGIC')
+savefig('../figures/newtrans/EGIC_maxvel.png')
+
+ccmaxvel=ccvel.min('depth').min(dim='distance')
+
+figure(figsize=(10,3))
+ccmaxvel.plot(color=ccol,label='coastal current',alpha=0.8)
+axhline(mean(ccmaxvel),color=ccol)
+title('Maximum velocity in EGCC')
+savefig('../figures/newtrans/EGCC_maxvel.png')
+egicmaxvel.plot(color=egicol,label='slope current',alpha=0.8)
+axhline(mean(egicmaxvel),color=egicol)
+title('Maximum velocities')
+legend()
+savefig('../figures/newtrans/EGC_maxvelcomp.png')
+
+egind=egvel.min(dim='depth').argmin(dim='distance')
+ccind=ccvel.min(dim='depth').argmin(dim='distance')
+
+
+figure(figsize=(14,3))
+plot(daily.date,egind,color=egicol,label='pos of max slope current vel')
+plot(daily.date,minind,color='grey',label='mi vel between currents')
+plot(daily.date,ccind,color=ccol,label='pos of max coastal current vel')
+plot(daily.date,ccind.where(ccind>5),'bo')
+plot(daily.date,egind.where(egind<13),'ro')
+
+ccind>5
+dat=daily.copy()
+
+def onecont(field,tit,vrange,coloor,hlevs,nomoorlines=0):
+    ax1=contourf(dat.distance,dat.depth,field,vrange,cmap=coloor,extend='both')
+    colorbar()
+    ax2=contour(dat.distance,dat.depth,field,levels=hlevs,colors='k')
+    clabel(ax2)
+    fill_between(bathdist,bathbath,2500*ones(len(bathbath)),color='k',zorder=22)
+    xlabel('distance (km)')
+    ylabel('depth (m)')
+    xlim([-5,100])
+    ylim([2200,0])
+    title(tit)
+    if nomoorlines==0:
+        [axvline(mm,color='w',linewidth=2) for mm in distvec]
+        [axvline(mm,color='k',linewidth=0.8) for mm in distvec]
+
+    return ax1,ax2
+
+
+
+for cc in where(array(ccind>5))[0]:
+        figure(figsize=(12,3))
+        subplot(121)
+        onecont(dat['across track velocity'][:,:,cc].T,'Across track velocity on '+str(daily.date[cc].values)[:10],arange(-0.8,0.81,0.01),cm.RdBu_r,arange(-0.8,0.9,0.2))
+        subplot(122)
+        onecont(dat['salinity'][:,:,cc].T,'Salinity on '+str(daily.date[cc].values)[:10],univec['sal'][1],sal_cmap,univec['sal'][3])
+        savefig('../figures/curpos/cc_close/salvelsec_'+str(cc)+'.png')
+
+
+for cc in where(array(egind<13))[0]:
+        figure(figsize=(12,3))
+        subplot(121)
+        onecont(dat['across track velocity'][:,:,cc].T,'Across track velocity on '+str(daily.date[cc].values)[:10],arange(-0.8,0.81,0.01),cm.RdBu_r,arange(-0.8,0.9,0.2))
+        subplot(122)
+        onecont(dat['salinity'][:,:,cc].T,'Salinity on '+str(daily.date[cc].values)[:10],univec['sal'][1],sal_cmap,univec['sal'][3])
+        savefig('../figures/curpos/eg_close/salvelsec_'+str(cc)+'.png')
