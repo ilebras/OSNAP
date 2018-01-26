@@ -10,10 +10,9 @@ from aux_funcs import *
 ################### Start with AQD data, then add ADCP and interp############
 #############################################################################
 
-def Interp_AQD_ADCP(moornum):
+def Interp_vel(moornum):
 
     moorname='CF'+str(moornum)
-
 
     if moorname=='CF8':
         aqdlist=hstack((glob.glob(datadir+'NOC_M1/nocm1_01_2014/nor/*.edt'),
@@ -61,10 +60,10 @@ def Interp_AQD_ADCP(moornum):
         prs=hstack((prs,prs_tmp))
         u=hstack((u,u_tmp))
         v=hstack((v,v_tmp))
+
         meanprs=hstack((meanprs,mprs_tmp))
         date=hstack((date,date_tmp))
         time=hstack((time,time_tmp))
-
 
         subplot(311)
         plot(date_tmp,prs_tmp)
@@ -76,6 +75,8 @@ def Interp_AQD_ADCP(moornum):
         plot(date_tmp,v_tmp)
         ylabel('v')
 
+    len(date_tmp)
+    len(prs_tmp)
 
     ##### Choose time and pressure bins
     #units are db
@@ -95,6 +96,7 @@ def Interp_AQD_ADCP(moornum):
         adcplist=hstack((glob.glob(datadir+'NOC_M1/nocm1_01_2014/adcp/*.edt'),
                         glob.glob(datadir+'NOC_M1/nocm1_02_2015/adcp/*.edt')))
         for dd in adcplist:
+            print(dd)
             dat=pd.read_csv(dd,header=12,sep='\s*')
             prs_tmp=hrly_ave(gsw.p_from_z(-dat.ix[:,4],lat),hrcon)
             datea_tmp=unique([datetime.datetime(int(dat.ix[ii,0]),
@@ -111,7 +113,7 @@ def Interp_AQD_ADCP(moornum):
 
     else:
         dat=io.loadmat(datadir+'ADCP_Data_CF/OSNAP_cf'+str(moornum)+'_Final1_ilebras.mat')
-        shapmat=shape(dat['u'][1:,:])
+        shapmat=shape(dat['u'])
         shapmat1=int(shape(dat['u'])[1]/24)+1
         datea_tmp=unique([datetime.datetime(int(tt[0]),int(tt[1]),int(tt[2])) for tt in dat['time']])[:shapmat1]
     #     Note that adcp "depths" from Dan Torres are also in db...
@@ -119,15 +121,27 @@ def Interp_AQD_ADCP(moornum):
         ua_tmp=zeros((shapmat[0],shapmat1))
         va_tmp=zeros((shapmat[0],shapmat1))
         for ii in range(shapmat[0]):
-            prsa_tmp[ii,:]=hrly_ave(dat['z'][ii+1,:],hrcon)
-            ua_tmp[ii,:]=hrly_ave(dat['u'][ii+1,:],hrcon)
-            va_tmp[ii,:]=hrly_ave(dat['v'][ii+1,:],hrcon)
+            prsa_tmp[ii,:]=hrly_ave(dat['z'][ii,:],hrcon)
+            ua_tmp[ii,:]=hrly_ave(dat['u'][ii,:],hrcon)
+            va_tmp[ii,:]=hrly_ave(dat['v'][ii,:],hrcon)
 
         ua=ua_tmp.flatten()
         va=va_tmp.flatten()
         prsa=prsa_tmp.flatten()
-
         datea=tile(datea_tmp,[1,shapmat[0]]).flatten()
+
+
+    figure()
+    plot(prsa)
+    title('pressure')
+
+    figure()
+    plot(ua)
+    title('u')
+
+    figure()
+    plot(va)
+    title('v')
 
     pdall=pd.DataFrame({'pressure':hstack((prsa,prs)),
                                    'u':hstack((ua,u)),
@@ -135,8 +149,10 @@ def Interp_AQD_ADCP(moornum):
                                    'date bin':hstack((datea,date))})
 
 
+
     pdall['u'][pdall['u']<-2]=NaN
     pdall['v'][pdall['v']<-2]=NaN
+
 
     if moornum==4:
         plim=40
@@ -148,7 +164,8 @@ def Interp_AQD_ADCP(moornum):
     common_mindate=max(min(datea),min(date))
     common_maxdate=min(max(datea),max(date))
 
-    # datevec=sort(unique(pdall['date bin']))
+    common_maxdate
+
     prsvec=arange(0,int(max(pdall['pressure']))+1,2)
 
 
@@ -159,12 +176,11 @@ def Interp_AQD_ADCP(moornum):
 
 
     u_interp=pivspline_ML('u',datevec,prsvec,pdall)
+
     v_interp=pivspline_ML('v',datevec,prsvec,pdall)
 
-
-    u_interp[(u_interp<-2) | (u_interp>2)]=nan
-    v_interp[(v_interp<-2) | (v_interp>2)]=nan
-
+    u_interp[(u_interp<-2) | (u_interp>1.5)]=nan
+    v_interp[(v_interp<-2) | (v_interp>1.5)]=nan
 
     figure(figsize=(12,4))
     subplot(121)
@@ -180,6 +196,7 @@ def Interp_AQD_ADCP(moornum):
     title('v, meridional velocity (m/s)')
     savefig('../figures/interpolation/VEL/'+moorname+'_uv_measinterp.png',bbox_inches='tight')
 
+
     plotcontour(u_interp,cm.RdBu_r,-2,2,moorname)
     savefig('../figures/interpolation/VEL/'+moorname+'_ucontour.png',bbox_inches='tight')
 
@@ -188,5 +205,4 @@ def Interp_AQD_ADCP(moornum):
     savefig('../figures/interpolation/VEL/'+moorname+'_vcontour.png',bbox_inches='tight')
 
 
-
-    pickle.dump([u_interp,v_interp],open('../pickles/VELinterp/'+moorname+'_uvinterp.pickle','wb'))
+    pickle.dump([u_interp,v_interp],open('../pickles/VELinterp/'+moorname+'_uvinterp_SAtheta.pickle','wb'))

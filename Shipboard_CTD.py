@@ -446,6 +446,38 @@ onecont(pden_14[2],'Density on k2 section of k221, 2014',linspace(23,28,21),cm.R
 onecont(pden_14[3],'Density on k3 section of k221, 2014',linspace(23,28,21),cm.RdPu,[25,26,27],bathdist_14[3],bathbath_14[3],0,2500,-2,160,'Pden_2014_3_zoomout')
 
 
+
+########################################################################################
+##################### Look at CTD profile detail for turbulence #######################
+########################################################################################
+
+shape(sal['2005'])
+shape(dist['2005'])
+dist['2005']<60
+
+for occ in ['2005','2008','2014','2016']:
+    figure(figsize=(10,3))
+    subplot(121)
+    plot(sal[occ][:,dist[occ]<100],prs[occ]);
+    ylim([200,0])
+    ylabel('pressure [db]')
+    xlabel('salinity')
+    subplot(122)
+    plot(tmp[occ][:,dist[occ]<100],prs[occ]);
+    ylim([200,0])
+    xlabel('temperature')
+    suptitle(occ)
+    savefig('../figures/shipboard_turb/TS_profs_'+occ+'.png',bbox_inches='tight')
+
+# now get potential density and vertical and horizontal turner angles -- read up on them. 
+
+
+
+
+########################################################################################
+######################### Compare with Nuka and moorings #######################################
+########################################################################################
+
 OSNAPgrid=pickle.load(open('../pickles/CF_xarray_gridplot_notid_pdenfix.pickle','rb'))
 
 OSNAPgrid
@@ -481,7 +513,7 @@ oshelf.date
 sumvec=[0,9,10,11,12,21,22,23]
 [oshelf.date[ss] for ss in sumvec]
 
-[plot(oshelf.salinity[ii,:,:].to_pandas(),oshelf.temperature[ii,:,:].to_pandas(),'go'); for ii in range(24)];
+# [plot(oshelf.salinity[ii,:,:].to_pandas(),oshelf.temperature[ii,:,:].to_pandas(),'go'); for ii in range(24)];
 
 figure()
 for ii in range(1,4):
@@ -537,7 +569,6 @@ plot(oshelf.temperature[0,0,0].to_pandas(),oshelf.depth[0],'g',label='OSNAP may-
 legend(loc=(1.05,0.25))
 savefig('../figures/CTDcomp/Tprof_hydroNuka_OSNAP.pdf',bbox_inches='tight')
 
-1905+140+75
 ########################################################################################
 ##################### Extract nearby stations for Jo's OOI calib ########################
 ########################################################################################

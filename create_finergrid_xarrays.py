@@ -50,7 +50,7 @@ for vv in dat:
 
 
 ### Save this version of the xarray (for plotting)
-pickle.dump(plussides,open('../pickles/xarray/CF_xarray_gridplot_notid_SAtheta.pickle','wb'))
+pickle.dump(plussides,open('../pickles/xarray/CF_xarray_gridplot_notid_1801.pickle','wb'))
 
 ## Took this part out since gridcalc version was not loading, it was taking up room, and I can just mask locally
 #

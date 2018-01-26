@@ -51,7 +51,7 @@ for moor in range(1,9):
     sminlist=hstack((sminlist,min(sal.index)))
     smaxlist=hstack((smaxlist,max(sal.index)))
 
-    u,v=pd.read_pickle(open('../pickles/VELinterp/CF'+str(moor)+'_uvinterp_SAtheta.pickle','rb'))
+    u,v=pd.read_pickle(open('../pickles/VELinterp/CF'+str(moor)+'_uvinterp.pickle','rb'))
     u_across=u*cos(theta)+v*sin(theta)
     u_along=-u*sin(theta)+v*cos(theta)
 

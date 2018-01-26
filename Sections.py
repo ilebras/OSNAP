@@ -9,7 +9,7 @@
 from aux_funcs import *
 
 
-dat=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_SAtheta.pickle','rb'))
+dat=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1801.pickle','rb'))
 
 #################################################################################
 # Make mean and var sections of all fields
