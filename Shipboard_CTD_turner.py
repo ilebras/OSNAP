@@ -1,5 +1,8 @@
 from aux_funcs import *
 
+CFlon
+CFlat
+
 datin=pickle.load(open('../pickles/Shipboard/CTD_xarray.pickle','rb'))
 
 prsvec=range(10,3125,10)

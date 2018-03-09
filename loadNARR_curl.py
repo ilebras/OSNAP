@@ -12,6 +12,8 @@ maxlon=-40.5
 
 dat=Dataset(nclist[0])
 
+dat
+
 locind=(dat['gridlat_221'][:]>minlat)&(dat['gridlat_221'][:]<=maxlat)&(dat['gridlon_221'][:]>minlon)&(dat['gridlon_221'][:]<=maxlon)
 
 lon=dat['gridlon_221'][:][locind]

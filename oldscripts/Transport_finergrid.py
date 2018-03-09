@@ -29,6 +29,9 @@ for vv in newgrid:
             daily[vv][dd,:,:]=daily[vv][dd,:,:].where(daily[vv][dd,:,:].depth<=bathonmygrid[dd])
 
 
+
+
+
 #################################################################################
 #################################################################################
 ############# Get EGCC and EGC transports ####################################
@@ -37,13 +40,13 @@ for vv in newgrid:
 
 #quick monthly plot
 
-def monthplot(afield):
-    figure()
-    afield.resample('M',dim='date',how='mean').plot(x='distance', y='depth', col='date', col_wrap=4)
-
-monthplot(daily['across track velocity'])
-ylim([1000,0])
-
+#  def monthplot(afield):
+#     figure()
+#     afield.resample('M',dim='date',how='mean').plot(x='distance', y='depth', col='date', col_wrap=4)
+#
+# monthplot(daily['across track velocity'])
+# ylim([1000,0])
+#
 
 #################################################################################
 ################ Find and examine isohalines ###################################
@@ -104,9 +107,185 @@ ylim([1000,0])
 #################################################################################
 # Transport
 #################################################################################
+
+
+#################################################################################
+######### Try out salinity classes hovmueller
+#################################################################################
+
+
+salims=[31,32,33,33.5,34,34.4,34.6,34.8,34.85 ,  34.875,  34.9  ,  34.925,  34.95 ,  34.975,  35.   ,
+        35.025,  35.05 ]
+
+#first, just velocities in salinity space:
+# daily=daily.resample('M',dim='date',how='mean')
+
 mid_dist=hstack((0,(diff(daily.distance)[:-1]+diff(daily.distance)[1:])/2,0))
 middistmat=transpose((tile(mid_dist,[len(daily.depth)-1,len(daily.date),1])),(2,0,1))
 depthdiffmat=transpose((tile(diff(daily.depth),[len(daily.distance),len(daily.date),1])),(0,2,1))
+shape(depthdiffmat)
+shape(middistmat)
+
+# daily.transpose('date','depth','distance')
+
+saltrans=zeros((len(salims)+1,len(daily.date)))
+
+saltrans[0,:]=(daily['across track velocity'].where(daily.salinity < salims[0])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+saltrans[-1,:]=(daily['across track velocity'].where(daily.salinity >= salims[-1])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+
+
+sreft=35.0
+salvel=saltrans.copy()
+salfresh=saltrans.copy()
+salarea=saltrans.copy()
+onesmat=daily.salinity.copy()
+onesmat[:]=1
+for ii in range(len(salims)-1):
+    print(ii+1,salims[ii],salims[ii+1])
+    # saltrans[ii+1,:]=(daily['across track velocity'].where((daily.salinity >= salims[ii]) & (daily.salinity < salims[ii+1]))[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+    salfresh[ii+1,:]=(daily['across track velocity'].where((daily.salinity >= salims[ii]) & (daily.salinity < salims[ii+1]))[:,:-1,:]*((daily['salinity'].where((daily.salinity >= salims[ii]) & (daily.salinity < salims[ii+1]))[:,:-1,:]-sreft)/sreft)*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+    # salvel[ii+1,:]=(daily['across track velocity'].where((daily.salinity >= salims[ii]) & (daily.salinity < salims[ii+1]))[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')/(onesmat.where((daily.salinity >= salims[ii]) & (daily.salinity < salims[ii+1]))[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+    # salarea[ii+1,:]=(onesmat.where((daily.salinity >= salims[ii]) & (daily.salinity < salims[ii+1]))[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+
+# salvel[0,:]=(daily['across track velocity'].where(daily.salinity < salims[0])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')/(onesmat.where(daily.salinity < salims[0])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+# salvel[-1,:]=(daily['across track velocity'].where(daily.salinity >= salims[-1])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')/(onesmat.where(daily.salinity >= salims[-1])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+#
+# salarea[0,:]=(onesmat.where(daily.salinity < salims[0])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+# salarea[-1,:]=(onesmat.where(daily.salinity >= salims[-1])[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+
+
+
+salfresh[0,:]=(daily['across track velocity'].where(daily.salinity < salims[0])[:,:-1,:]*(((daily['salinity'].where(daily.salinity<salims[0]))[:,:-1,:]-sreft)/sreft)*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+
+salfresh[-1,:]=(daily['across track velocity'].where(daily.salinity >= salims[-1])[:,:-1,:]*(((daily['salinity'].where(daily.salinity>=salims[-1]))[:,:-1,:]-sreft)/sreft)*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+
+def plot_salspace(field,fname,cmapo,vn,vx):
+    figure(figsize=(14,4))
+    contourf(daily.date.values,arange(len(salims)+1),field,31,cmap=cmapo,vmin=vn,vmax=vx,extend='both');
+    yticks(arange(0.5,len(salims),1),hstack(([str(ss) for ss in salims])))
+    [axhline(xx,color='grey') for xx in [4.5,10.5]]
+    [axvline(yy,color='grey') for yy in [datetime.datetime(2015,1,1),datetime.datetime(2015,6,1),datetime.datetime(2016,1,1),datetime.datetime(2016,6,1)]]
+    colorbar()
+    savefig('../figures/salspace/'+fname+'.png')
+
+
+sname='_moresm_35'
+
+# plot_salspace(salarea,'salarea','YlGnBu',0,40)
+plot_salspace(salfresh,'salfresh_35',cm.RdBu,-0.06,0.06)
+# plot_salspace(salvel,'salvel',cm.YlOrBr_r,-0.8,0)
+# plot_salspace(saltrans,'saltrans',cm.hot,-10,0)
+
+# figure(figsize=(14,4))
+# contourf(daily.date.values,range(9),saltrans[:9,:],51,cmap=cm.hot);
+# yticks(arange(0.5,8,1),[str(ss) for ss in salims])
+# colorbar()
+# savefig('../figures/salspace/saltrans_lowsal.png')
+
+# plot(daily.date,salfresh[:5,:].T)
+
+XXXXXXXXXXXXXX
+
+
+def smoothmat(matin,smparam):
+    matout=matin.copy()
+    for ii in range(shape(matin)[0]):
+        matout[ii,:]=run_ave(matin[ii,:],smparam)
+
+    return matout
+
+# salvel_sm=smoothmat(salvel,10)
+# saltrans_sm=smoothmat(saltrans,10)
+
+salfresh_sm=smoothmat(salfresh,30)
+
+
+
+figure(figsize=(14,3))
+plot(daily.date,salfresh_sm[2,:].T,label='fresher than 33')
+plot(daily.date,salfresh_sm[3,:].T,label='33-33.5')
+plot(daily.date,salfresh_sm[4,:].T,label='33.5-34')
+plot(daily.date,sum(salfresh_sm[2:5,:],axis=0),label='total fresher than 34')
+legend()
+savefig('../figures/salspace/salfresh_under34'+sname+'.png')
+
+# figure(figsize=(14,3))
+# plot(daily.date,salfresh_sm[5,:].T,label='34-34.4')
+# plot(daily.date,salfresh_sm[6,:].T,label='34.4-34.6')
+# plot(daily.date,salfresh_sm[7,:].T,label='34.6-34.8')
+# plot(daily.date,salfresh_sm[8,:].T,label='34.8-34.85')
+# plot(daily.date,salfresh_sm[9,:].T,label='34.85-34.875')
+# plot(daily.date,salfresh_sm[10,:].T,label='34.875-34.9')
+# plot(daily.date,sum(salfresh_sm[5:11,:],axis=0),label='total 34-34.9')
+# legend()
+# savefig('../figures/salspace/salfresh_34-34.9'+sname+'.png')
+
+# figure(figsize=(14,3))
+# plot(daily.date,salfresh_sm[11,:].T,label='34.9-34.925')
+# plot(daily.date,salfresh_sm[12,:].T,label='34.925-34.95')
+# plot(daily.date,salfresh_sm[13,:].T,label='34.95-34.975')
+# plot(daily.date,salfresh_sm[14,:].T,label='34.975-35.0')
+# plot(daily.date,salfresh_sm[15,:].T,label='35.0-35.05')
+# plot(daily.date,salfresh_sm[16,:].T,label='above 35.05')
+# legend()
+# savefig('../figures/salspace/salfresh_comps_above34.9'+sname+'.png')
+# plot(daily.date,sum(salfresh_sm[11:,:],axis=0),label='total above 34.9')
+# legend()
+# savefig('../figures/salspace/salfresh_above34.9'+sname+'.png')
+plot(salfresh_sm[5:11,:].T)
+
+figure(figsize=(14,3))
+plot(daily.date,sum(salfresh_sm[:5,:],axis=0),label='total under 34')
+plot(daily.date,sum(salfresh_sm[5:15,:],axis=0),label='total 34-35')
+plot(daily.date,sum(salfresh_sm[15:,:],axis=0),label='total above 35')
+legend()
+axhline(0,color='grey')
+savefig('../figures/salspace/salfresh_3sec'+sname+'.png')
+figure(figsize=(14,3))
+plot(daily.date,sum(salfresh_sm[:5,:],axis=0),label='total under 34')
+plot(daily.date,sum(salfresh_sm[5:15,:],axis=0),label='total 34-35')
+plot(daily.date,sum(salfresh_sm[15:,:],axis=0),label='total above 35')
+legend()
+axhline(0,color='grey')
+savefig('../figures/salspace/salfresh_3sec'+sname+'.png')
+
+
+sname
+figure(figsize=(14,3))
+plot(daily.date,sum(salfresh_sm[:5,:],axis=0),label='total under 34')
+plot(daily.date,sum(salfresh_sm[5:8,:],axis=0),label='total 34-34.8')
+plot(daily.date,sum(salfresh_sm[8:,:],axis=0),label='total above 34.8')
+legend()
+axhline(0,color='grey')
+savefig('../figures/salspace/salfresh_3sec'+sname+'.png')
+
+figure(figsize=(14,3))
+plot(daily.date,sum(salfresh_sm[:5,:],axis=0),label='total under 34')
+plot(daily.date,sum(salfresh_sm[5:11,:],axis=0),label='total 34-34.9')
+plot(daily.date,sum(salfresh_sm[11:,:],axis=0),label='total above 34.9')
+plot(daily.date,sum(salfresh_sm[:,:],axis=0),label='total')
+legend()
+axhline(0,color='grey')
+savefig('../figures/salspace/salfresh_3sec_wtot'+sname+'.png')
+
+figure(figsize=(14,3))
+plot(daily.date,sum(salfresh_sm[5:8,:],axis=0),label='total 34-34.8')
+plot(daily.date,sum(salfresh_sm[8:,:],axis=0),label='total above 34.8')
+plot(daily.date,sum(salfresh_sm[5:,:],axis=0),label='total above 34')
+legend()
+axhline(0,color='grey')
+savefig('../figures/salspace/salfresh_above34'+sname+'.png')
+
+# figure(figsize=(14,3))
+# plot(daily.date,sum(salfresh_sm[5:11,:],axis=0),label='total 34-34.9')
+# plot(daily.date,sum(salfresh_sm[11:,:],axis=0),label='total above 34.9')
+# plot(daily.date,sum(salfresh_sm[5:,:],axis=0),label='total above 34')
+# legend()
+# axhline(0,color='grey')
+# savefig('../figures/salspace/salfresh_above34'+sname+'.png')
+
+
+XXXXXXXXXXXXXXxx
 
 
 
@@ -151,6 +330,24 @@ mindxr.resample('W',dim='date').plot(color='k')
 title('distance at which minimum between currents occurs [km]')
 ylabel('')
 savefig('../figures/newtrans/minpos.png')
+
+run_ave(mindxr.values,30)
+
+dlen=int(len(daily.date)/2)
+
+dlen
+
+figure(figsize=(10,4))
+# plot(daily.date,run_ave(mindxr.values,5))
+# plot(daily.date,run_ave(mindxr.values,10))
+plot(daily.date[:dlen],run_ave(mindxr.values,30)[:dlen])
+plot(daily.date[:dlen],run_ave(mindxr.values,30)[dlen:])
+
+# plot(daily.date,run_ave(mindxr.values,60))
+title('distance at which minimum between currents occurs [km]')
+ylabel('')
+savefig('../figures/newtrans/minpos_smooth.png')
+
 
 ccvel=daily['across track velocity'].copy()
 ccarea=daily['across track velocity'].copy()
@@ -221,14 +418,18 @@ ccfresh_refc=(ccvel*(daily.salinity[:,:-1,:]-srefc)/srefc*depthdiffmat[:,:,:]*mi
 egfresh=(egvel*(daily.where(daily.salinity<34.85)['salinity'][:,:-1,:]-srefb)/srefb*depthdiffmat*middistmat).sum('distance').sum('depth')
 
 egicfresh=(egvel*(daily['salinity'][:,:-1,:]-srefc)/srefc*depthdiffmat*middistmat).sum('distance').sum('depth')
+egicfresh_refb=(egvel*(daily['salinity'][:,:-1,:]-srefb)/srefb*depthdiffmat*middistmat).sum('distance').sum('depth')
+
 
 
 figure()
-ccfresh.plot(figsize=(12,3),color=ccol)
-ccfresh.resample('M',dim='date',how='mean').plot(linewidth=2,color=ccol)
+ccfresh.plot(figsize=(12,3),color=ccol,alpha=0.3)
+plot(ccfresh.date,run_ave(ccfresh,30),linewidth=2,color=ccol)
 title('Freshwater transport in the EGCC referenced to 34')
 ylabel('mSv')
 savefig('../figures/newtrans/CC_fresh.png')
+ylim([0,20])
+savefig('../figures/newtrans/CC_fresh_zoom.png')
 
 figure()
 ccfresh_refb.plot(figsize=(12,3),color=ccol)
@@ -315,7 +516,8 @@ ax2.set_title('Freshwater transport in the EGC system [mSv]')
 ax2.set_ylabel('Coastal Current',color=ccol)
 ax2.tick_params('y', colors=ccol)
 ax2.set_ylim([0,60])
-savefig('../figures/newtrans/EGCC-EGIC_fresh.png')
+savefig('../figures/newtrans/EGCC-EGIC_fresh.png',bbox_inches='tight')
+savefig('../figures/newtrans/EGCC-EGIC_fresh.pdf',bbox_inches='tight')
 
 #########################################################################
 ## Look at rel between transports and wind
@@ -706,6 +908,8 @@ def onecont(field,tit,vrange,coloor,hlevs,nomoorlines=0):
         [axvline(mm,color='k',linewidth=0.8) for mm in distvec]
 
     return ax1,ax2
+
+plot(run_ave(mindxr.values,30))
 
 
 #

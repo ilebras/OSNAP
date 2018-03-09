@@ -10,8 +10,6 @@ plot(mean(geoshear,axis=2).T);
 
 geovel=nancumsum(geoshear[:,::-1,:],axis=1)[:,::-1,:]*2
 
-
-
 prsvec=range(0,2113,2)
 
 SA=datin['salinity'].copy()

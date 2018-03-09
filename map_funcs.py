@@ -170,13 +170,20 @@ def findSubsetIndices(min_lat,max_lat,min_lon,max_lon,lats,lons):
     return res
 
 
-lat_start=58.5
-lat_end  =61.5
 
-lon_start=-45
-lon_end  =-39
 
-def makeMap():
+def makeMap(zoomlev):
+    if zoomlev=='CF':
+        lat_start=58.5
+        lat_end  =61.5
+        lon_start=-45
+        lon_end  =-39
+    else:
+        lat_start=53
+        lat_end  =66
+        lon_start=-60
+        lon_end  =-20
+
     figure(figsize=(8,8))
 
     """Get the etopo1 data"""
@@ -192,7 +199,7 @@ def makeMap():
     bathy = etopo1.variables["z"][int(res[2]):int(res[3]),int(res[0]):int(res[1])]
     bathySmoothed = laplace_filter(bathy,M=None)
 
-    levels=array([-6000,-5000,-3000, -2000, -1500, -1000,-500, -250])
+    levels=array([-7000,-6000,-5000,-3000, -2000, -1500, -1000,-500, -250])
 
     if lon_start< 0 and lon_end < 0:
         lon_0= - (abs(lon_end)+abs(lon_start))/2.0
@@ -214,17 +221,32 @@ def makeMap():
     CS1 = map.contourf(x,y,bathySmoothed,arange(-4e3,0,100),
                       cmap=cm.Blues_r)
 
-    CS0 = map.contour(x,y,bathySmoothed,levels,
-                       colors='grey')
-    continent = map.contour(x,y,bathySmoothed,[0],colors='grey')
 
-    clabel(CS0,fmt='%1.0f')
 
-    CS0.axis='tight'
+    if zoomlev=='CF':
+        CS0 = map.contour(x,y,bathySmoothed,levels,
+                           colors='grey')
+        clabel(CS0,fmt='%1.0f')
 
-    map.drawmeridians(range(lon_start+2,lon_end,2),labels=[0,0,0,1])
-    map.drawparallels(arange(59,lat_end,1),labels=[1,0,0,0])
+
+        CS0.axis='tight'
+
+        map.drawmeridians(range(lon_start,lon_end,2),linewidth=0.001,labels=[0,0,0,1])
+        map.drawparallels(arange(59,lat_end,1),linewidth=0.001,labels=[1,0,0,0])
+        continent = map.contour(x,y,bathySmoothed,[0],colors='grey')
+    else:
+        map.drawmeridians(range(lon_start,lon_end,5),linewidth=0.001,labels=[0,0,0,1])
+        map.drawparallels(arange(54,lat_end+1,2),linewidth=0.001,labels=[1,0,0,0])
+
 
     return map
-
-makeMap()
+#
+# map=makeMap('zoomout')
+# savefig('../figures/Map/Map_zoomout.pdf',bbox_inches='tight')
+# lat_start=58.5
+# lat_end  =61.5
+# lon_start=-45
+# lon_end  =-39
+# map.plot([lon_start,lon_start,lon_end,lon_end,lon_start],[lat_start,lat_end,lat_end,lat_start,lat_start],latlon=True,linewidth=2,color='k')
+# map.plot(CFlon,CFlat,latlon=True,linewidth=2,color='k')
+# savefig('../figures/Map/Map_zoomout_wbox.pdf',bbox_inches='tight')

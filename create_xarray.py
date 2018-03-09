@@ -107,4 +107,4 @@ daily=xr.Dataset({'temperature': (['distance', 'depth', 'date'],  tmpmat),
                         'depth': sw.dpth(sal.index.values,60),
                         'date': sal.columns[(sal.columns>=dmin)&(sal.columns<=dmax)].values})
 
-pickle.dump(daily,open('../pickles/xarray/CF_xarray_notid_SAtheta.pickle','wb'))
+pickle.dump(daily,open('../pickles/xarray/CF_xarray_notid_1801.pickle','wb'))

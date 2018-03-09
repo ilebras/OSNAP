@@ -1,7 +1,8 @@
 from aux_funcs import *
 
+dat=pickle.load(open('../pickles/xarray/CF_xarray_notid_1801.pickle','rb'))
 
-dat=pickle.load(open('../pickles/xarray/CF_xarray_notid_SAtheta.pickle','rb'))
+
 
 ################################################################################
 ################################################################################

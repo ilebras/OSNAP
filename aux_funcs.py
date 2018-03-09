@@ -22,12 +22,13 @@ import csv
 
 from seabird import cnv
 
-
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 matplotlib.rcParams['contour.negative_linestyle'] = 'solid'
 
-# rc('xtick',labelsize='Large')
-# rc('ytick',labelsize='Large')
-# rc('axes', labelsize='Large')
+rc('xtick',labelsize='Large')
+rc('ytick',labelsize='Large')
+rc('axes', labelsize='Large')
 
 datadir='/home/isabela/Documents/OSNAP/data/'
 
@@ -69,11 +70,11 @@ def make_cmap(colors, position=None, bit=False):
 egcol='#33a02c'
 ccol='#1f78b4'
 icol='#e31a1c'
-egicol='#ff7f00'
+egicol='purple'
 
-#(35,139,69) 0.65,
-colors = [(44,127,184) ,(237,248,177),(254,196,79),(217,95,14)] # This example uses the 8-bit RGB
-sal_cmap = make_cmap(colors,position=[0,0.85,0.95,1],bit=True)
+colors = [(44,127,184) ,(237,248,177),(255,237,160),(217,95,14),(240,59,32)]
+# colors = [(44,127,184) ,(237,248,177),(254,196,79),(217,95,14),(240,59,32)] # This example uses the 8-bit RGB
+sal_cmap = make_cmap(colors,position=[0,0.8,0.95,0.99,1],bit=True)
 
 colors = [(37,52,148),(127,205,187),(5,112,176),(110,1,107)]
 pden_cmap=make_cmap(colors,position=[0,0.666666666666,0.833333333333,1],bit=True)
@@ -82,10 +83,10 @@ univec={}
 # univec['pden']=['potential density',linspace(26,28,41),cm.BuPu,arange(26,28.1,0.3),'[kg/m$^3$]']
 # univec['sal']=['salinity',linspace(32.5,35.5,31),cm.YlGnBu_r,array([ 32. ,  32.4,  32.8,  33.2,  33.6,  34. ,  34.4,  34.8, 34.9, 35, 35.1,35.2]),'']
 # univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
-univec['pden']=['potential density',linspace(26,28,41),pden_cmap,arange(26,28.1,0.3),'[kg/m$^3$]']
-univec['sal']=['salinity',arange(33.5,35.1,0.05),sal_cmap,array([33.6, 34. ,  34.4,  34.8, 34.9, 34.95, 35, 35.1,35.2]),'']
+univec['pden']=['potential density',linspace(26,28,41),[27,27.5,27.68,27.74,27.8],'[kg/m$^3$]']
+univec['sal']=['salinity',array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),sal_cmap,array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),'']
 univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
-univec['uacross']=['across track velocity',arange(-0.6,0.605,0.05),cm.RdBu_r,arange(-0.6,0.605,0.2),'[m/s]']
+univec['uacross']=['across track velocity',arange(-0.6,0.005,0.05),cm.Blues_r,arange(-0.6,0.005,0.2),'[m/s]']
 
 univec['ualong']=['along track velocity',arange(-0.4,0.401,0.02),cm.RdBu_r,arange(-0.4,0.401,0.1),'[m/s]']
 univec['geostrophic velocity']=['geostrophic velocity',arange(-0.6,0.605,0.05),cm.RdBu_r,arange(-0.6,0.605,0.2),'[m/s]']
@@ -117,11 +118,26 @@ salmat,tmpmat=meshgrid(salvec,tmpvec)
 
 pdenmat=pd.read_pickle(open('../pickles/aux/pdenmat.pickle','rb'))
 
+
+
+def run_ave(vec,rundiv):
+    runave=vec.copy()
+    for ii in range(int(rundiv/2)):
+        runave[ii]=nanmean(vec[:int(ii+rundiv/2)])
+    for ii in range(int(rundiv/2),len(vec)-int(rundiv/2)):
+        runave[ii]=nanmean(vec[int(ii-rundiv/2):int(ii+rundiv/2)])
+    for ii in range(len(vec)-int(rundiv/2),len(vec)):
+        runave[ii]=nanmean(vec[int(ii-rundiv/2):])
+    # runave=array(runave)
+    return runave
+
 # Below is really just a boxcar averager for any time increment
+
 
 #standard averaging constant for turning 15 min microcat into daily.
 aveconst=4*24
 hrcon=24
+
 
 
 def hrly_ave(vec,hourdiv):
@@ -173,7 +189,7 @@ adcpdp=[160,160,160,340,90,90,90]
 def plotinstpos(axchoice,savename):
         if 'v' in savename:
             for rr in range(7):
-                axchoice.plot(distvec[rr],adcpdp[rr],'r^',markersize=6,zorder=40)
+                axchoice.plot(distvec[rr],adcpdp[rr],'r^',markersize=16,zorder=40)
         mm=0
         for key in depths:
             for dd in range(len(depths[key])):
@@ -182,7 +198,7 @@ def plotinstpos(axchoice,savename):
                         axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
                     if 'tmp' in savename:
                         if ('tidbit' in inst[key][dd]) | ('olo' in inst[key][dd]):
-                             axchoice.axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
+                             axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
 
                 elif 'v' in savename:
                     if ('AQ' in inst[key][dd]):

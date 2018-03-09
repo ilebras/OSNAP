@@ -8,10 +8,15 @@ with open(datadir+'Shipboard/adcp_distances.dat', 'r') as f:
 
 adcp_dist=[float(dd[0]) for dd in adcp_dist]
 
+datadir
+
 adcp_14=io.loadmat(datadir+'Shipboard/kn221_2014/kn221_2014_vm_adcp_ilebras.mat')
 adcp_16=io.loadmat(datadir+'Shipboard/ar07_2016/ar07_2016_vm_adcp_ilebras.mat')
 
+
 adcp_14.keys()
+
+plot(adcp_16['lon'],adcp_16['lat'],'o');
 
 plot(adcp_14['lon'],adcp_14['lat'],'ko');
 plot(adcp_16['lon'],adcp_16['lat'],'ro');
@@ -52,11 +57,13 @@ contadcp(adcp_dist,adcp_14,'2014')
 
 contadcp(adcp_dist[:-3],adcp_16,'2016')
 
+adcp_16
+
 #################################################################################
 # Make four-panel comparison plot between shipboard and mooring
 #################################################################################
 
-dat=pickle.load(open('../pickles/CF_xarray_gridplot_notid.pickle','rb'))
+dat=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1801.pickle','rb'))
 
 dat.date[0]
 
@@ -64,8 +71,6 @@ dat.date[-1]
 
 bathdist=hstack((-20,bathdist))
 bathbath=hstack((bathbath[0],bathbath))
-
-
 
 #new function just has minimal framework
 def contadcp_min(axspec,distvec,adic):
@@ -83,6 +88,38 @@ def contmoor_min(axspec,datechoice):
 
     return im
 
+def mkbox(axc,x1,x2,y1,y2):
+    axc.plot([x1,x1,x2,x2,x1],[y1,y2,y2,y1,y1],color='purple',linewidth=3)
+
+minind=zeros(len(dat.date))
+for tt,na in enumerate(dat.date):
+    minind[tt]=where(max(dat['across track velocity'][2:15,0,tt])==dat['across track velocity'][2:15,0,tt])[0][0]+2
+
+minind=[int(mm) for mm in minind]
+
+mid_dist_adcp=hstack((diff(adcp_dist)[0]/2,(diff(adcp_dist)[:-1]+diff(adcp_dist)[1:])/2,diff(adcp_dist)[-1]/2))
+middistmat_a14=tile(mid_dist_adcp,[len(adcp_14['depth'][:,0]),1])
+middistmat_a16=tile(mid_dist_adcp[:-3],[len(adcp_16['depth'][:,0]),1])
+shape(middistmat_a16)
+depthdiffmat_a14=tile(diff(hstack((0,adcp_14['depth'][:,0]))),[len(adcp_dist),1]).T
+depthdiffmat_a16=tile(diff(hstack((0,adcp_16['depth'][:,0]))),[len(adcp_dist[:-3]),1]).T
+shape(depthdiffmat_a16)
+
+plot(adcp_dist[-20:],adcp_14['across track velocity'][0,-20:]);
+plot(adcp_dist[-23:-3],adcp_16['across track velocity'][0,-20:]);
+plot(adcp_dist[-13:-10],adcp_16['across track velocity'][0,-10:-7]);
+
+minind14=where(adcp_14['across track velocity'][0,-20:]==max(adcp_14['across track velocity'][0,-20:]))[0][0]+len(adcp_14['across track velocity'][0,:])-20
+minind16=where(adcp_16['across track velocity'][0,-10:-7]==max(adcp_16['across track velocity'][0,-10:-7]))[0][0]+len(adcp_16['across track velocity'][0,:])-10
+
+trans14_less=nansum(adcp_14['across track velocity'][:,minind14:-3]*depthdiffmat_a14[:,minind14:-3]*middistmat_a14[:,minind14:-3])/1e3
+trans14=nansum(adcp_14['across track velocity'][:,minind14:]*depthdiffmat_a14[:,minind14:]*middistmat_a14[:,minind14:])/1e3
+trans16=nansum(adcp_16['across track velocity'][:,minind16:]*depthdiffmat_a16[:,minind16:]*middistmat_a16[:,minind16:])/1e3
+
+trans14
+trans14_less
+trans16
+
 
 def plt4pan():
     fs=11
@@ -97,8 +134,10 @@ def plt4pan():
     ax2.set_title('Moored array measurements',fontsize=fs+2)
     ax1.set_ylabel('August, 2014 \n \n depth (m)',fontsize=fs)
     ax3.set_ylabel('July, 2016 \n \n depth (m)',fontsize=fs)
-    # ax1.set_ylabel('depth (m)')
-    # ax3.set_ylabel('depth (m)')
+    mkbox(ax1,-12,adcp_dist[minind14],150,5)
+    mkbox(ax2,-5,dat.distance[minind[0]],150,5)
+    mkbox(ax3,-5,adcp_dist[minind16],150,5)
+    mkbox(ax4,-5,daily.distance[minind[-1]],150,5)
     ax3.set_xlabel('distance (km)',fontsize=fs)
     ax4.set_xlabel('distance (km)',fontsize=fs)
     fig.subplots_adjust(hspace=0.1,wspace=0.1)
@@ -112,11 +151,13 @@ def plt4pan():
 
 plt4pan()
 
+
 #################################################################################
 # Compare vertically integrated velocity profiles as a function of distance from the coast
 #################################################################################
 
 def compdistvel(afunc,tit,ylab):
+    figure()
     intdpth=300
     plot(adcp_dist,afunc(adcp_14['across track velocity'][adcp_14['depth'][:,0]<intdpth,:],axis=0),label='August 2014')
 
@@ -124,7 +165,7 @@ def compdistvel(afunc,tit,ylab):
     plot(0,0,'k',label='Vessel mounted ADCP')
     plot(0,0,'k--',label='Moored array measurements')
     plot(dat.distance,afunc(dat['across track velocity'][:,dat.depth<intdpth,0],axis=1),'--',color='blue')
-    plotinstpos('v')
+    # plotinstpos('v')
     plot(dat.distance,afunc(dat['across track velocity'][:,dat.depth<intdpth,-1],axis=1),'--',color='orange')
     xlim([-15,110])
     axhline(0,color='k')
@@ -132,6 +173,8 @@ def compdistvel(afunc,tit,ylab):
     ylabel(ylab)
     legend(loc=(1.05,0.2))
     title(tit)
+
+help(plotinstpos)
 
 dat.salinity.min()
 

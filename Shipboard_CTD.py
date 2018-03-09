@@ -20,7 +20,7 @@ plot(pennydist,pennybath);
 #dtype=[('lat', 'O'), ('lon', 'O'), ('stn', 'O'), ('maxpress', 'O'), ('press', 'O'), ('temp', 'O'), ('potemp', 'O'), ('cond', 'O'), ('sal', 'O'), ('oxy', 'O'), ('trans', 'O'), ('sig0', 'O'), ('dist', 'O')])
 
 alldat=sort(glob.glob(datadir+'Shipboard/CTD_fromPenny/*/*'))
-alldat
+
 
 dicvec=['2005','2006','2008','2014','2015','2016']
 lon={}
@@ -39,6 +39,8 @@ for ii,aa in enumerate(alldat[:3]):
     prs[dicvec[ii]]=prstmp
     sal[dicvec[ii]]=dat[8][:len(prstmp),:]
     tmp[dicvec[ii]]=dat[5][:len(prstmp),:]
+dat
+
 
 colvec=['r','b','orange','grey','c','purple']
 for ii,key in enumerate(sal):
@@ -61,6 +63,8 @@ jrnum=3
 dat=io.loadmat(alldat[jrnum])['ctd'][0][0]
 dat
 
+
+
 lat[dicvec[jrnum]]=dat[0].flatten()
 lon[dicvec[jrnum]]=dat[1].flatten()
 prstmp=sort(unique(dat[9]))
@@ -82,8 +86,9 @@ tmp['2014']=tmp['2014'][:,lonind14]
 ################################## 2014 KN221 section ########################################
 ########################################################################################
 
-ctd_kn221=sort(glob.glob(datadir+'Shipboard/kn221_2014/cnv_files/kn221-03*.cnv'))[:28]
+dates={}
 
+ctd_kn221=sort(glob.glob(datadir+'Shipboard/kn221_2014/cnv_files/kn221-03*.cnv'))[:28]
 
 prs['kn221']=arange(2,3172,2) # determined in retrospect after inspecting
 lat['kn221']=zeros(len(ctd_kn221))
@@ -94,11 +99,11 @@ for ii,dd in enumerate(ctd_kn221):
     profile = cnv.fCNV(dd)
     lat['kn221'][ii]=profile.attributes['LATITUDE']
     lon['kn221'][ii]=profile.attributes['LONGITUDE']
+    print(profile.attributes['LONGITUDE']profile.attributes['datetime'])
     salfnc=interpolate.interp1d(profile['PRES'],profile['PSAL'],kind='linear',fill_value='NaN',bounds_error=False)
     tmpfnc=interpolate.interp1d(profile['PRES'],profile['TEMP'],kind='linear',fill_value='NaN',bounds_error=False)
     sal['kn221'][:,ii]=salfnc(prs['kn221'])
     tmp['kn221'][:,ii]=tmpfnc(prs['kn221'])
-
 
 ########################################################################################
 ################################## 2015 section ########################################
@@ -111,8 +116,15 @@ penum=4
 dat=io.loadmat(datadir+'Shipboard/CTD_fromPenny/PE400 CTD data/pe400_Ar7E_CTD_section.mat')
 
 datelist_2015=[datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in dat['dd'][0]]
+
+datelist_2015
+
 lat[dicvec[penum]]=dat['LAT'].flatten()
 lon[dicvec[penum]]=dat['LON'].flatten()
+
+plot(lon['2015'], datelist_2015,'o')
+
+
 prs[dicvec[penum]]=dat['P'].flatten()
 sal[dicvec[penum]]=dat['S']
 tmp[dicvec[penum]]=dat['T']
@@ -173,6 +185,7 @@ for ii,cc in enumerate(ctdlist_16):
         if 'Latitude:' in line:
             lattmp=float(line[line.find('Latitude:')+9:line.find('Longitude:')])
             lontmp=float(line[line.find('Longitude:')+10:line.find('Date:')])
+            print(lontmp,line[line.find('Date:'):])
     lat[dicvec[arnum]]=hstack((lat[dicvec[arnum]],lattmp))
     lon[dicvec[arnum]]=hstack((lon[dicvec[arnum]],lontmp))
 
@@ -181,7 +194,7 @@ for ii,cc in enumerate(ctdlist_16):
     sal[dicvec[arnum]][:,ii]=salfunc(prs['2016'])
     tmpfunc=interpolate.interp1d(datpd.iloc[:,0],datpd.iloc[:,1],kind='linear',fill_value='NaN',bounds_error=False)
     tmp[dicvec[arnum]][:,ii]=tmpfunc(prs['2016'])
-
+line
 
 ########################################################################################
 ################################## Grid all ########################################
@@ -389,6 +402,7 @@ pickle.dump(grdat,open('../pickles/Shipboard/CTD_xarray.pickle','wb'))
 ######################### 2014 KN221 sub-sections #######################################
 ########################################################################################
 
+
 def colstopanda(keylab):
     field=pd.DataFrame(data=ctd_2014[keylab],columns=['distance','depth',keylab])
     field=field.pivot(columns='distance',index='depth')
@@ -409,9 +423,10 @@ for snum in range(1,4):
     bathbath_14[snum]=ctd_2014['k'+str(snum)+'_bath'][:,1]
 
 
+ctd_2014
 
 def onecont(apanda,tit,vrange,coloor,hlevs,bathdist,bathbath,ylim1,ylim2,xlim1,xlim2,savename):
-    figure()
+    # figure()
     ax1=contourf(apanda.columns.levels[1],apanda.index,apanda.values,vrange,cmap=coloor)
     colorbar()
     contour(apanda.columns.levels[1].values,apanda.index,apanda.values,levels=hlevs,colors='k')
@@ -419,8 +434,8 @@ def onecont(apanda,tit,vrange,coloor,hlevs,bathdist,bathbath,ylim1,ylim2,xlim1,x
     gca().invert_yaxis()
     ylim([ylim2,ylim1])
     xlim([xlim1,xlim2])
-    xlabel('distance (km)')
-    ylabel('pressure (db)')
+    xlabel('distance [km]')
+    ylabel('pressure [db]')
     title(tit,fontsize=18)
     savefig('../figures/CTD/'+savename+'.png')
 
@@ -445,11 +460,143 @@ onecont(pden_14[3],'Density on k3 section of k221, 2014',linspace(23,28,21),cm.R
 onecont(pden_14[2],'Density on k2 section of k221, 2014',linspace(23,28,21),cm.RdPu,[25,26,27],bathdist_14[2],bathbath_14[2],0,2500,-2,160,'Pden_2014_2_zoomout')
 onecont(pden_14[3],'Density on k3 section of k221, 2014',linspace(23,28,21),cm.RdPu,[25,26,27],bathdist_14[3],bathbath_14[3],0,2500,-2,160,'Pden_2014_3_zoomout')
 
+linspace(-2,10,49)
 
+figure(figsize=(14,3))
+subplot(131)
+onecont(tmp_14[2],'Temperature on k2 section of k221, 2014',linspace(-2,10,49),cm.RdYlBu_r,range(-1,9,2),bathdist_14[2],bathbath_14[2],0,400,-2,60,'Tmp_2014_2')
+title('Potential Temperature [$^\circ$C]')
+subplot(132)
+onecont(sal_14[2],'Salinity on k2 section of k221, 2014',linspace(28,35.5,51),cm.YlGnBu_r,[30,32,34.0,34.4,34.8],bathdist_14[2],bathbath_14[2],0,400,-2,60,'Sal_2014_2')
+title('Salinity')
+ylabel('')
+subplot(133)
+onecont(pden_14[2],'Density on k2 section of k221, 2014',linspace(23,28,51),cm.RdPu,[25,26,27,27.5],bathdist_14[2],bathbath_14[2],0,400,-2,60,'Pden_2014_2')
+ylabel('')
+title('Potential Density [kg/m$^3$]')
+savefig('../figures/CTD/K2sections_triptich.pdf',bbox_inches='tight')
+
+adcp_14=io.loadmat(datadir+'Shipboard/kn221_2014/kn221_2014_vm_adcp_ilebras.mat')
+
+
+def acrosstrackname(adic):
+    adic['across track velocity']=adic['v_dt']*sin(theta)+adic['u_dt']*cos(theta)
+
+    return adic
+
+adcp_14=acrosstrackname(adcp_14)
+
+def contadcp(distvec,adic,tit):
+    contourf(distvec,adic['depth'][:,0],adic['across track velocity'],arange(-0.8,0.8,0.05),cmap=cm.RdBu_r);
+    colorbar()
+    contour(distvec,adic['depth'][:,0],adic['across track velocity'],[-0.4,-0.2],colors='k');
+    fill_between(bathdist,bathbath,1800*ones(len(bathbath)),color='k',zorder=22)
+    title('Velocity along bathymetry [m/s]')
+    ylim([400,0])
+    xlim([-10,60])
+    xlabel('distance [km]')
+
+adcp_dist=array(pd.DataFrame.from_csv(datadir+'Shipboard/adcp_distances.dat').index)
+
+with open(datadir+'Shipboard/adcp_distances.dat', 'r') as f:
+    reader = csv.reader(f)
+    adcp_dist = list(reader)
+
+adcp_dist=[float(dd[0]) for dd in adcp_dist]
+
+figure(figsize=(10,8))
+subplot(221)
+onecont(tmp_14[2],'Temperature on k2 section of k221, 2014',linspace(-2,10,49),cm.RdYlBu_r,range(-1,9,2),bathdist_14[2],bathbath_14[2],0,400,-2,60,'Tmp_2014_2')
+title('Potential Temperature [$^\circ$C]')
+xlabel('')
+subplot(222)
+onecont(sal_14[2],'Salinity on k2 section of k221, 2014',linspace(28,35.5,51),cm.YlGnBu_r,[30,32,34.0,34.4,34.8],bathdist_14[2],bathbath_14[2],0,400,-2,60,'Sal_2014_2')
+title('Salinity')
+ylabel('')
+xlabel('')
+subplot(223)
+onecont(pden_14[2],'Density on k2 section of k221, 2014',linspace(23,28,51),cm.RdPu,[25,26,27,27.5],bathdist_14[2],bathbath_14[2],0,400,-2,60,'Pden_2014_2')
+title('Potential Density [kg/m$^3$]')
+subplot(224)
+contadcp(adcp_dist,adcp_14,'2014')
+savefig('../figures/CTD/K2sections_4plusvel.pdf',bbox_inches='tight')
+
+
+def vert_turner(salarray,prsvec,tmparray,pdenarray):
+
+    # get vertical turner angles for k2 section...
+    SA=salarray.copy()
+    for ii in range(shape(salarray)[1]):
+        SA[:,ii]=gsw.SA_from_SP(salarray[:,ii],prsvec,CFlon[3],CFlat[3]).T
+
+    CT=gsw.CT_from_pt(SA,tmparray)
+
+    prsint=prsvec[:-1]+diff(prsvec)
+
+    SAint=SA[:-1,:]+diff(SA,axis=0)/2
+    CTint=CT[:-1,:]+diff(CT,axis=0)/2
+    alphaint=CTint.copy()
+    betaint=SAint.copy()
+    for ii in range(shape(salarray)[1]):
+        alphaint[:,ii]=gsw.alpha(SAint[:,ii].T,CTint[:,ii].T,prsint).T
+        betaint[:,ii]=gsw.beta(SAint[:,ii].T,CTint[:,ii].T,prsint).T
+
+    alphaT=-alphaint*diff(tmparray,axis=0)
+    betaS=betaint*diff(salarray,axis=0)
+
+    R=alphaT/betaS
+
+    dendiff=diff(pdenarray,axis=0)
+
+    turner=arctan2((alphaT-betaS)*dendiff/abs(dendiff),(alphaT+betaS)*dendiff/abs(dendiff))*180/pi
+
+    turner_noden=arctan2((alphaT-betaS),(alphaT+betaS))*180/pi
+
+    return alphaint,betaint,alphaT,betaS,dendiff,turner,turner_noden
+
+alphaint,betaint,alphaT,betaS,dendiff,turner,turner_noden=vert_turner(sal_14[2].values,sal_14[2].index,tmp_14[2],pden_14[2])
+pint=sal_14[2].index[:-1]+diff(sal_14[2].index)/2
+
+plot(alphaT,pint,'r.');
+ylim([400,0])
+
+plot(betaS,pint,'b.');
+ylim([400,0])
+
+plot(alphaint,'r');
+plot(betaint,'b');
+
+pint
+shape(turner)
+
+dd=2
+[plot(turner[::dd,ii],pint[::dd],'.') for ii in range(0,21,4)];
+[plot(turner[::dd,ii],pint[::dd],'-',alpha=0.7) for ii in range(0,21,4)];
+ylim([400,0])
+axvline(0,color='k')
+text(10,-15,'Temperature dominated',color='red')
+text(-85,-15,'Salinity dominated',color='blue')
+xticks(arange(-90,100,45))
+xlim([-100,100])
+xlabel('Turner Angle [$^\circ$]')
+ylabel('pressure [db]')
+savefig('../figures/shipboard_turb/vert_turner_2014.pdf',bbox_inches='tight')
+
+
+plot(turner_noden,,'.');
+
+shape(sal_14[2])
 
 ########################################################################################
 ##################### Look at CTD profile detail for turbulence #######################
 ########################################################################################
+
+pden={}
+for occ in ['2005','2008','2014','2016']:
+    pden[occ]=sal[occ].copy()
+    for ii in range(shape(sal[occ])[1]):
+        SA=gsw.SA_from_SP(sal[occ][:,ii],prs[occ],[lon0]*len(prs[occ]),[lat0]*len(prs[occ]))
+        pden[occ][:,ii]=gsw.sigma0(SA,gsw.CT_from_t(SA,tmp[occ][:,ii],prs[occ]))
 
 shape(sal['2005'])
 shape(dist['2005'])
@@ -469,7 +616,64 @@ for occ in ['2005','2008','2014','2016']:
     suptitle(occ)
     savefig('../figures/shipboard_turb/TS_profs_'+occ+'.png',bbox_inches='tight')
 
-# now get potential density and vertical and horizontal turner angles -- read up on them. 
+for occ in ['2005','2008','2014','2016']:
+    figure(figsize=(14,3))
+    subplot(131)
+    plot(sal[occ][:,dist[occ]<100],prs[occ]);
+    ylim([200,0])
+    ylabel('pressure [db]')
+    xlabel('salinity')
+    subplot(132)
+    plot(tmp[occ][:,dist[occ]<100],prs[occ]);
+    ylim([200,0])
+    xlabel('potential temperature [$^\circ$ C]')
+    subplot(133)
+    plot(pden[occ][:,dist[occ]<100],prs[occ]);
+    ylim([200,0])
+    xlabel('potential density [kg/$m^3$]')
+    suptitle(occ)
+    savefig('../figures/shipboard_turb/TSD_profs_'+occ+'.png',bbox_inches='tight')
+
+univec['sal'][-2]
+
+occ='2016'
+figure(figsize=(14,3))
+subplot(131)
+contourf(dist[occ][dist[occ]<100],prs[occ],sal[occ][:,dist[occ]<100],101,cmap=univec['sal'][2]);
+ylim([400,0])
+colorbar()
+contour(dist[occ][dist[occ]<100],prs[occ],sal[occ][:,dist[occ]<100],levels=univec['sal'][-2],colors='k');
+ylabel('pressure [db]')
+xlabel('distance [km]')
+subplot(132)
+contourf(dist[occ][dist[occ]<100],prs[occ],tmp[occ][:,dist[occ]<100],101,cmap=univec['tmp'][2]);
+ylim([400,0])
+colorbar()
+contour(dist[occ][dist[occ]<100],prs[occ],tmp[occ][:,dist[occ]<100],levels=univec['tmp'][-2],colors='k');
+xlabel('distance [km]')
+subplot(133)
+contourf(dist[occ][dist[occ]<100],prs[occ],pden[occ][:,dist[occ]<100],101,cmap=univec['pden'][2]);
+colorbar()
+contour(dist[occ][dist[occ]<100],prs[occ],pden[occ][:,dist[occ]<100],levels=univec['pden'][-2],colors='k');
+ylim([400,0])
+xlabel('distance [km]')
+savefig('../figures/CTD/TSDsections_2016.png',bbox_inches='tight')
+
+
+xxxxxxxxxxxxx
+    # subplot(132)
+    # plot(tmp[occ][:,dist[occ]<100],prs[occ]);
+    # ylim([200,0])
+    # xlabel('potential temperature [$^\circ$ C]')
+    # subplot(133)
+    # plot(pden[occ][:,dist[occ]<100],prs[occ]);
+    # ylim([200,0])
+    # xlabel('potential density [kg/$m^3$]')
+    # suptitle(occ)
+    # savefig('../figures/shipboard_turb/TSD_profs_'+occ+'.png',bbox_inches='tight')
+
+
+
 
 
 

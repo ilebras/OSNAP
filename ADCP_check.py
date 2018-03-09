@@ -1,6 +1,6 @@
 from aux_funcs import *
 
-for mm in range(1,8):
+for mm in range(1,2):
 
     moorname='cf'+str(mm)
 
