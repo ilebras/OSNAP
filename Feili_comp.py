@@ -8,14 +8,8 @@
 from aux_funcs import *
 
 newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.pickle','rb'))
-bathatmoor=zeros(len(newgrid.distance))
-for dd in range(len(newgrid.distance)):
-    bathatmoor[dd]=newgrid.depth[where(isnan(newgrid['salinity'].mean(dim='date').isel(distance=dd))==False)[0][-1]]
 
-newdpth=sort(hstack((bathatmoor[:-1]+diff(bathatmoor)/4,
-        bathatmoor[:-1]+diff(bathatmoor)/2,
-        bathatmoor[:-1]+3*diff(bathatmoor)/4,
-        bathatmoor)))
+[bathatmoor,newdpth]=pickle.load(open('../pickles/moordpths.pickle','rb'))
 
 dat=newgrid.copy()
 for vv in dat:
@@ -141,6 +135,7 @@ def plotcomp(field):
 plotcomp('sal')
 
 plotcomp('tmp')
+
 
 plotcomp('pden')
 

@@ -63,7 +63,7 @@ adcp_16
 # Make four-panel comparison plot between shipboard and mooring
 #################################################################################
 
-dat=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1801.pickle','rb'))
+dat=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.pickle','rb'))
 
 dat.date[0]
 
@@ -116,11 +116,42 @@ trans14_less=nansum(adcp_14['across track velocity'][:,minind14:-3]*depthdiffmat
 trans14=nansum(adcp_14['across track velocity'][:,minind14:]*depthdiffmat_a14[:,minind14:]*middistmat_a14[:,minind14:])/1e3
 trans16=nansum(adcp_16['across track velocity'][:,minind16:]*depthdiffmat_a16[:,minind16:]*middistmat_a16[:,minind16:])/1e3
 
+moorind=zeros(len(distvec))
+for dd in range(len(distvec)):
+    moorind[dd]=argmin(abs(adcp_dist-distvec[dd]))
+
+moorind=[int(dd) for dd in moorind][::-1]
+
+## transport between mooring locations
+trans14_moorloc=nansum(adcp_14['across track velocity'][:,moorind[1]:moorind[0]]*depthdiffmat_a14[:,moorind[1]:moorind[0]]*middistmat_a14[:,moorind[1]:moorind[0]])/1e3
+trans16_moorloc=nansum(adcp_16['across track velocity'][:,moorind[1]:moorind[0]]*depthdiffmat_a16[:,moorind[1]:moorind[0]]*middistmat_a16[:,moorind[1]:moorind[0]])/1e3
+
+## transport from subsampling at mooring locations
+adcp_dist_sub=[adcp_dist[dd] for dd in moorind]
+adcp_dist_sub
+mid_dist_adcp_sub=hstack((diff(adcp_dist_sub)[0]/2,(diff(adcp_dist_sub)[:-1]+diff(adcp_dist_sub)[1:])/2,diff(adcp_dist_sub)[-1]/2))
+middistmat_a14_sub=tile(mid_dist_adcp_sub,[len(adcp_14['depth'][:,0]),1])
+middistmat_a16_sub=tile(mid_dist_adcp_sub[:-3],[len(adcp_16['depth'][:,0]),1])
+
+[adcp_14['across track velocity'][:,mm] for mm in moorind]
+
+trans14_sub=nansum(adcp_14['across track velocity'][:,moorind[-1]]*depthdiffmat_a14[:,moorind[-1]]*middistmat_a14_sub.T[-1,:])/1e3
+
+trans16_sub=nansum(adcp_16['across track velocity'][:,moorind[-1]]*depthdiffmat_a16[:,moorind[-1]]*middistmat_a16_sub.T[-1,:])/1e3
+
+middistmat_a16_sub.T[-1,:]
+
+shape(middistmat_a14_sub)
+
+## read out the values
 trans14
 trans14_less
+trans14_moorloc
+trans14_sub
+
 trans16
-
-
+trans16_moorloc
+trans16_sub
 def plt4pan():
     fs=11
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, sharex=True, sharey=True,figsize=(8,6))
@@ -131,13 +162,13 @@ def plt4pan():
     contadcp_min(ax3,adcp_dist[:-3],adcp_16)
     im=contmoor_min(ax4,-1)
     ax1.set_title('Vessel mounted ADCP',fontsize=fs+2)
-    ax2.set_title('Moored array measurements',fontsize=fs+2)
+    ax2.set_title('Daily snap from moorings',fontsize=fs+2)
     ax1.set_ylabel('August, 2014 \n \n depth (m)',fontsize=fs)
     ax3.set_ylabel('July, 2016 \n \n depth (m)',fontsize=fs)
     mkbox(ax1,-12,adcp_dist[minind14],150,5)
     mkbox(ax2,-5,dat.distance[minind[0]],150,5)
     mkbox(ax3,-5,adcp_dist[minind16],150,5)
-    mkbox(ax4,-5,daily.distance[minind[-1]],150,5)
+    mkbox(ax4,-5,dat.distance[minind[-1]],150,5)
     ax3.set_xlabel('distance (km)',fontsize=fs)
     ax4.set_xlabel('distance (km)',fontsize=fs)
     fig.subplots_adjust(hspace=0.1,wspace=0.1)
@@ -145,8 +176,8 @@ def plt4pan():
     cbar_ax = fig.add_axes([0.85, 0.15, 0.025, 0.7])
     fig.colorbar(im, cax=cbar_ax,label='across-track velocity [m/s]')
 
-    savefig('../figures/shipboard/ADCPmoorcomp_4panel.pdf')
-    savefig('../figures/shipboard/ADCPmoorcomp_4panel.png')
+    savefig('../figures/shipboard/ADCPmoorcomp_4panel_1803bathy.pdf')
+    savefig('../figures/shipboard/ADCPmoorcomp_4panel_1803bathy.png')
 
 
 plt4pan()

@@ -76,14 +76,14 @@ colors = [(44,127,184) ,(237,248,177),(255,237,160),(217,95,14),(240,59,32)]
 # colors = [(44,127,184) ,(237,248,177),(254,196,79),(217,95,14),(240,59,32)] # This example uses the 8-bit RGB
 sal_cmap = make_cmap(colors,position=[0,0.8,0.95,0.99,1],bit=True)
 
-colors = [(37,52,148),(127,205,187),(5,112,176),(110,1,107)]
+colors = [(255,237,160),(127,205,187),(5,112,176),(110,1,107)]
 pden_cmap=make_cmap(colors,position=[0,0.666666666666,0.833333333333,1],bit=True)
 
 univec={}
 # univec['pden']=['potential density',linspace(26,28,41),cm.BuPu,arange(26,28.1,0.3),'[kg/m$^3$]']
 # univec['sal']=['salinity',linspace(32.5,35.5,31),cm.YlGnBu_r,array([ 32. ,  32.4,  32.8,  33.2,  33.6,  34. ,  34.4,  34.8, 34.9, 35, 35.1,35.2]),'']
 # univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
-univec['pden']=['potential density',linspace(26,28,41),[27,27.5,27.68,27.74,27.8],'[kg/m$^3$]']
+univec['pden']=['potential density',linspace(26,28,41),pden_cmap,[27,27.5,27.68,27.74,27.8],'[kg/m$^3$]']
 univec['sal']=['salinity',array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),sal_cmap,array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),'']
 univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
 univec['uacross']=['across track velocity',arange(-0.6,0.005,0.05),cm.Blues_r,arange(-0.6,0.005,0.2),'[m/s]']

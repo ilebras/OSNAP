@@ -9,7 +9,7 @@
 from aux_funcs import *
 
 
-newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.pickle','rb'))
+newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1801.pickle','rb'))
 
 # mask the fields based on bathymetry file (this version does not have extra fields on either side, thats just for plotting)
 
@@ -139,9 +139,8 @@ def psf(field,colo,ylim1,ylim2,tit,nofilt=0,colcol=0,xr=daily):
 
 def OSMtrans(savename,ylab):
     ylabel(ylab)
-    savefig('../figures/OSM_post/'+savename+'.pdf',bbox_inches='tight')
+    savefig('../../confschools/1802_oceansciences/presentation/figures/'+savename+'.pdf',bbox_inches='tight')
 
-cc['trans'][-30:].mean()
 
 figure(figsize=(10,6))
 subplot(211)
@@ -183,7 +182,7 @@ def decompose(cur,srefchoose):
 cc=decompose(cc,srefb)
 egic=decompose(egic,srefb)
 
-egic['trans'].mean()
+
 fig=figure(figsize=(10,6))
 subplot(211)
 psf(cc['trans'],ccol,-1.5,0,'cc_trans')
@@ -240,7 +239,7 @@ gca().set_xticks(dticks)
 text(datetime.datetime(2014,10,15),68,'FALL',color=ccol,fontsize=15)
 legend()
 text(datetime.datetime(2015,1,7),68,'WINTER',color=egcol,fontsize=15)
-savefig('../figures/OSM_post/FreshB_all_comps.pdf',bbox_inches='tight')
+savefig('../../confschools/1802_oceansciences/presentation/figures/FreshB_all_comps.pdf',bbox_inches='tight')
 
 #### TS diagram
 def TSplot():
@@ -257,7 +256,7 @@ def TSplot():
         text(34.1,0.1,'PW',color='k',fontsize=20)
         ylabel('pot. temperature [$^\circ$C]')
         axvline(34.9,color='k')
-        savefig('../figures/OSM_post/TSall.pdf',bbox_inches='tight')
+        savefig('../../confschools/1802_oceansciences/presentation/figures/TSall.pdf',bbox_inches='tight')
 
 TSplot()
 

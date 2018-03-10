@@ -14,15 +14,25 @@ newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.p
 # mask the fields based on bathymetry file (this version does not have extra fields on either side, thats just for plotting)
 
 
-bathf=interpolate.interp1d(bathdist,bathbath)
-bathonmygrid=bathf(newgrid.distance)
+[bathatmoor,newdpth]=pickle.load(open('../pickles/moordpths.pickle','rb'))
 
 daily=newgrid.copy()
-for vv in newgrid:
+for vv in daily:
     if vv[0]!='d':
         print(vv)
-        for dd,adist in enumerate(daily.distance):
-            daily[vv][dd,:,:]=daily[vv][dd,:,:].where(daily[vv][dd,:,:].depth<=bathonmygrid[dd])
+        for dd,adist in enumerate(newgrid.distance):
+            daily[vv][dd,:,:]=daily[vv][dd,:,:].where(daily[vv][dd,:,:].depth<=newdpth[dd])
+
+#
+# bathf=interpolate.interp1d(bathdist,bathbath)
+# bathonmygrid=bathf(newgrid.distance)
+#
+# daily=newgrid.copy()
+# for vv in newgrid:
+#     if vv[0]!='d':
+#         print(vv)
+#         for dd,adist in enumerate(daily.distance):
+#             daily[vv][dd,:,:]=daily[vv][dd,:,:].where(daily[vv][dd,:,:].depth<=bathonmygrid[dd])
 
 # figure()
 # plot(bathdist,bathbath,'-')
@@ -50,6 +60,26 @@ mid_dist=hstack((0,(diff(daily.distance)[:-1]+diff(daily.distance)[1:])/2,0))
 middistmat=transpose((tile(mid_dist,[len(daily.depth)-1,len(daily.date),1])),(2,0,1))
 depthdiffmat=transpose((tile(diff(daily.depth),[len(daily.distance),len(daily.date),1])),(0,2,1))
 
+
+
+# Adding back minind to document the difference
+## surface def
+minind=zeros(len(daily.date))
+for tt,na in enumerate(daily.date):
+    minind[tt]=where(max(daily['across track velocity'][2:15,0,tt])==daily['across track velocity'][2:15,0,tt])[0][0]+2
+
+minind=[int(mm) for mm in minind]
+
+mindxr=daily.date.copy()
+mindxr.values=daily.distance[minind]
+
+
+
+
+ccvel=daily['across track velocity'].copy()
+for tt,mm in enumerate(minind):
+        ccvel[mm:,:,tt]=NaN
+
 srefa=34.8
 srefb=34.9
 srefc=35
@@ -58,8 +88,14 @@ daily['xport']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat/1
 
 onesxr=daily.salinity/daily.salinity
 
+
 cc={}
 cc['trans']=daily.xport[:6,:,:].sum('depth').sum('distance')
+cc['trans sal def']=(daily['across track velocity'].where(daily.salinity<34)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+cc['trans plus sal']=(daily['across track velocity'].where(daily.salinity<34)[:,:-1,:]*depthdiffmat*middistmat/1e3)[:6,:,:].sum('depth').sum('distance')
+cc['trans min vel']=(ccvel[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+cc['trans min vel plus sal']=(ccvel.where(daily.salinity<34)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
+
 cc['fresha']=(daily['xport'][:6,:-1,:]*1e3*(daily.salinity[:6,:-1,:]-srefa)/srefa).sum('depth').sum('distance')
 cc['freshb']=(daily['xport'][:6,:-1,:]*1e3*(daily.salinity[:6,:-1,:]-srefb)/srefb).sum('depth').sum('distance')
 cc['freshc']=(daily['xport'][:6,:-1,:]*1e3*(daily.salinity[:6,:-1,:]-srefc)/srefc).sum('depth').sum('distance')
@@ -124,24 +160,74 @@ B, A = sig.butter(N, Wn, output='ba')
 
 def pwf(field,colo,nofilt=0,labit='',xr=daily):
     if nofilt==0:
-        field.plot(alpha=0.5,color=colo)
+        field.plot(alpha=0.5,color=colo,label='')
     plot(xr.date,sig.filtfilt(B,A, field),linewidth=2,color=colo,label=labit)
 
 
-def psf(field,colo,ylim1,ylim2,tit,nofilt=0,colcol=0,xr=daily):
+def psf(field,colo,ylim1,ylim2,tit,nofilt=0,colcol=0,xr=daily,labit=''):
     if colcol==1:
         colorstripes()
-    pwf(field,colo,nofilt,xr=xr)
+    pwf(field,colo,nofilt,xr=xr,labit=labit)
     ylim([ylim1,ylim2])
     xlabel('')
-    if nofilt==0:
-        savefig('../figures/xport/'+tit+'_nocol.png')
+    # if nofilt==0:
+    #     savefig('../figures/xport/'+tit+'_nocol.png')
+
+
 
 def OSMtrans(savename,ylab):
     ylabel(ylab)
     savefig('../figures/OSM_post/'+savename+'.pdf',bbox_inches='tight')
 
-cc['trans'][-30:].mean()
+1/0.02
+
+figure(figsize=(10,3))
+psf(cc['trans'],'b',-1.5,0,'cc_trans',labit='fixed pos')
+psf(cc['trans plus sal'],'k',-1.5,0,'cc_trans',labit='plus sal')
+legend()
+gca().set_yticks(arange(-1.5,0.3,0.5))
+ylabel('Transport [Sv]')
+savefig('../figures/xport/cc_trans_fixedpos_salcomp.pdf',bbox_inches='tight')
+
+figure(figsize=(10,3))
+psf(cc['trans min vel'],'g',-1.5,0,'cc_trans',labit='min vel')
+psf(cc['trans min vel plus sal'],'k',-1.5,0,'cc_trans',labit='plus sal')
+legend()
+gca().set_yticks(arange(-1.5,0.3,0.5))
+ylabel('Transport [Sv]')
+savefig('../figures/xport/cc_trans_minvel_salcomp.pdf',bbox_inches='tight')
+
+
+figure(figsize=(10,9))
+subplot(311)
+psf(cc['trans'],'b',-1.5,0,'cc_trans',labit='fixed pos')
+psf(cc['trans min vel'],'g',-1.5,0,'cc_trans',labit='min vel')
+psf(cc['trans sal def'],'orange',-1.5,0,'cc_trans',labit='sal def')
+legend()
+gca().set_yticks(arange(-1.5,0.3,0.5))
+gca().set_xticklabels('')
+ylabel('Transport [Sv]')
+subplot(312)
+psf(cc['trans min vel'],'g',-1.5,0,'cc_trans',labit='min vel')
+psf(cc['trans min vel plus sal'],'k',-1.5,0,'cc_trans',labit='plus sal')
+legend()
+gca().set_yticks(arange(-1.5,0.3,0.5))
+ylabel('Transport [Sv]')
+gca().set_xticklabels('')
+subplot(313)
+psf(cc['trans'],'b',-1.5,0,'cc_trans',labit='fixed pos')
+psf(cc['trans plus sal'],'k',-1.5,0,'cc_trans',labit='plus sal')
+legend()
+gca().set_yticks(arange(-1.5,0.3,0.5))
+ylabel('Transport [Sv]')
+savefig('../figures/xport/cc_trans_allcomp.pdf',bbox_inches='tight')
+
+
+figure(figsize=(10,3))
+psf(mindxr,'purple',0,40,'position of surface velocity minimum')
+ylabel('')
+title('position of surface velocity minimum between currents [km]')
+savefig('../figures/xport/minpos_smooth.pdf',bbox_inches='tight')
 
 figure(figsize=(10,6))
 subplot(211)
