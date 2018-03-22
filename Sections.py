@@ -9,15 +9,15 @@
 from aux_funcs import *
 
 
-dat=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1801.pickle','rb'))
+dat=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.pickle','rb'))
 
-bathf=interpolate.interp1d(bathdist,bathbath)
-bathonmygrid=bathf(dat.distance)
-justsal=dat['salinity'].copy()
-justtmp=dat['temperature'].copy()
-for dd,adist in enumerate(dat.distance):
-            justsal[dd,:,:]=justsal[dd,:,:].where(justsal[dd,:,:].depth<=bathonmygrid[dd])
-            justtmp[dd,:,:]=justtmp[dd,:,:].where(justtmp[dd,:,:].depth<=bathonmygrid[dd])
+# bathf=interpolate.interp1d(bathdist,bathbath)
+# bathonmygrid=bathf(dat.distance)
+# justsal=dat['salinity'].copy()
+# justtmp=dat['temperature'].copy()
+# for dd,adist in enumerate(dat.distance):
+#             justsal[dd,:,:]=justsal[dd,:,:].where(justsal[dd,:,:].depth<=bathonmygrid[dd])
+#             justtmp[dd,:,:]=justtmp[dd,:,:].where(justtmp[dd,:,:].depth<=bathonmygrid[dd])
 
 #################################################################################
 # Make mean and var sections of all fields
@@ -46,11 +46,11 @@ def onecont(field,tit,vrange,coloor,hlevs,axx=0,nomoorlines=1,addcont=0):
     return ax1
 
 
-def partmean(date1,date2,textit,axx=0,cbarito=1,cwidth=0.025):
+def partmean(date1,date2,textit,axx=0,cbarito=1,cwidth=0.025,nomoorlines=1):
     field='uacross'
     if axx==0:
         axx=subplot(111)
-    axvel=onecont(dat[univec[field][0]].sel(date=slice(date1,date2)).mean(dim='date').T,'',univec[field][1],univec[field][2],univec[field][3],axx)
+    axvel=onecont(dat[univec[field][0]].sel(date=slice(date1,date2)).mean(dim='date').T,'',univec[field][1],univec[field][2],univec[field][3],axx,nomoorlines=nomoorlines)
 
     axsal=contour(dat.distance,dat.depth,dat['salinity'].sel(date=slice(date1,date2)).mean(dim='date').T,levels=[33.5,34,34.4,34.95],cmap=cm.YlOrRd,linewidths=2)
     manual_locations = [(10,100), (30, 100), (80,500)]
@@ -71,33 +71,57 @@ def plotbox(ax,x1,x2,y1,y2,colo):
 def plotkinkybox(ax,x1,x2,x3,y1,y2,y3,colo):
     ax.plot([x1,x2,x3,x3,x2,x2,x1,x1],[y1,y1,y1,y3,y3,y2,y2,y1],color=colo,linewidth=4,zorder=300)
 
-fig=figure(figsize=(8,6))
-axx=partmean('2014-1-01','2016-12-01','Mean 2014-2016')
-axx.text(-20,-50,'Coastal current',fontsize=20)
-axx.text(30,-50,'Slope current',fontsize=20)
-axx.text(40,150,'EGC',fontsize=20)
-axx.text(60,400,'IC',fontsize=20)
-axx.text(85,1900,'DWBC',fontsize=20)
-savefig('../../confschools/1802_oceansciences/presentation/figures/velpropmean.pdf',bbox_inches='tight')
-# plotbox(axx,-4.5,15,20,200,'r')
-# savefig('../../confschools/1802_oceansciences/presentation/figures/velpropmean_wcc.pdf',bbox_inches='tight')
-plotkinkybox(axx,15,35.5,99.5,20,200,1750,'red')
-savefig('../../confschools/1802_oceansciences/presentation/figures/velpropmean_wegic.pdf',bbox_inches='tight')
+
+fig=figure(figsize=(16,12))
+ax1=subplot(221)
+partmean('2014-12-01','2015-1-01','Dec 2014 \nCC offshore?',ax1,nomoorlines=0)
+ax2=subplot(222)
+axx=partmean('2015-08-01','2015-10-01','Aug/Sep 2015 \nCC offshore?',ax2,nomoorlines=0)
+ax3=subplot(223)
+partmean('2015-03-01','2015-06-01','Mar-May 2015 \nCC inshore?',ax3,nomoorlines=0)
+ax4=subplot(224)
+axx=partmean('2016-04-01','2016-05-01','Apr 2016 \nCC inshore?',ax4,nomoorlines=0)
+savefig('../figures/xport/CurrentMotionTest.pdf',bbox_inches='tight')
+
+fig=figure(figsize=(16,12))
+ax1=subplot(221)
+partmean('2015-05-01','2015-06-01','May 2015 \nCC offshore?',ax1,nomoorlines=0)
+ax2=subplot(222)
+axx=partmean('2016-04-01','2016-05-01','Apr 2016 \nCC offshore?',ax2,nomoorlines=0)
+ax3=subplot(223)
+partmean('2014-09-01','2014-10-01','Sep 2014 \nCC inshore?',ax3,nomoorlines=0)
+ax4=subplot(224)
+axx=partmean('2015-10-01','2015-11-01','Oct 2015 \nCC inshore?',ax4,nomoorlines=0)
+savefig('../figures/xport/CurrentMotionTest2.pdf',bbox_inches='tight')
 
 
-
-fig=figure(figsize=(16,6))
-ax1=subplot(121)
-partmean('2014-10-01','2015-1-1','FALL',ax1,0)#,'Coastal current is fastest\n\nTS suggests local origin\n\nStill high salinity off-shore')
-ax1.text(35,150,'EGC',fontsize=20)
-ax1.text(60,400,'IC',fontsize=20)
-ax2=subplot(122)
-partmean('2015-1-1','2015-4-1','WINTER',ax2,1,0.015)#,'Shelf freshens\n\nLow salinity off-shore\n\nTS shows mixed PW')
-ax2.text(45,200,'EGC',fontsize=20)
-ax2.text(60,500,'IC',fontsize=20)
-ax2.set_yticklabels('')
-ax2.set_ylabel('')
-savefig('../../confschools/1802_oceansciences/presentation/figures/fallvswintersections.pdf',bbox_inches='tight')
+# fig=figure(figsize=(8,6))
+# axx=partmean('2014-1-01','2016-12-01','Mean 2014-2016')
+# axx.text(-20,-50,'Coastal current',fontsize=20)
+# axx.text(30,-50,'Slope current',fontsize=20)
+# axx.text(40,150,'EGC',fontsize=20)
+# axx.text(60,400,'IC',fontsize=20)
+# axx.text(85,1900,'DWBC',fontsize=20)
+# savefig('../../confschools/1802_oceansciences/presentation/figures/velpropmean.pdf',bbox_inches='tight')
+# # plotbox(axx,-4.5,15,20,200,'r')
+# # savefig('../../confschools/1802_oceansciences/presentation/figures/velpropmean_wcc.pdf',bbox_inches='tight')
+# plotkinkybox(axx,15,35.5,99.5,20,200,1750,'red')
+# savefig('../../confschools/1802_oceansciences/presentation/figures/velpropmean_wegic.pdf',bbox_inches='tight')
+#
+#
+#
+# fig=figure(figsize=(16,6))
+# ax1=subplot(121)
+# partmean('2014-10-01','2015-1-1','FALL',ax1,0)#,'Coastal current is fastest\n\nTS suggests local origin\n\nStill high salinity off-shore')
+# ax1.text(35,150,'EGC',fontsize=20)
+# ax1.text(60,400,'IC',fontsize=20)
+# ax2=subplot(122)
+# partmean('2015-1-1','2015-4-1','WINTER',ax2,1,0.015)#,'Shelf freshens\n\nLow salinity off-shore\n\nTS shows mixed PW')
+# ax2.text(45,200,'EGC',fontsize=20)
+# ax2.text(60,500,'IC',fontsize=20)
+# ax2.set_yticklabels('')
+# ax2.set_ylabel('')
+# savefig('../../confschools/1802_oceansciences/presentation/figures/fallvswintersections.pdf',bbox_inches='tight')
 
 
 # partmean('2015-6-1','2015-9-1','')

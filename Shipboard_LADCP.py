@@ -95,14 +95,13 @@ lon08,lat08,u08,v08,date08=load05_06_08(mat08,'08')
 plot(v08);
 
 lon05,lat05,u05,v05,date05=load05_06_08(mat05,'05')
-plot(v05);
+
 lon06,lat06,u06,v06,date06=load05_06_08(mat06,'06')
 
 plot(v06);
 
-
+figure()
 plot(lon05,lat05,'o',label='2005')
-
 plot(lon06,lat06,'o',label='2006')
 plot(lon08,lat08,'o',label='2008')
 legend()
@@ -175,7 +174,6 @@ vkn=zeros((prslen,knlen))
 for ii,dd in enumerate(matkn221):
 
     dat=io.loadmat(dd)['dr'][0][0]
-
 
     latkn[ii]=float(dat[2])
     lonkn[ii]=float(dat[3])
@@ -370,10 +368,10 @@ savefig('../figures/LADCP/measpos_all.png',bbox_inches='tight')
 ################################## Grid all ####################################################
 ################################################################################################
 
-# Find distance from north-westernmost point
+# Find distance from CF1!
 ################################################################################################
-lon0=min(lon14)
-lat0=max(lat14)
+lon0=CFlon[0]
+lat0=CFlat[0]
 
 
 def getdist(lonex,latex):
@@ -391,9 +389,11 @@ dist11=getdist(lon11,lat11)
 dist15=getdist(lon15,lat15)
 dist16=getdist(lon16,lat16)
 
+dist16
+
 distkn=getdist(lonkn,latkn)
 
-# Angle for 2005,2006,2008
+# Angle for 2005,2006
 xdist2=sw.dist([lat05[5],lat05[5]],[lon05[0],lon05[10]])[0][0]
 ydist2=sw.dist([lat05[0],lat05[10]],[lon05[5],lon05[5]])[0][0]
 xdist2
@@ -431,11 +431,9 @@ uackn=getacrosstrack(ukn,vkn,theta)
 uac15=getacrosstrack(u15,v15,theta)
 uac16=getacrosstrack(u16,v16,theta)
 
+################################################################################################
 ### Smooth/interpolate each dataset onto same grid --> make an xarray!
 ################################################################################################
-
-prsvec[1::2]
-s
 
 distgrid=range(0,int(max(dist14))+10,10)
 distlen=len(distgrid)
@@ -501,7 +499,6 @@ savefig('../figures/LADCP/firstsix_extdpth_uacross.pdf',bbox_inches='tight')
 
 d1=0
 d2=10
-
 g=grdat['across track velocity [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.6,vmax=0.6,cmap=cm.RdBu_r,figsize=(15,12))
 ylim([400,0]);
 for ii, ax in enumerate(g.axes.flat):

@@ -123,7 +123,7 @@ def LevelColormap(levels, cmap=None):
 
 
 
-predir='/home/isabela/Documents/bathymetry/etopo1/'
+predir='/home/isabela/Documents/projects/bathymetry/etopo1/'
 
 def findSubsetIndices(min_lat,max_lat,min_lon,max_lon,lats,lons):
 
@@ -178,6 +178,11 @@ def makeMap(zoomlev):
         lat_end  =61.5
         lon_start=-45
         lon_end  =-39
+    elif zoomlev=='fullsouth':
+        lat_start=58
+        lat_end  =62
+        lon_start=-50
+        lon_end  =-40
     else:
         lat_start=53
         lat_end  =66
@@ -223,7 +228,7 @@ def makeMap(zoomlev):
 
 
 
-    if zoomlev=='CF':
+    if (zoomlev=='CF') | (zoomlev=='fullsouth'):
         CS0 = map.contour(x,y,bathySmoothed,levels,
                            colors='grey')
         clabel(CS0,fmt='%1.0f')

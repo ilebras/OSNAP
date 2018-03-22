@@ -43,7 +43,7 @@ dmaxlist=[]
 
 for moor in range(1,9):
     sal,tmp,pden=pickle.load(open('../pickles/TSinterp/CF'+str(moor)+
-                                  '_saltmpinterp_SAtheta_notid.pickle','rb'))
+                                  '_saltmpinterp_1803extrap_notid.pickle','rb'))
 
     dminlist=hstack((dminlist,min(sal.columns)))
     dmaxlist=hstack((dmaxlist,max(sal.columns)))
@@ -107,4 +107,4 @@ daily=xr.Dataset({'temperature': (['distance', 'depth', 'date'],  tmpmat),
                         'depth': sw.dpth(sal.index.values,60),
                         'date': sal.columns[(sal.columns>=dmin)&(sal.columns<=dmax)].values})
 
-pickle.dump(daily,open('../pickles/xarray/CF_xarray_notid_1801.pickle','wb'))
+pickle.dump(daily,open('../pickles/xarray/CF_xarray_notid_1803extrap.pickle','wb'))

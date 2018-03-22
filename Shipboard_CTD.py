@@ -18,8 +18,10 @@ plot(pennylon,pennylat);
 plot(pennydist,pennybath);
 
 #dtype=[('lat', 'O'), ('lon', 'O'), ('stn', 'O'), ('maxpress', 'O'), ('press', 'O'), ('temp', 'O'), ('potemp', 'O'), ('cond', 'O'), ('sal', 'O'), ('oxy', 'O'), ('trans', 'O'), ('sig0', 'O'), ('dist', 'O')])
+datadir
 
 alldat=sort(glob.glob(datadir+'Shipboard/CTD_fromPenny/*/*'))
+alldat
 
 
 dicvec=['2005','2006','2008','2014','2015','2016']
@@ -39,7 +41,6 @@ for ii,aa in enumerate(alldat[:3]):
     prs[dicvec[ii]]=prstmp
     sal[dicvec[ii]]=dat[8][:len(prstmp),:]
     tmp[dicvec[ii]]=dat[5][:len(prstmp),:]
-dat
 
 
 colvec=['r','b','orange','grey','c','purple']
@@ -88,7 +89,7 @@ tmp['2014']=tmp['2014'][:,lonind14]
 
 dates={}
 
-ctd_kn221=sort(glob.glob(datadir+'Shipboard/kn221_2014/cnv_files/kn221-03*.cnv'))[:28]
+ctd_kn221=sort(glob.glob(datadir+'Shipboard/kn221_2014/cnv_files/k3/*.cnv'))
 
 prs['kn221']=arange(2,3172,2) # determined in retrospect after inspecting
 lat['kn221']=zeros(len(ctd_kn221))
@@ -99,7 +100,7 @@ for ii,dd in enumerate(ctd_kn221):
     profile = cnv.fCNV(dd)
     lat['kn221'][ii]=profile.attributes['LATITUDE']
     lon['kn221'][ii]=profile.attributes['LONGITUDE']
-    print(profile.attributes['LONGITUDE']profile.attributes['datetime'])
+    print(profile.attributes['LONGITUDE'],profile.attributes['datetime'])
     salfnc=interpolate.interp1d(profile['PRES'],profile['PSAL'],kind='linear',fill_value='NaN',bounds_error=False)
     tmpfnc=interpolate.interp1d(profile['PRES'],profile['TEMP'],kind='linear',fill_value='NaN',bounds_error=False)
     sal['kn221'][:,ii]=salfnc(prs['kn221'])
@@ -108,44 +109,46 @@ for ii,dd in enumerate(ctd_kn221):
 ########################################################################################
 ################################## 2015 section ########################################
 ########################################################################################
-# #For PE 400
-# #dtype=[('JD0', 'O'), ('T', '1'), ('S', '2'), ('C', 'O'), ('time0', 'O'), ('datetime', 'O'), ('P', '6'), ('file', 'O'), ('lon', '8'), ('lat', '9'), ('dlon', '10'), ('dlat', '11')])}
-penum=4
-
-
-dat=io.loadmat(datadir+'Shipboard/CTD_fromPenny/PE400 CTD data/pe400_Ar7E_CTD_section.mat')
-
-datelist_2015=[datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in dat['dd'][0]]
-
-datelist_2015
-
-lat[dicvec[penum]]=dat['LAT'].flatten()
-lon[dicvec[penum]]=dat['LON'].flatten()
-
-plot(lon['2015'], datelist_2015,'o')
-
-
-prs[dicvec[penum]]=dat['P'].flatten()
-sal[dicvec[penum]]=dat['S']
-tmp[dicvec[penum]]=dat['T']
-shape(sal['2015'])
-shape(prs['2015'])
-shape(lon['2015'])
-
-plot(dat['POTEMP'],'r');
-plot(dat['T'],'b');
-plot(tmp['2015'],'g');
-axhline(2)
-
-
-contourf(lon['2015'],prs['2015'],tmp['2015'])
-colorbar()
-
-# lat[dicvec[penum]]=[NaN]
-# lon[dicvec[penum]]=[NaN]
-# sal[dicvec[penum]]=[NaN]
-# prs[dicvec[penum]]=[NaN]
-# tmp[dicvec[penum]]=[NaN]
+# # #For PE 400
+# # #dtype=[('JD0', 'O'), ('T', '1'), ('S', '2'), ('C', 'O'), ('time0', 'O'), ('datetime', 'O'), ('P', '6'), ('file', 'O'), ('lon', '8'), ('lat', '9'), ('dlon', '10'), ('dlat', '11')])}
+# penum=4
+#
+#
+# # dat=io.loadmat(datadir+'Shipboard/CTD_fromPenny/PE400 CTD data/pe400_Ar7E_CTD_section.mat')
+# dat=io.loadmat(datadir+'Shipboard/CTD_fromPenny/PE400 CTD data/PE400_1Hz.mat')['ctd_cal']
+#
+# # datelist_2015=[datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in dat['dd']]
+# datelist_2015=[datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in dat['time0'][0][0].flatten()]
+#
+# datelist_2015
+#
+# lat[dicvec[penum]]=dat['LAT'].flatten()
+# lon[dicvec[penum]]=dat['LON'].flatten()
+#
+# plot(lon['2015'], datelist_2015,'o')
+#
+#
+# prs[dicvec[penum]]=dat['P'].flatten()
+# sal[dicvec[penum]]=dat['S']
+# tmp[dicvec[penum]]=dat['T']
+# shape(sal['2015'])
+# shape(prs['2015'])
+# shape(lon['2015'])
+#
+# plot(dat['POTEMP'],'r');
+# plot(dat['T'],'b');
+# plot(tmp['2015'],'g');
+# axhline(2)
+#
+#
+# contourf(lon['2015'],prs['2015'],tmp['2015'])
+# colorbar()
+#
+# # lat[dicvec[penum]]=[NaN]
+# # lon[dicvec[penum]]=[NaN]
+# # sal[dicvec[penum]]=[NaN]
+# # prs[dicvec[penum]]=[NaN]
+# # tmp[dicvec[penum]]=[NaN]
 
 ########################################################################################
 ################################## 2016 section ########################################
@@ -194,7 +197,6 @@ for ii,cc in enumerate(ctdlist_16):
     sal[dicvec[arnum]][:,ii]=salfunc(prs['2016'])
     tmpfunc=interpolate.interp1d(datpd.iloc[:,0],datpd.iloc[:,1],kind='linear',fill_value='NaN',bounds_error=False)
     tmp[dicvec[arnum]][:,ii]=tmpfunc(prs['2016'])
-line
 
 ########################################################################################
 ################################## Grid all ########################################
@@ -277,10 +279,12 @@ for key in dist:
     print(shape(sal[key]))
 dicvec
 
-newdic=['2005', '2008', '2014','kn221','2015', '2016']
+# newdic=['2005', '2008', '2014','kn221','2015', '2016']
+newdic=['2005', '2008', '2014','kn221', '2016']
 
-saltot=NaN*ones((smprslen,distlen,6))
-tmptot=NaN*ones((smprslen,distlen,6))
+
+saltot=NaN*ones((smprslen,distlen,5))
+tmptot=NaN*ones((smprslen,distlen,5))
 
 for ii,key in enumerate(newdic):
         print(key)
@@ -289,7 +293,7 @@ for ii,key in enumerate(newdic):
 
 
 pdentot=NaN*ones(shape(saltot))
-for kk in range(6):
+for kk in range(5):
     print(kk)
     for jj in range(distlen):
         salnan=~isnan(saltot[:,jj,kk])
@@ -297,7 +301,9 @@ for kk in range(6):
             SA=gsw.SA_from_SP(saltot[:,jj,kk][salnan],array(smprs)[salnan],[lon0]*sum(salnan),[lat0]*sum(salnan))
             pdentot[salnan,jj,kk]=gsw.sigma0(SA,gsw.CT_from_t(SA,tmptot[:,jj,kk][salnan],array(smprs)[salnan]))
 
-occvec=['2005', '2008', '2014 (JR302)','2014 (KN221)','2015', '2016']
+# occvec=['2005', '2008', '2014 (JR302)','2014 (KN221)','2015', '2016']
+occvec=['2005', '2008', '2014 (JR302)','2014 (KN221)', '2016']
+
 #Get into an xarray
 grdat=xr.Dataset({'salinity': (['pressure [db]','distance [km]', 'occupation'],  saltot),
                     'temperature [$^\circ$ C]': (['pressure [db]','distance [km]', 'occupation'],  tmptot),
@@ -305,6 +311,8 @@ grdat=xr.Dataset({'salinity': (['pressure [db]','distance [km]', 'occupation'], 
                 coords={'distance [km]': distgrid,
                         'pressure [db]': smprs,
                         'occupation': occvec})
+
+grdat
 
 ########################################################################################
 ################################## Plot! ########################################
@@ -397,7 +405,7 @@ xlim([0,300])
 savefig('../figures/CTD_cruises/firstsix_mean_extdpth_pden.png',bbox_inches='tight')
 savefig('../figures/CTD_cruises/firstsix_mean_extdpth_pden.pdf',bbox_inches='tight')
 
-pickle.dump(grdat,open('../pickles/Shipboard/CTD_xarray.pickle','wb'))
+pickle.dump(grdat,open('../pickles/Shipboard/CTD_xarray_1803.pickle','wb'))
 ########################################################################################
 ######################### 2014 KN221 sub-sections #######################################
 ########################################################################################

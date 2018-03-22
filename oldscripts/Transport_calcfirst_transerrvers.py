@@ -74,6 +74,16 @@ mindxr=daily.date.copy()
 mindxr.values=daily.distance[minind]
 
 
+maxind=zeros(len(daily.date))
+for tt,na in enumerate(daily.date):
+    maxind[tt]=where(min(daily['across track velocity'][1:12,0,tt])==daily['across track velocity'][1:12,0,tt])[0][0]+1
+
+maxind=[int(mm) for mm in maxind]
+maxind[maxind==11]=1
+
+
+maxdxr=daily.date.copy()
+maxdxr.values=daily.distance[maxind]
 
 
 ccvel=daily['across track velocity'].copy()
@@ -179,7 +189,6 @@ def OSMtrans(savename,ylab):
     ylabel(ylab)
     savefig('../figures/OSM_post/'+savename+'.pdf',bbox_inches='tight')
 
-1/0.02
 
 figure(figsize=(10,3))
 psf(cc['trans'],'b',-1.5,0,'cc_trans',labit='fixed pos')
@@ -222,12 +231,31 @@ gca().set_yticks(arange(-1.5,0.3,0.5))
 ylabel('Transport [Sv]')
 savefig('../figures/xport/cc_trans_allcomp.pdf',bbox_inches='tight')
 
+figure(figsize=(10,3))
+psf(cc['trans min vel plus sal'],'r',-1.5,0,'cc_trans',labit='min vel plus sal')
+psf(cc['trans'],'b',-1.5,0,'cc_trans',labit='fixed pos')
+psf(cc['trans plus sal'],'k',-1.5,0,'cc_trans',labit='plus sal')
+legend()
+gca().set_yticks(arange(-1.5,0.3,0.5))
+ylabel('Transport [Sv]')
+savefig('../figures/xport/cc_trans_mvelsalpcomp.pdf',bbox_inches='tight')
+
 
 figure(figsize=(10,3))
 psf(mindxr,'purple',0,40,'position of surface velocity minimum')
 ylabel('')
 title('position of surface velocity minimum between currents [km]')
 savefig('../figures/xport/minpos_smooth.pdf',bbox_inches='tight')
+
+
+figure(figsize=(10,3))
+psf(maxdxr,'grey',-5,30,'position of coastal current core (max out to 30km)')
+ylabel('')
+title('position of coastal current core (max out to 30km) [km]')
+savefig('../figures/xport/maxpos_smooth.pdf',bbox_inches='tight')
+
+
+
 
 figure(figsize=(10,6))
 subplot(211)

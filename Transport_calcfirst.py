@@ -13,7 +13,6 @@ newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.p
 
 # mask the fields based on bathymetry file (this version does not have extra fields on either side, thats just for plotting)
 
-
 bathf=interpolate.interp1d(bathdist,bathbath)
 bathonmygrid=bathf(newgrid.distance)
 
@@ -47,8 +46,11 @@ for vv in newgrid:
 #################################################################################
 
 mid_dist=hstack((0,(diff(daily.distance)[:-1]+diff(daily.distance)[1:])/2,0))
+mid_dist[1]=1.5 ## being strict -- only on one side of mooring
+mid_dist[-1]=2.5 ## being strict -- only on one side of mooring
 middistmat=transpose((tile(mid_dist,[len(daily.depth)-1,len(daily.date),1])),(2,0,1))
 depthdiffmat=transpose((tile(diff(daily.depth),[len(daily.distance),len(daily.date),1])),(0,2,1))
+
 
 srefa=34.8
 srefb=34.9
@@ -56,10 +58,18 @@ srefc=35
 
 daily['xport']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat/1e3
 
+##adding 10km width to CF1
+mid_dist_plus=mid_dist.copy()
+mid_dist_plus[0]=10
+middistmat_plus=transpose((tile(mid_dist_plus,[len(daily.depth)-1,len(daily.date),1])),(2,0,1))
+daily['xport plus']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat_plus/1e3
+
 onesxr=daily.salinity/daily.salinity
 
 cc={}
 cc['trans']=daily.xport[:6,:,:].sum('depth').sum('distance')
+cc['trans plus']=daily['xport plus'][:6,:,:].sum('depth').sum('distance')
+
 cc['fresha']=(daily['xport'][:6,:-1,:]*1e3*(daily.salinity[:6,:-1,:]-srefa)/srefa).sum('depth').sum('distance')
 cc['freshb']=(daily['xport'][:6,:-1,:]*1e3*(daily.salinity[:6,:-1,:]-srefb)/srefb).sum('depth').sum('distance')
 cc['freshc']=(daily['xport'][:6,:-1,:]*1e3*(daily.salinity[:6,:-1,:]-srefc)/srefc).sum('depth').sum('distance')
@@ -124,18 +134,23 @@ B, A = sig.butter(N, Wn, output='ba')
 
 def pwf(field,colo,nofilt=0,labit='',xr=daily):
     if nofilt==0:
-        field.plot(alpha=0.5,color=colo)
+        field.plot(alpha=0.5,color=colo,label='')
     plot(xr.date,sig.filtfilt(B,A, field),linewidth=2,color=colo,label=labit)
 
 
-def psf(field,colo,ylim1,ylim2,tit,nofilt=0,colcol=0,xr=daily):
+def psf(field,colo,ylim1,ylim2,tit,nofilt=0,colcol=0,xr=daily,labit=''):
     if colcol==1:
         colorstripes()
-    pwf(field,colo,nofilt,xr=xr)
+    pwf(field,colo,nofilt,xr=xr,labit=labit)
     ylim([ylim1,ylim2])
     xlabel('')
-    if nofilt==0:
-        savefig('../figures/xport/'+tit+'_nocol.png')
+    # if nofilt==0:
+        # savefig('../figures/xport/'+tit+'_nocol.png')
+
+
+cc['trans'].mean()
+
+cc['trans plus'].mean()
 
 def OSMtrans(savename,ylab):
     ylabel(ylab)

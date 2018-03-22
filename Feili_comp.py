@@ -21,7 +21,9 @@ for vv in dat:
 #################################################################################
 # Load Feili's data
 #################################################################################
-feili=io.loadmat(glob.glob(datadir+'Feili/*dataproduct*.mat')[0])
+glob.glob(datadir+'Feili/*product_1803*.mat')
+
+feili=io.loadmat(glob.glob(datadir+'Feili/*product_1803*.mat')[0])
 
 distvec_fl=cumsum(vstack((0,sw.dist(feili['CF_gridded']['lat'][0][0],feili['CF_gridded']['lon'][0][0])[0])))+sw.dist([feili['CF_gridded']['lat'][0][0][0][0],CFlat[0]],[feili['CF_gridded']['lon'][0][0][0][0],CFlon[0]])[0][0]
 
@@ -36,20 +38,28 @@ sw.dist([feili['CF_gridded']['lat'][0][0][0][0],CFlat[0]],[feili['CF_gridded']['
 # plot(distvec,'o');
 # plot(distvec_fl,'o');
 
-
 def dateconv(matlab_datenum): # note, this is for integer version, acuracy is up to days
     python_datetime = datetime.datetime.fromordinal(int(matlab_datenum)) - datetime.timedelta(days=366)
     return python_datetime
 
 fl_date=[dateconv(tt[0]) for tt in feili['CF_gridded']['time'][0][0]]
 
+# dat_fl=xr.Dataset({'across track velocity': (['distance', 'depth', 'date'],  feili['CF_gridded']['velo'][0][0]),
+#                 'salinity': (['distance', 'depth', 'date'],  feili['CF_gridded']['salt'][0][0]),
+#                 'temperature': (['distance', 'depth', 'date'],  feili['CF_gridded']['ptmp'][0][0]),
+#                 'potential density': (['distance', 'depth', 'date'],  feili['CF_gridded']['pden'][0][0]-1e3),},
+#                 coords={'distance': distvec_fl,
+#                         'depth':feili['CF_gridded']['depth'][0][0][0],
+#                         'date': fl_date})
+
 dat_fl=xr.Dataset({'across track velocity': (['distance', 'depth', 'date'],  feili['CF_gridded']['velo'][0][0]),
-                'salinity': (['distance', 'depth', 'date'],  feili['CF_gridded']['salt'][0][0]),
+                'salinity': (['distance', 'depth', 'date'],  feili['CF_gridded']['psal'][0][0]),
                 'temperature': (['distance', 'depth', 'date'],  feili['CF_gridded']['ptmp'][0][0]),
                 'potential density': (['distance', 'depth', 'date'],  feili['CF_gridded']['pden'][0][0]-1e3),},
                 coords={'distance': distvec_fl,
                         'depth':feili['CF_gridded']['depth'][0][0][0],
                         'date': fl_date})
+
 
 
 dat_fl
@@ -152,28 +162,46 @@ depthdiffmat=transpose((tile(diff(daily.depth),[len(daily.distance),len(daily.da
 
 daily['xport']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat/1e3
 
-fl_tottrans=feili['CF_gridded']['T_total'][0][0]
-fl_uLSW=feili['CF_gridded']['T_uLSW'][0][0]
-fl_dLSW=feili['CF_gridded']['T_dLSW'][0][0]
+ftrans=io.loadmat(glob.glob(datadir+'Feili/*Transport_1803*.mat')[0])
+feili.keys()
+
+
+fl_tottrans=ftrans['CF_transport']['total_d30'][0][0]
+fl_uLSW=ftrans['CF_transport']['uLSW_d30'][0][0]
+fl_dLSW=ftrans['CF_transport']['dLSW_d30'][0][0]
+
+
+fl_tottrans_daily=ftrans['CF_transport']['total_d1'][0][0]
+fl_uLSW_daily=ftrans['CF_transport']['uLSW_d1'][0][0]
+fl_dLSW_daily=ftrans['CF_transport']['dLSW_d1'][0][0]
+
+len(fl_tottrans)
+len(fl_tottrans_daily)
+584/30
+def quickfilt(fvers):
+    fout=zeros(len(fl_tottrans))
+    for ii in range(len(fl_tottrans)):
+        fout[ii]=mean(fvers[30*ii:30*ii+30])
+    return fout
+
+fl_tottrans_dmean=quickfilt(fl_tottrans_daily)
+fl_uLSW_dmean=quickfilt(fl_uLSW_daily)
+fl_dLSW_dmean=quickfilt(fl_dLSW_daily)
 
 fl_date
 
-Itrans=daily['xport'].sel(date=slice('2014-8-22','2016-4-21')).sum(dim='distance').sum(dim='depth').resample('30D',dim='date',base=31)
-
-mean(Itrans).values
-
-def transcomp(tit,d1,d2,fvers):
+def transcomp(tit,d1,d2,fvers,fvers2):
     figure(figsize=(12,3))
-    Itrans=daily['xport'].sel(date=slice('2014-8-22','2016-4-21')).where((daily['potential density']<=d2)&(daily['potential density']>d1)).sum(dim='distance').sum(dim='depth').resample('30D',dim='date',base=1)
+    Itrans=daily['xport'].sel(date=slice('2014-8-30','2016-4-20')).where((daily['potential density']<=d2)&(daily['potential density']>d1)).sum(dim='distance').sum(dim='depth').resample('30D',dim='date',base=1)
     Itrans.plot.line(marker='o',label='Isabela; '+str('{:5.2f}'.format(mean(Itrans.values)))+' Sv')
-    plot(fl_date,fvers,'o-',label='Feili; '+str('{:5.2f}'.format(mean(fvers)))+' Sv')
+    plot(fl_date,fvers,'o-',label='Feili (from monthly prof); '+str('{:5.2f}'.format(mean(fvers)))+' Sv')
+    plot(fl_date,fvers2,'o-',label='Feili (from daily prof); '+str('{:5.2f}'.format(mean(fvers2)))+' Sv')
     ylabel('Transport [Sv]')
     legend()
     title(tit)
     savefig('../figures/feili/transcomp_'+tit[:5]+'.pdf',bbox_inches='tight')
 
 
-transcomp('Total transport',0,40,fl_tottrans)
-transcomp('uLSW transport',27.68,27.74,fl_uLSW)
-
-transcomp('dLSW transport',27.74,27.8,fl_dLSW)
+transcomp('Total transport',0,40,fl_tottrans,fl_tottrans_dmean)
+transcomp('uLSW transport',27.68,27.74,fl_uLSW,fl_uLSW_dmean)
+transcomp('dLSW transport',27.74,27.8,fl_dLSW,fl_dLSW_dmean)

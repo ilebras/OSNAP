@@ -30,7 +30,9 @@ rc('xtick',labelsize='Large')
 rc('ytick',labelsize='Large')
 rc('axes', labelsize='Large')
 
-datadir='/home/isabela/Documents/OSNAP/data/'
+datadir='/home/isabela/Documents/projects/OSNAP/data/'
+
+#potentially useful ploting scripts
 
 
 def make_cmap(colors, position=None, bit=False):
@@ -179,6 +181,8 @@ def pivspline_ML(afield,datevec,prsvec,pdall):
             panpiv.iloc[ii]=pd.to_numeric(pani)
     return panpiv.T
 
+
+
 maxinstdpth=io.loadmat('../data/maxinstdpth.mat')
 
 
@@ -215,6 +219,7 @@ CFlon=hstack((CFlon,-41-8.409/60))
 CFlat=hstack((CFlat,59+54.244/60))
 distvec=cumsum(hstack((0,sw.dist(CFlat,CFlon)[0])))
 
+lon0=60
 
 # xdist=sw.dist([CFlat[-2],CFlat[-2]],[CFlon[0],CFlon[-2]])[0][0]
 # ydist=sw.dist([CFlat[0],CFlat[-2]],[CFlon[-2],CFlon[-2]])[0][0]

@@ -1,7 +1,7 @@
 from aux_funcs import *
 
 
-dat=pickle.load(open('../pickles/xarray/CF_xarray_notid_1801.pickle','rb'))
+dat=pickle.load(open('../pickles/xarray/CF_xarray_notid_1803extrap.pickle','rb'))
 
 ################################################################################
 ################################################################################
@@ -86,7 +86,7 @@ dat['salinity'].mean(dim='date').plot()
 plussides['salinity'].mean(dim='date').plot()
 
 ### Save this version of the xarray (for plotting)
-pickle.dump(plussides,open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.pickle','wb'))
+pickle.dump(plussides,open('../pickles/xarray/CF_xarray_gridplot_notid_1803extrap.pickle','wb'))
 
 
 
