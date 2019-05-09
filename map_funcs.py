@@ -1,5 +1,13 @@
 from aux_funcs import *
 
+import os
+import conda
+
+conda_file_dir = conda.__file__
+conda_dir = conda_file_dir.split('lib')[0]
+proj_lib = os.path.join(os.path.join(conda_dir, 'share'), 'proj')
+os.environ["PROJ_LIB"] = proj_lib
+
 #make a map that depicts the relevant measurement sites
 from mpl_toolkits.basemap import Basemap, shiftgrid
 from mpl_toolkits.basemap import cm as bcm
@@ -14,7 +22,6 @@ import os, sys, datetime, string
 #        M = 1 pÃ¥ grid-celler som brukes
 #        M = 0 pÃ¥ grid-celler som maskeres vekk
 # Default er uten maske
-
 import numpy as np
 
 
@@ -121,8 +128,6 @@ def LevelColormap(levels, cmap=None):
     return matplotlib.colors.LinearSegmentedColormap(
         '%s_levels' % cmap.name, cdict, 256)
 
-
-
 predir='/home/isabela/Documents/projects/bathymetry/etopo1/'
 
 def findSubsetIndices(min_lat,max_lat,min_lon,max_lon,lats,lons):
@@ -169,94 +174,91 @@ def findSubsetIndices(min_lat,max_lat,min_lon,max_lon,lats,lons):
     res[0]=minI; res[1]=maxI; res[2]=minJ; res[3]=maxJ;
     return res
 
-
-
-
-def makeMap(zoomlev):
-    if zoomlev=='CF':
-        lat_start=58.5
-        lat_end  =61.5
-        lon_start=-45
-        lon_end  =-39
-    elif zoomlev=='fullsouth':
-        lat_start=58
-        lat_end  =62
-        lon_start=-50
-        lon_end  =-40
-    elif zoomlev=='GR':
-        lat_start=58
-        lat_end  =70
-        lon_start=-55
-        lon_end  =-30
-    else:
-        lat_start=53
-        lat_end  =66
-        lon_start=-60
-        lon_end  =-20
-
-    figure(figsize=(8,8))
-
-    """Get the etopo1 data"""
-    etopo1name=predir+'ETOPO1_Ice_g_gmt4.grd'
-    etopo1 = Dataset(etopo1name,'r')
-
-    lons = etopo1.variables["x"][:]
-    lats = etopo1.variables["y"][:]
-
-    res = findSubsetIndices(lat_start-5,lat_end+5,lon_start-40,lon_end+10,lats,lons)
-
-    lon,lat=np.meshgrid(lons[int(res[0]):int(res[1])],lats[int(res[2]):int(res[3])])
-    bathy = etopo1.variables["z"][int(res[2]):int(res[3]),int(res[0]):int(res[1])]
-    bathySmoothed = laplace_filter(bathy,M=None)
-
-    levels=array([-7000,-6000,-5000,-3000, -2000, -1500, -1000,-500, -250])
-
-    if lon_start< 0 and lon_end < 0:
-        lon_0= - (abs(lon_end)+abs(lon_start))/2.0
-    else:
-        lon_0=(abs(lon_end)+abs(lon_start))/2.0
-
-    # print 'Center longitude ',lon_0
-
-    map = Basemap(llcrnrlat=lat_start,urcrnrlat=lat_end,
-                llcrnrlon=lon_start,urcrnrlon=lon_end,
-                resolution=None,projection='stere',
-                lat_0=(lat_start+lat_end)/2,lon_0=lon_0)
-
-    x, y = map(lon,lat)
-
-    CS2 = map.contourf(x,y,bathySmoothed,arange(0,2.5e3,100),
-                      cmap=cm.Oranges_r)
-
-    CS1 = map.contourf(x,y,bathySmoothed,arange(-4e3,0,100),
-                      cmap=cm.Blues_r)
-
-
-
-    if (zoomlev=='CF') | (zoomlev=='fullsouth'):
-        CS0 = map.contour(x,y,bathySmoothed,levels,
-                           colors='grey')
-        clabel(CS0,fmt='%1.0f')
-
-
-        CS0.axis='tight'
-
-        map.drawmeridians(range(lon_start,lon_end,2),linewidth=0.001,labels=[0,0,0,1])
-        map.drawparallels(arange(59,lat_end,1),linewidth=0.001,labels=[1,0,0,0])
-        continent = map.contour(x,y,bathySmoothed,[0],colors='grey')
-    else:
-        map.drawmeridians(range(lon_start,lon_end,5),linewidth=0.001,labels=[0,0,0,1])
-        map.drawparallels(arange(54,lat_end+1,2),linewidth=0.001,labels=[1,0,0,0])
-
-
-    if zoomlev=='GR':
-        CS0 = map.contour(x,y,bathySmoothed,[-1e3,-500,-200,-100],
-                           colors='black')
-        clabel(CS0,fmt='%1.0f')
-    return map
-
-map=makeMap('GR')
-savefig('../figures/Map/Greenlandbathy.pdf')
+# def makeMap(zoomlev):
+#     if zoomlev=='CF':
+#         lat_start=58.5
+#         lat_end  =61.5
+#         lon_start=-45
+#         lon_end  =-39
+#     elif zoomlev=='fullsouth':
+#         lat_start=58
+#         lat_end  =62
+#         lon_start=-50
+#         lon_end  =-40
+#     elif zoomlev=='GR':
+#         lat_start=58
+#         lat_end  =70
+#         lon_start=-55
+#         lon_end  =-30
+#     else:
+#         lat_start=53
+#         lat_end  =66
+#         lon_start=-60
+#         lon_end  =-20
+#
+#     figure(figsize=(8,8))
+#
+#     """Get the etopo1 data"""
+#     etopo1name=predir+'ETOPO1_Ice_g_gmt4.grd'
+#     etopo1 = Dataset(etopo1name,'r')
+#
+#     lons = etopo1.variables["x"][:]
+#     lats = etopo1.variables["y"][:]
+#
+#     res = findSubsetIndices(lat_start-5,lat_end+5,lon_start-40,lon_end+10,lats,lons)
+#
+#     lon,lat=np.meshgrid(lons[int(res[0]):int(res[1])],lats[int(res[2]):int(res[3])])
+#     bathy = etopo1.variables["z"][int(res[2]):int(res[3]),int(res[0]):int(res[1])]
+#     bathySmoothed = laplace_filter(bathy,M=None)
+#
+#     levels=array([-7000,-6000,-5000,-3000, -2000, -1500, -1000,-500, -250])
+#
+#     if lon_start< 0 and lon_end < 0:
+#         lon_0= - (abs(lon_end)+abs(lon_start))/2.0
+#     else:
+#         lon_0=(abs(lon_end)+abs(lon_start))/2.0
+#
+#     # print 'Center longitude ',lon_0
+#
+#     map = Basemap(llcrnrlat=lat_start,urcrnrlat=lat_end,
+#                 llcrnrlon=lon_start,urcrnrlon=lon_end,
+#                 resolution=None,projection='stere',
+#                 lat_0=(lat_start+lat_end)/2,lon_0=lon_0)
+#
+#     x, y = map(lon,lat)
+#
+#     CS2 = map.contourf(x,y,bathySmoothed,arange(0,2.5e3,100),
+#                       cmap=cm.Oranges_r)
+#
+#     CS1 = map.contourf(x,y,bathySmoothed,arange(-4e3,0,100),
+#                       cmap=cm.Blues_r)
+#
+#
+#
+#     if (zoomlev=='CF') | (zoomlev=='fullsouth'):
+#         CS0 = map.contour(x,y,bathySmoothed,levels,
+#                            colors='grey')
+#         clabel(CS0,fmt='%1.0f')
+#
+#
+#         CS0.axis='tight'
+#
+#         map.drawmeridians(range(lon_start,lon_end,2),linewidth=0.001,labels=[0,0,0,1])
+#         map.drawparallels(arange(59,lat_end,1),linewidth=0.001,labels=[1,0,0,0])
+#         continent = map.contour(x,y,bathySmoothed,[0],colors='grey')
+#     else:
+#         map.drawmeridians(range(lon_start,lon_end,5),linewidth=0.001,labels=[0,0,0,1])
+#         map.drawparallels(arange(54,lat_end+1,2),linewidth=0.001,labels=[1,0,0,0])
+#
+#
+#     if zoomlev=='GR':
+#         CS0 = map.contour(x,y,bathySmoothed,[-1e3,-500,-200,-100],
+#                            colors='black')
+#         clabel(CS0,fmt='%1.0f')
+#     return map
+#
+# map=makeMap('GR')
+# savefig('../figures/Map/Greenlandbathy.pdf')
 
 #
 # map=makeMap('zoomout')

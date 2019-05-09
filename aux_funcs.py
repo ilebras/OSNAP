@@ -4,7 +4,7 @@
 # ## Get some useful functions together to use in several scripts
 
 from pylab import *
-get_ipython().magic('matplotlib inline')
+# get_ipython().magic('matplotlib inline')
 
 from scipy import io,interpolate
 from scipy.interpolate import griddata,interp1d
@@ -18,13 +18,14 @@ import datetime as dt
 import xarray as xr
 import seawater as sw
 import palettable as pal
+import matplotlib.gridspec as gridspec
 
 from scipy import signal
 import csv
 
 from seabird import cnv
 
-fcor=fcor=gsw.f(60)
+fcor=gsw.f(60)
 
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
@@ -35,7 +36,7 @@ rc('ytick',labelsize='Large')
 rc('axes', labelsize='Large')
 
 datadir='/home/isabela/Documents/projects/OSNAP/data/'
-
+figdir='/home/isabela/Documents/projects/OSNAP/figures/'
 
 ## 2nd order 50 day default filter
 import scipy.signal as sig
@@ -86,19 +87,19 @@ ccol='#1f78b4'
 icol='#e31a1c'
 egicol='purple'
 
-colors = [(44,127,184) ,(237,248,177),(255,237,160),(217,95,14),(240,59,32)]
-# colors = [(44,127,184) ,(237,248,177),(254,196,79),(217,95,14),(240,59,32)] # This example uses the 8-bit RGB
-sal_cmap = make_cmap(colors,position=[0,0.8,0.95,0.99,1],bit=True)
+
+colors = [(12,44,132),(78,179,211) ,(255,237,160),(217,95,14),(240,59,32)]#(237,248,177),,
+sal_cmap = make_cmap(colors,position=[0,0.9,0.96,0.99,1],bit=True)#0.9,
 
 colors = [(255,237,160),(127,205,187),(5,112,176),(110,1,107)]
 pden_cmap=make_cmap(colors,position=[0,0.666666666666,0.833333333333,1],bit=True)
 
 univec={}
 univec['pden']=['potential density',array([26.75,27,27.125,27.25,27.375,27.5,27.55,27.6,27.64,27.68,27.695,27.71,27.725,27.74,27.755,27.77,27.785,27.8,27.815,27.83,27.845,27.86,27.875,27.89]),pden_cmap,[27,27.5,27.68,27.74,27.8,27.86],'[kg/m$^3$]']
-univec['sal']=['salinity',array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),sal_cmap,array([34, 34.8,34.92,34.94,34.96,34.98, 35]),'']
-# univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,[2,4,5,6,7,8,9,10],'[$^\circ$C]']
-univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
-univec['uacross']=['across track velocity',arange(-0.6,0.005,0.05),cm.Blues_r,arange(-0.6,0.005,0.2),'[m/s]']
+
+univec['uacross']=['across track velocity',arange(0,0.6005,0.025),cm.BuPu,arange(0,0.8,0.1),'[m/s]']
+univec['sal']=['salinity',array([33, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),sal_cmap,array([33,34, 34.8,34.92,34.94,34.96,34.98, 35]),'']
+univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,[2,4,5,6,7,8],'[$^\circ$C]']
 univec['ualong']=['along track velocity',arange(-0.4,0.401,0.02),cm.RdBu_r,arange(-0.4,0.401,0.1),'[m/s]']
 univec['geostrophic velocity']=['geostrophic velocity',arange(-0.6,0.605,0.05),cm.RdBu_r,arange(-0.6,0.605,0.2),'[m/s]']
 univec['turner angle']=['turner angle',arange(-90,90,1),cm.RdBu_r,arange(-90,95,45),'$^\circ$']
@@ -120,15 +121,15 @@ tmpvec=linspace(-2,10,100)
 salmat,tmpmat=meshgrid(salvec,tmpvec)
 
 # SA_vec=gsw.SA_from_SP(salvec,zeros(len(salvec)),CFlon[3],CFlat[4])
-# CT_vec=gsw.CT_from_t(SA_vec,tmpvec,zeros(len(salvec)))
+# CT_vec=gsw.CT_from_pt(SA_vec,tmpvec)
 # pdenmat=zeros((shape(salmat)))
 # for ii in range(len(salvec)):
 #     for jj in range(len(tmpvec)):
-#         pdenmat[jj,ii]=gsw.sigma0(salvec[ii],tmpvec[jj])
+#         pdenmat[jj,ii]=gsw.sigma0(SA_vec[ii],CT_vec[jj])
 # pickle.dump(pdenmat,open('../pickles/aux/pdenmat.pickle','wb'))
 
-pdenmat=pd.read_pickle(open('../pickles/aux/pdenmat.pickle','rb'))
 
+pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickle','rb'))
 
 
 def run_ave(vec,rundiv):
@@ -142,7 +143,39 @@ def run_ave(vec,rundiv):
     # runave=array(runave)
     return runave
 
+def date_from_matlab(matdate):
+    pydate=array([datetime.datetime.fromordinal(int(matlab_datenum)) + datetime.timedelta(days=matlab_datenum%1) - datetime.timedelta(days = 366) for matlab_datenum in matdate])
+    return pydate
+
+
 # Below is really just a boxcar averager for any time increment
+import calendar
+def toTime(d):
+  return [calendar.timegm(dd.timetuple()) for dd in d]
+
+def np64ToDatetime(DA):
+  return [datetime.datetime.utcfromtimestamp((dd-np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')) for dd in DA]
+
+
+from scipy.optimize import leastsq
+def fitsin(t,data,guess_mean,guess_phase,guess_std,guess_period):
+
+    first_guess=guess_std*np.sin(2*pi*(t+guess_phase)/guess_period) +guess_mean
+
+    optimize_func = lambda x: x[0]*np.sin(2*pi*(t+x[1])/guess_period) + x[2] - data
+
+    est_std, est_phase, est_mean = leastsq(optimize_func, [guess_std, guess_phase, guess_mean])[0]
+
+    # tgrid=linspace(t[0],t[-1],100)
+    est_period=guess_period
+
+    data_fit = est_std*np.sin(2*pi*(t+est_phase)/est_period) + est_mean
+
+    # date=[]
+    # for i in range(len(tgrid)):
+    #     date.append(dt.date.fromtimestamp(tgrid[i]))
+
+    return data_fit,est_std,est_period
 
 
 def colorstripes():
@@ -157,8 +190,6 @@ def colorstripes():
 aveconst=4*24
 hrcon=24
 
-
-
 def hrly_ave(vec,hourdiv):
     newlen=int(len(vec)/hourdiv+1)
     hrly_vec=zeros(newlen)
@@ -166,6 +197,7 @@ def hrly_ave(vec,hourdiv):
         hrly_vec[ii]=nanmean(vec[int(hourdiv*ii):int(hourdiv*(ii+1))])
     hrly_vec=array(hrly_vec)
     return hrly_vec
+
 
 
 def interp_overnan(vec):
@@ -200,9 +232,7 @@ def pivspline_ML(afield,datevec,prsvec,pdall):
 
 
 
-maxinstdpth=io.loadmat('../data/maxinstdpth.mat')
-
-
+maxinstdpth=io.loadmat('../data/OSNAP2016recovery/maxinstdpth.mat')
 
 adcpdp=[160,160,160,340,90,90,90]
 
@@ -252,7 +282,7 @@ def plotinstpos(axchoice,savename):
 
 
 
-info=io.loadmat(datadir+'allmoorinfo.mat')
+info=io.loadmat(datadir+'OSNAP2016recovery/allmoorinfo.mat')
 CFlon=[info['CF'+str(ii)+'_header'][0][0][3][0][0] for ii in range(1,8)]
 CFlon[3]=-42.20529938
 CFlat=[info['CF'+str(ii)+'_header'][0][0][1][0][0] for ii in range(1,8)]
@@ -283,16 +313,16 @@ for mm in range(1,8):
             depths['CF'+str(mm)][ii]=array(info['CF'+str(mm)+'_sensors'][0][ii][1][0][0])
 
 
+
 inst={}
 for mm in range(1,8):
     inst['CF'+str(mm)]=[info['CF'+str(mm)+'_sensors'][0][ii][2][0] for ii in range(len(info['CF'+str(mm)+'_sensors'][0]))]
 
-
+inst['CF5'][0]='lost'
 depths['M1']=array([50,50,290,530,530,765,1000,1000,1250,1500,
                     1500,1730,1730,1950,1950])
 inst['M1']=array(['AQ','MC','MC','AQ','MC','MC','AQ','MC','MC','AQ',
                   'MC','AQ','MC','MC','WH'])
-
 
 bathy=io.loadmat(datadir+'k3_clean.mat')
 bathdist=hstack((-5,bathy['dist'][:1000].flatten()))
@@ -352,7 +382,6 @@ def con2sal(c,t,p):
     S = sw.sals(ratio,t)
 
     return S
-
 
 # Parula map
 
