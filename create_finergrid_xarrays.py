@@ -1,8 +1,6 @@
 from aux_funcs import *
 
-dat=pickle.load(open('../pickles/xarray/CF_xarray_notid_1801.pickle','rb'))
-
-
+dat=pickle.load(open('../pickles/xarray/CF_xarray_notid_1803extrap.pickle','rb'))
 
 ################################################################################
 ################################################################################
@@ -51,7 +49,7 @@ for vv in dat:
 
 
 ### Save this version of the xarray (for plotting)
-pickle.dump(plussides,open('../pickles/xarray/CF_xarray_gridplot_notid_1801.pickle','wb'))
+pickle.dump(plussides,open('../pickles/xarray/CF_xarray_gridplot_notid_1803extrap_nobathy.pickle','wb'))
 
 ## Took this part out since gridcalc version was not loading, it was taking up room, and I can just mask locally
 #

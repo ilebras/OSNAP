@@ -21,8 +21,8 @@ def quivermap():
     map.plot(CFlon,CFlat,'ko', markersize=10,zorder=98,latlon=True)
     qq=map.quiver(CFlon,CFlat,umean,vmean,latlon=True,linewidth=0.5,scale=2,zorder=100)#,scale_units='xy')
     title('Mean velocity top 150m',fontsize=25)
-    savefig('../figures/flowdirection/Map_wvelarrows_150_nogrid.pdf',bbox_inches='tight')
-    savefig('../figures/flowdirection/Map_wvelarrows_150_nogrid.png',bbox_inches='tight')
+    # savefig('../figures/flowdirection/Map_wvelarrows_150_nogrid.pdf',bbox_inches='tight')
+    # savefig('../figures/flowdirection/Map_wvelarrows_150_nogrid.png',bbox_inches='tight')
 
 quivermap()
 

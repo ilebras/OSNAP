@@ -183,6 +183,11 @@ def makeMap(zoomlev):
         lat_end  =62
         lon_start=-50
         lon_end  =-40
+    elif zoomlev=='GR':
+        lat_start=58
+        lat_end  =70
+        lon_start=-55
+        lon_end  =-30
     else:
         lat_start=53
         lat_end  =66
@@ -215,8 +220,8 @@ def makeMap(zoomlev):
 
     map = Basemap(llcrnrlat=lat_start,urcrnrlat=lat_end,
                 llcrnrlon=lon_start,urcrnrlon=lon_end,
-                resolution=None,projection='aea',
-                lat_1=lat_start,lon_0=lon_0)
+                resolution=None,projection='stere',
+                lat_0=(lat_start+lat_end)/2,lon_0=lon_0)
 
     x, y = map(lon,lat)
 
@@ -244,7 +249,15 @@ def makeMap(zoomlev):
         map.drawparallels(arange(54,lat_end+1,2),linewidth=0.001,labels=[1,0,0,0])
 
 
+    if zoomlev=='GR':
+        CS0 = map.contour(x,y,bathySmoothed,[-1e3,-500,-200,-100],
+                           colors='black')
+        clabel(CS0,fmt='%1.0f')
     return map
+
+map=makeMap('GR')
+savefig('../figures/Map/Greenlandbathy.pdf')
+
 #
 # map=makeMap('zoomout')
 # savefig('../figures/Map/Map_zoomout.pdf',bbox_inches='tight')

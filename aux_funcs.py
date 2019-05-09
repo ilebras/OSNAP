@@ -18,9 +18,13 @@ import datetime as dt
 import xarray as xr
 import seawater as sw
 import palettable as pal
+
+from scipy import signal
 import csv
 
 from seabird import cnv
+
+fcor=fcor=gsw.f(60)
 
 matplotlib.rcParams['pdf.fonttype'] = 42
 matplotlib.rcParams['ps.fonttype'] = 42
@@ -31,6 +35,14 @@ rc('ytick',labelsize='Large')
 rc('axes', labelsize='Large')
 
 datadir='/home/isabela/Documents/projects/OSNAP/data/'
+
+
+## 2nd order 50 day default filter
+import scipy.signal as sig
+# Design the Buterworth filter
+N  = 2    # Filter order
+Wn = 0.02 # Cutoff frequency (50 days)
+B, A = sig.butter(N, Wn, output='ba')
 
 #potentially useful ploting scripts
 
@@ -82,14 +94,11 @@ colors = [(255,237,160),(127,205,187),(5,112,176),(110,1,107)]
 pden_cmap=make_cmap(colors,position=[0,0.666666666666,0.833333333333,1],bit=True)
 
 univec={}
-# univec['pden']=['potential density',linspace(26,28,41),cm.BuPu,arange(26,28.1,0.3),'[kg/m$^3$]']
-# univec['sal']=['salinity',linspace(32.5,35.5,31),cm.YlGnBu_r,array([ 32. ,  32.4,  32.8,  33.2,  33.6,  34. ,  34.4,  34.8, 34.9, 35, 35.1,35.2]),'']
-# univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
-univec['pden']=['potential density',linspace(26,28,41),pden_cmap,[27,27.5,27.68,27.74,27.8],'[kg/m$^3$]']
-univec['sal']=['salinity',array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),sal_cmap,array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),'']
+univec['pden']=['potential density',array([26.75,27,27.125,27.25,27.375,27.5,27.55,27.6,27.64,27.68,27.695,27.71,27.725,27.74,27.755,27.77,27.785,27.8,27.815,27.83,27.845,27.86,27.875,27.89]),pden_cmap,[27,27.5,27.68,27.74,27.8,27.86],'[kg/m$^3$]']
+univec['sal']=['salinity',array([33.6, 34,  34.4,  34.8, 34.9, 34.92,34.94,34.96,34.98, 35]),sal_cmap,array([34, 34.8,34.92,34.94,34.96,34.98, 35]),'']
+# univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,[2,4,5,6,7,8,9,10],'[$^\circ$C]']
 univec['tmp']=['temperature',linspace(-1,8,31),cm.RdYlBu_r,range(0,10,1),'[$^\circ$C]']
 univec['uacross']=['across track velocity',arange(-0.6,0.005,0.05),cm.Blues_r,arange(-0.6,0.005,0.2),'[m/s]']
-
 univec['ualong']=['along track velocity',arange(-0.4,0.401,0.02),cm.RdBu_r,arange(-0.4,0.401,0.1),'[m/s]']
 univec['geostrophic velocity']=['geostrophic velocity',arange(-0.6,0.605,0.05),cm.RdBu_r,arange(-0.6,0.605,0.2),'[m/s]']
 univec['turner angle']=['turner angle',arange(-90,90,1),cm.RdBu_r,arange(-90,95,45),'$^\circ$']
@@ -135,6 +144,14 @@ def run_ave(vec,rundiv):
 
 # Below is really just a boxcar averager for any time increment
 
+
+def colorstripes():
+    axvspan(datetime.datetime(2014,10,1),datetime.datetime(2015,1,1),color=ccol,alpha=0.4)
+    # axvspan(datetime.datetime(2015,10,1),datetime.datetime(2016,1,1),color=ccol,alpha=0.4)
+    axvspan(datetime.datetime(2015,9,1),datetime.datetime(2015,12,1),color=ccol,alpha=0.4)
+    axvspan(datetime.datetime(2015,1,1),datetime.datetime(2015,4,1),color=egcol,alpha=0.4)
+    # axvspan(datetime.datetime(2016,1,1),datetime.datetime(2016,4,1),color=egcol,alpha=0.4)
+    axvspan(datetime.datetime(2015,12,1),datetime.datetime(2016,3,1),color=egcol,alpha=0.4)
 
 #standard averaging constant for turning 15 min microcat into daily.
 aveconst=4*24
@@ -189,25 +206,50 @@ maxinstdpth=io.loadmat('../data/maxinstdpth.mat')
 
 adcpdp=[160,160,160,340,90,90,90]
 
-
 def plotinstpos(axchoice,savename):
-        if 'v' in savename:
+        if ('uac' in savename) | ('v' in savename):
             for rr in range(7):
-                axchoice.plot(distvec[rr],adcpdp[rr],'r^',markersize=16,zorder=40)
+                if rr==0:
+                    axchoice.plot(distvec[rr],adcpdp[rr],'r^',markersize=12,zorder=40,label='ADCP')
+                else:
+                    axchoice.plot(distvec[rr],adcpdp[rr],'r^',markersize=12,zorder=40)
         mm=0
         for key in depths:
             for dd in range(len(depths[key])):
                 if ('sal' in savename) | ('tmp' in savename) | ('pden' in savename):
                     if ('MC' in inst[key][dd]) | ('CTD' in inst[key][dd])  | ('XR-420' in inst[key][dd]):
-                        axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
-                    if 'tmp' in savename:
-                        if ('tidbit' in inst[key][dd]) | ('olo' in inst[key][dd]):
-                             axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
+                            axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35,markersize=4)
 
-                elif 'v' in savename:
+                elif 'uac' in savename:
                     if ('AQ' in inst[key][dd]):
-                        axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
+                        if dd==0:
+                            axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35,markersize=6,label='Current meter')
+                        else:
+                            axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35,markersize=6)
             mm+=1
+
+# simpler, previous version
+# def plotinstpos(axchoice,savename):
+#         if 'v' in savename:
+#             for rr in range(7):
+#                 axchoice.plot(distvec[rr],adcpdp[rr],'r^',markersize=16,zorder=40)
+#         mm=0
+#         for key in depths:
+#             for dd in range(len(depths[key])):
+#                 if ('sal' in savename) | ('tmp' in savename) | ('pden' in savename):
+#                     if ('MC' in inst[key][dd]) | ('CTD' in inst[key][dd])  | ('XR-420' in inst[key][dd]):
+#                         axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
+#                     if 'tmp' in savename:
+#                         if ('tidbit' in inst[key][dd]) | ('olo' in inst[key][dd]):
+#                              axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
+#
+#                 elif 'v' in savename:
+#                     if ('AQ' in inst[key][dd]):
+#                         axchoice.plot(distvec[mm],depths[key][dd],'ko',zorder=35)
+#             mm+=1
+
+
+
 
 
 info=io.loadmat(datadir+'allmoorinfo.mat')

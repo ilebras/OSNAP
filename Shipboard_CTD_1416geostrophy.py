@@ -44,6 +44,8 @@ for key in lat:
         plot(lon[key],lat[key],'o',label=key)
 legend(loc=(1.05,0.1))
 
+
+
 ctdlist_2016=sort(glob.glob(datadir+'Shipboard/ar07_2016/cnv_files/*.cnv'))[1:]
 lat,lon,sal,tmp,date=loadCTD_cnv(ctdlist_2016,'2016')
 
@@ -119,6 +121,9 @@ for key in secs16:
     sal=subit(sal,key)
     tmp=subit(tmp,key)
     date=subit(date,key)
+
+plot(lon['2014_3'],lat['2014_3'],'o')
+plot(lon['2016_6'],lat['2016_6'],'o')
 
 def delit(myDict):
     if '2016' in myDict: del myDict['2016']

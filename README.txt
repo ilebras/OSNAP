@@ -25,7 +25,9 @@ Note: temperature changed to potential temperature here! (python 2)
 
 * create_finergrid_xarrays.py: Uses output of create_xarray.py to make finer grid data directly usable for calculating transport and making plots
 
-* Shipboard_CTD.py:  load Shipboard CTD data from several cruises and make xarray. Also a lot of auxiliary analysis in this script, including comparison with Nuka  re: surface extrapolate
+* Shipboard_CTD.py:  load Shipboard CTD data from several cruises and make xarray.
+Also a lot of auxiliary analysis in this script, including comparison with Nuka  re: surface extrapolate
+and some analysis for Jo
 
 * Shipboard_ADCP.py: load vessel mounted adcp data, plot and compare
 

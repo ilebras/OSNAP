@@ -10,9 +10,9 @@ from aux_funcs import *
 #### Load Mooring dailya and set up transport calc framework
 #################################################################################
 
-newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803bathy.pickle','rb'))
+newgrid=pickle.load(open('../pickles/xarray/CF_xarray_gridplot_notid_1803extrap.pickle','rb'))
 
-savename=''
+savename='extrap'
 
 bathf=interpolate.interp1d(bathdist,bathbath)
 bathonmygrid=bathf(newgrid.distance)
@@ -56,6 +56,8 @@ egic={}
 egic['trans']=daily.where(daily['potential density']<27.8).xport[6:,:,:].sum('depth').sum('distance')
 egic['fresh no sum']=(daily.where(daily['potential density']<27.8)['xport'][6:,:-1,:]*1e3*(daily.where(daily['potential density']<27.8).salinity[6:,:-1,:]-sref)/sref)
 egic['fresh']=(daily.where(daily['potential density']<27.8)['xport'][6:,:-1,:]*1e3*(daily.where(daily['potential density']<27.8).salinity[6:,:-1,:]-sref)/sref).sum('depth').sum('distance')
+
+egic['trans'].std()
 
 
 ################################################################################
@@ -131,6 +133,37 @@ def compsalfreshprof(occ,datechoose):
 
 compsalfreshprof('2014 (KN221)',0)
 compsalfreshprof('2016',-1)
+
+grdat
+
+################################################################################
+##### Salinity comparison paper figure
+################################################################################
+
+
+def salcomp_paper():
+        f=figure(figsize=(8,5))
+        for ii in range(1,3):
+            subplot(1,2,ii)
+            plot(daily.salinity[6:,:,:].isel(date=0).mean(axis=0).T,daily.depth,'k',label='Moorings, first day: '+str('{:5.2f}'.format(egic['fresh'][0].values))+' mSv')
+            plot(daily.salinity[6:,:,:].isel(date=-1).mean(axis=0).T,daily.depth,'k--',label='Moorings, last day: '+str('{:5.2f}'.format(egic['fresh'][-1].values))+' mSv')
+            plot(daily.salinity[6:,:,:30].mean(axis=0).mean(axis=1).T,daily.depth,'b',label='Moorings, first month: '+str('{:5.2f}'.format(mean(egic['fresh'][:30]).values))+' mSv')
+            plot(daily.salinity[6:,:,-30:].mean(axis=0).mean(axis=1).T,daily.depth,'b--',label='Moorings, last month: '+str('{:5.2f}'.format(mean(egic['fresh'][-30:]).values))+' mSv')
+            plot(grdat.salinity[:,d1:d2,:].sel(occupation='2014 (KN221)').mean(axis=1),grdat['pressure [db]'],'r',label='Shipboard 2014: '+str('{:5.2f}'.format(fresh_ladcp.sel(occupation='2014 (KN221)').values))+' mSv')
+            plot(grdat.salinity[:,d1:d2,:].sel(occupation='2016').mean(axis=1),grdat['pressure [db]'],'r--',label='Shipboard 2016: '+str('{:5.2f}'.format(fresh_ladcp.sel(occupation='2016').values))+' mSv')
+            ylim([1600,0])
+        subplot(121)
+        xlim([34,34.9])
+        legend()
+        ylabel('depth [m]',fontsize=14)
+        subplot(122)
+        gca().set_xticks(arange(34.9,35.1,0.05))
+        gca().set_yticklabels('')
+        xlim([34.9,35.05])
+        tight_layout()
+        f.text(0.5, -0.03, 'mean slope current salinity', ha='center',fontsize=14)
+        savefig('../figures/paperfigs/salcomp_slope.pdf')
+salcomp_paper()
 
 
 ################################################################################

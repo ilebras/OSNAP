@@ -3,8 +3,6 @@ from aux_funcs import *
 
 ### Testing the loading of Nuka data from Jamie
 
-
-
 dat=io.loadmat(datadir+'aux_data/nuka/jamie/osnapsssfromnuka.mat')
 
 

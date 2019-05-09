@@ -109,46 +109,46 @@ for ii,dd in enumerate(ctd_kn221):
 ########################################################################################
 ################################## 2015 section ########################################
 ########################################################################################
-# # #For PE 400
-# # #dtype=[('JD0', 'O'), ('T', '1'), ('S', '2'), ('C', 'O'), ('time0', 'O'), ('datetime', 'O'), ('P', '6'), ('file', 'O'), ('lon', '8'), ('lat', '9'), ('dlon', '10'), ('dlat', '11')])}
-# penum=4
-#
-#
-# # dat=io.loadmat(datadir+'Shipboard/CTD_fromPenny/PE400 CTD data/pe400_Ar7E_CTD_section.mat')
+# #For PE 400
+# #dtype=[('JD0', 'O'), ('T', '1'), ('S', '2'), ('C', 'O'), ('time0', 'O'), ('datetime', 'O'), ('P', '6'), ('file', 'O'), ('lon', '8'), ('lat', '9'), ('dlon', '10'), ('dlat', '11')])}
+penum=4
+
+
+dat=io.loadmat(datadir+'Shipboard/CTD_fromPenny/PE400 CTD data/pe400_Ar7E_CTD_section.mat')
 # dat=io.loadmat(datadir+'Shipboard/CTD_fromPenny/PE400 CTD data/PE400_1Hz.mat')['ctd_cal']
-#
-# # datelist_2015=[datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in dat['dd']]
+
+datelist_2015=[datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in dat['dd']]
 # datelist_2015=[datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in dat['time0'][0][0].flatten()]
-#
-# datelist_2015
-#
-# lat[dicvec[penum]]=dat['LAT'].flatten()
-# lon[dicvec[penum]]=dat['LON'].flatten()
-#
-# plot(lon['2015'], datelist_2015,'o')
-#
-#
-# prs[dicvec[penum]]=dat['P'].flatten()
-# sal[dicvec[penum]]=dat['S']
-# tmp[dicvec[penum]]=dat['T']
-# shape(sal['2015'])
-# shape(prs['2015'])
-# shape(lon['2015'])
-#
-# plot(dat['POTEMP'],'r');
-# plot(dat['T'],'b');
-# plot(tmp['2015'],'g');
-# axhline(2)
-#
-#
-# contourf(lon['2015'],prs['2015'],tmp['2015'])
-# colorbar()
-#
-# # lat[dicvec[penum]]=[NaN]
-# # lon[dicvec[penum]]=[NaN]
-# # sal[dicvec[penum]]=[NaN]
-# # prs[dicvec[penum]]=[NaN]
-# # tmp[dicvec[penum]]=[NaN]
+
+datelist_2015
+
+lat[dicvec[penum]]=dat['LAT'].flatten()
+lon[dicvec[penum]]=dat['LON'].flatten()
+
+plot(lon['2015'], datelist_2015,'o')
+
+
+prs[dicvec[penum]]=dat['P'].flatten()
+sal[dicvec[penum]]=dat['S']
+tmp[dicvec[penum]]=dat['T']
+shape(sal['2015'])
+shape(prs['2015'])
+shape(lon['2015'])
+
+plot(dat['POTEMP'],'r');
+plot(dat['T'],'b');
+plot(tmp['2015'],'g');
+axhline(2)
+
+
+contourf(lon['2015'],prs['2015'],tmp['2015'])
+colorbar()
+
+# lat[dicvec[penum]]=[NaN]
+# lon[dicvec[penum]]=[NaN]
+# sal[dicvec[penum]]=[NaN]
+# prs[dicvec[penum]]=[NaN]
+# tmp[dicvec[penum]]=[NaN]
 
 ########################################################################################
 ################################## 2016 section ########################################
@@ -279,8 +279,8 @@ for key in dist:
     print(shape(sal[key]))
 dicvec
 
-# newdic=['2005', '2008', '2014','kn221','2015', '2016']
-newdic=['2005', '2008', '2014','kn221', '2016']
+newdic=['2005', '2008', '2014','kn221','2015', '2016']
+# newdic=['2005', '2008', '2014','kn221', '2016']
 
 
 saltot=NaN*ones((smprslen,distlen,5))
@@ -301,8 +301,8 @@ for kk in range(5):
             SA=gsw.SA_from_SP(saltot[:,jj,kk][salnan],array(smprs)[salnan],[lon0]*sum(salnan),[lat0]*sum(salnan))
             pdentot[salnan,jj,kk]=gsw.sigma0(SA,gsw.CT_from_t(SA,tmptot[:,jj,kk][salnan],array(smprs)[salnan]))
 
-# occvec=['2005', '2008', '2014 (JR302)','2014 (KN221)','2015', '2016']
-occvec=['2005', '2008', '2014 (JR302)','2014 (KN221)', '2016']
+occvec=['2005', '2008', '2014 (JR302)','2014 (KN221)','2015', '2016']
+# occvec=['2005', '2008', '2014 (JR302)','2014 (KN221)', '2016']
 
 #Get into an xarray
 grdat=xr.Dataset({'salinity': (['pressure [db]','distance [km]', 'occupation'],  saltot),
@@ -431,7 +431,7 @@ for snum in range(1,4):
     bathbath_14[snum]=ctd_2014['k'+str(snum)+'_bath'][:,1]
 
 
-ctd_2014
+sal_14[2].index
 
 def onecont(apanda,tit,vrange,coloor,hlevs,bathdist,bathbath,ylim1,ylim2,xlim1,xlim2,savename):
     # figure()
@@ -455,7 +455,6 @@ onecont(sal_14[2],'Salinity on k2 section of k221, 2014',linspace(28,35.5,21),cm
 onecont(sal_14[3],'Salinity on k3 section of k221, 2014',linspace(28,35.5,21),cm.YlGnBu_r,[34.0,34.4,34.8],bathdist_14[3],bathbath_14[3],0,400,-2,60,'Sal_2014_3')
 
 onecont(sal_14[3],'Salinity on k3 section of k221, 2014',linspace(28,35.5,21),cm.YlGnBu_r,[34.0,34.4,34.8],bathdist_14[3],bathbath_14[3],0,2500,-2,160,'Sal_2014_3_zoomout')
-
 onecont(tmp_14[1],'Temperature on k1 section of k221, 2014',linspace(-2,10,13),cm.RdYlBu_r,[3],bathdist_14[1],bathbath_14[1],0,400,-2,60,'Tmp_2014_1')
 onecont(tmp_14[2],'Temperature on k2 section of k221, 2014',linspace(-2,10,13),cm.RdYlBu_r,[3],bathdist_14[2],bathbath_14[2],0,400,-2,60,'Tmp_2014_2')
 onecont(tmp_14[3],'Temperature on k3 section of k221, 2014',linspace(-2,10,13),cm.RdYlBu_r,[3],bathdist_14[3],bathbath_14[3],0,400,-2,60,'Tmp_2014_3')
@@ -484,9 +483,46 @@ ylabel('')
 title('Potential Density [kg/m$^3$]')
 savefig('../figures/CTD/K2sections_triptich.pdf',bbox_inches='tight')
 
+
+
+figure(figsize=(14,3))
+subplot(131)
+plot(tmp_14[2].values,sal_14[2].index)
+title('temperature [$^\circ$ C]')
+ylabel('pressure [db]')
+ylim(250,0)
+subplot(132)
+plot(sal_14[2].values,sal_14[2].index)
+title('salinity')
+ylim(250,0)
+subplot(133)
+plot(pden_14[2].values,sal_14[2].index)
+title('potential density [kg m$^{-3}$]')
+ylim(250,0)
+savefig('../figures/CTD/K2sections_profiles.pdf',bbox_inches='tight')
+y1=150
+y2=100
+figure(figsize=(14,3))
+subplot(131)
+plot(tmp_14[2].values,sal_14[2].index)
+title('temperature [$^\circ$ C]')
+ylabel('pressure [db]')
+ylim(y1,y2)
+xlim(0,4)
+subplot(132)
+title('salinity')
+plot(sal_14[2].values,sal_14[2].index)
+ylim(y1,y2)
+xlim(33,34.5)
+subplot(133)
+title('potential density [kg m$^{-3}$]')
+plot(pden_14[2].values,sal_14[2].index)
+ylim(y1,y2)
+xlim(26.5,27.4)
+savefig('../figures/CTD/K2sections_profiles_zoom.pdf',bbox_inches='tight')
+
+
 adcp_14=io.loadmat(datadir+'Shipboard/kn221_2014/kn221_2014_vm_adcp_ilebras.mat')
-
-
 def acrosstrackname(adic):
     adic['across track velocity']=adic['v_dt']*sin(theta)+adic['u_dt']*cos(theta)
 

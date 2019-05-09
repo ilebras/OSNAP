@@ -197,8 +197,6 @@ for ii,dd in enumerate(matkn221):
 
 plot(lonkn,latkn,'o')
 
-xxxxxxxxxxxxxxxxxxxx
-
 ############################################################################################################
 #################################### 2015 section ##########################################################
 ############################################################################################################
@@ -207,7 +205,7 @@ xxxxxxxxxxxxxxxxxxxx
 #################################### Variable names for LADCP_64PE400_deSteur_2015 #######################################
 ##       dtype=[('name', 'O'), ('date', 'O'), ('lat', 'O'), ('lon', 'O'), ('zbot', 'O'), ('ubot', 'O'), ('vbot', 'O'), ('uerrbot', 'O'), ('z', 'O'), ('u', 'O'), ('v', 'O'), ('nvel', 'O'), ('ubar', 'O'), ('vbar', 'O'), ('tim', 'O'), ('tim_hour', 'O'), ('shiplon', 'O'), ('shiplat', 'O'), ('xship', 'O'), ('yship', 'O'), ('uship', 'O'), ('vship', 'O'), ('zctd', 'O'), ('wctd', 'O'), ('uctd', 'O'), ('vctd', 'O'), ('xctd', 'O'), ('yctd', 'O'), ('uerr', 'O'), ('range', 'O'), ('range_do', 'O'), ('range_up', 'O'), ('ts', 'O'), ('ts_out', 'O'), ('p', 'O'), ('uctderr', 'O'), ('u_do', 'O'), ('v_do', 'O'), ('u_up', 'O'), ('v_up', 'O'), ('ensemble_vel_err', 'O'), ('u_shear_method', 'O'), ('v_shear_method', 'O'), ('w_shear_method', 'O'), ('ctd_t', 'O'), ('ctd_s', 'O'), ('ctd_ss', 'O'), ('u_detide', 'O'), ('v_detide', 'O'), ('utide', 'O'), ('vtide', 'O')])}
 
-mat15=sort(glob.glob(datadir+'Shipboard/LADCP/2015_64PE400_deSteur/*'))
+mat15=sort(glob.glob(datadir+'Shipboard/LADCP/2015_64PE400_deSteur/*.mat'))
 
 distlen15=36
 date15=[0]*(distlen15)
@@ -329,7 +327,7 @@ plot(lon08,lat08,'o',label='2008')
 legend()
 ylabel('Latitude ($^\circ$ N)')
 xlabel('Longitude ($^\circ$ W)')
-savefig('../figures/LADCP/measpos_all.png',bbox_inches='tight')
+savefig('../figures/Shipboard_forPenny/measpos_all.png',bbox_inches='tight')
 
 
 
@@ -341,9 +339,9 @@ savefig('../figures/LADCP/measpos_all.png',bbox_inches='tight')
 #     ylabel('pressure [db]')
 #     ylim([3000,0])
 #     xlim([-43,-30.5])
-#     savefig('../figures/LADCP/v'+savelab+'_full.png')
+#     savefig('../figures/Shipboard_forPenny/v'+savelab+'_full.png')
 #     xlim([-43,-38])
-#     savefig('../figures/LADCP/v'+savelab+'_zoom.png')
+#     savefig('../figures/Shipboard_forPenny/v'+savelab+'_zoom.png')
 #
 #
 # figure(figsize=(12,6))
@@ -368,10 +366,12 @@ savefig('../figures/LADCP/measpos_all.png',bbox_inches='tight')
 ################################## Grid all ####################################################
 ################################################################################################
 
-# Find distance from CF1!
+# Find distance from Jo's zero point
 ################################################################################################
-lon0=CFlon[0]
-lat0=CFlat[0]
+lon0=-43.0884
+lat0=60.0911
+
+
 
 
 def getdist(lonex,latex):
@@ -393,12 +393,20 @@ dist16
 
 distkn=getdist(lonkn,latkn)
 
+# # Use true, old across track definition here!
+xdist=sw.dist([CFlat[-2],CFlat[-2]],[CFlon[0],CFlon[-2]])[0][0]
+ydist=sw.dist([CFlat[0],CFlat[-2]],[CFlon[-2],CFlon[-2]])[0][0]
+theta=abs(arctan((xdist)/(ydist)))
+#
 # Angle for 2005,2006
 xdist2=sw.dist([lat05[5],lat05[5]],[lon05[0],lon05[10]])[0][0]
 ydist2=sw.dist([lat05[0],lat05[10]],[lon05[5],lon05[5]])[0][0]
 xdist2
 ydist2
 theta2=abs(arctan((xdist2)/(ydist2)))
+
+90-theta*180/pi
+pi/2
 
 figure()
 plot(lon05[dist05<300],lat05[dist05<300],'o',label='2005')
@@ -412,8 +420,8 @@ plot(CFlon[2:],CFlat[2:],'o',label='CF3-M1')
 legend()
 ylabel('Latitude ($^\circ$ N)')
 xlabel('Longitude ($^\circ$ W)')
-savefig('../figures/LADCP/measpos_dwreg.png',bbox_inches='tight')
-savefig('../figures/LADCP/measpos_dwreg.pdf',bbox_inches='tight')
+savefig('../figures/Shipboard_forPenny/measpos_dwreg.png',bbox_inches='tight')
+savefig('../figures/Shipboard_forPenny/measpos_dwreg.pdf',bbox_inches='tight')
 
 ### Get across track velocity:
 ################################################################################################
@@ -423,8 +431,12 @@ def getacrosstrack(u00,v00,theta00):
 
     return uac00
 
-uac05=getacrosstrack(u05,v05,theta2)
-uac06=getacrosstrack(u06,v06,theta2)
+
+##For now, get mer and zon vels to share w Jo
+theta=pi/2
+
+uac05=getacrosstrack(u05,v05,theta)
+uac06=getacrosstrack(u06,v06,theta)
 uac08=getacrosstrack(u08,v08,theta)
 uac14=getacrosstrack(u14,v14,theta)
 uackn=getacrosstrack(ukn,vkn,theta)
@@ -460,8 +472,6 @@ v14grid=gridv(uac14,dist14)
 v15grid=gridv(uac15,dist15)
 # v11grid=gridv(uac11,dist11)
 v16grid=gridv(uac16,dist16)
-
-
 v05grid=gridv(uac05,dist05)
 v06grid=gridv(uac06,dist06)
 v08grid=gridv(uac08,dist08)
@@ -478,45 +488,90 @@ vtot[:,:,3]=vkngrid
 vtot[:,:,4]=v15grid
 vtot[:,:,5]=v16grid
 
+u14grid=gridv(u14,dist14)
+u15grid=gridv(u15,dist15)
+u16grid=gridv(u16,dist16)
+u05grid=gridv(u05,dist05)
+u06grid=gridv(u06,dist06)
+u08grid=gridv(u08,dist08)
+ukngrid=gridv(ukn,distkn)
+
+utot=zeros((smprslen,distlen,6))
+utot[:,:,0]=u05grid
+utot[:,:,1]=u08grid
+utot[:,:,2]=u14grid
+utot[:,:,3]=ukngrid
+utot[:,:,4]=u15grid
+utot[:,:,5]=u16grid
+
 ## Make into an xarray
-grdat=xr.Dataset({'across track velocity [m/s]': (['pressure [db]','distance [km]', 'occupation'],  vtot)},
+grdat=xr.Dataset({'zonal velocity, u [m/s]': (['pressure [db]','distance [km]', 'occupation'],  utot),
+                    'meridional velocity, v [m/s]': (['pressure [db]','distance [km]', 'occupation'],  vtot)},
                 coords={'distance [km]': distgrid,
                         'pressure [db]': smprs,
                         'occupation': ['2005','2008','2014 (JR302)','2014 (KN221)','2015','2016']})
+
+## Make into an xarray
+# grdat=xr.Dataset({'across track velocity [m/s]': (['pressure [db]','distance [km]', 'occupation'],  vtot)},
+#                 coords={'distance [km]': distgrid,
+#                         'pressure [db]': smprs,
+#                         'occupation': ['2005','2008','2014 (JR302)','2014 (KN221)','2015','2016']})
+
 
 
 d1=0
 d2=30
 
-g=grdat['across track velocity [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.4,vmax=0.4,cmap=cm.RdBu_r,figsize=(15,12))
+g=grdat['zonal velocity, u [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.4,vmax=0.4,cmap=cm.RdBu_r,figsize=(15,12))
 ylim([3e3,0]);
+xlim([0,250])
 for ii, ax in enumerate(g.axes.flat):
     ax.set_title(grdat.occupation.values[ii],fontsize=20)
-    ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
-    ax.contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
-savefig('../figures/LADCP/firstsix_extdpth_uacross.png',bbox_inches='tight')
-savefig('../figures/LADCP/firstsix_extdpth_uacross.pdf',bbox_inches='tight')
+    # ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
+    ax.contour(distgrid[d1:d2],smprs,grdat['zonal velocity, u [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
+savefig('../figures/Shipboard_forPenny/LADCP_uzonal_panels.png',bbox_inches='tight')
+savefig('../figures/Shipboard_forPenny/LADCP_uzonal_panels.pdf',bbox_inches='tight')
 
-d1=0
-d2=10
-g=grdat['across track velocity [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.6,vmax=0.6,cmap=cm.RdBu_r,figsize=(15,12))
-ylim([400,0]);
+g=grdat['meridional velocity, v [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.4,vmax=0.4,cmap=cm.RdBu_r,figsize=(15,12))
+ylim([3e3,0]);
+xlim([0,250])
 for ii, ax in enumerate(g.axes.flat):
     ax.set_title(grdat.occupation.values[ii],fontsize=20)
-    ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
-    ax.contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
-savefig('../figures/LADCP/firstsix_extdpth_uacross_shelfslope.png',bbox_inches='tight')
+    # ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
+    ax.contour(distgrid[d1:d2],smprs,grdat['meridional velocity, v [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
+savefig('../figures/Shipboard_forPenny/LADCP_umer_panels.png',bbox_inches='tight')
+savefig('../figures/Shipboard_forPenny/LADCP_umer_panels.pdf',bbox_inches='tight')
 
-d1=2
-d2=-1
-
-g=grdat['across track velocity [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.6,vmax=0.6,cmap=cm.RdBu_r,figsize=(15,12))
-ylim([3e3,0])
-for ii, ax in enumerate(g.axes.flat):
-    ax.set_title(grdat.occupation.values[ii],fontsize=20)
-    ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
-    ax.contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
-savefig('../figures/LADCP/firstsix_extdpth_uacross_fullbasin.png',bbox_inches='tight')
+# g=grdat['across track velocity [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.4,vmax=0.4,cmap=cm.RdBu_r,figsize=(15,12))
+# ylim([3e3,0]);
+# xlim([0,250])
+# for ii, ax in enumerate(g.axes.flat):
+#     ax.set_title(grdat.occupation.values[ii],fontsize=20)
+#     ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
+#     ax.contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
+# savefig('../figures/Shipboard_forPenny/LADCP_uacross_panels.png',bbox_inches='tight')
+# savefig('../figures/Shipboard_forPenny/LADCP_uacross_panels.pdf',bbox_inches='tight')
+#
+# d1=0
+# d2=10
+# g=grdat['across track velocity [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.6,vmax=0.6,cmap=cm.RdBu_r,figsize=(15,12))
+# ylim([400,0]);
+# for ii, ax in enumerate(g.axes.flat):
+#     ax.set_title(grdat.occupation.values[ii],fontsize=20)
+#     ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
+#     ax.contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
+# savefig('../figures/Shipboard_forPenny/firstsix_extdpth_uacross_shelfslope.png',bbox_inches='tight')
+#
+# d1=2
+# d2=-1
+#
+# g=grdat['across track velocity [m/s]'][:,d1:d2,:].plot(x='distance [km]', y='pressure [db]', col='occupation', col_wrap=2,vmin=-0.6,vmax=0.6,cmap=cm.RdBu_r,figsize=(15,12))
+# ylim([3e3,0])
+# for ii, ax in enumerate(g.axes.flat):
+#     ax.set_title(grdat.occupation.values[ii],fontsize=20)
+#     ax.fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
+#     ax.contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,ii],arange(-0.4,0.5,0.1),colors='k')
+# savefig('../figures/Shipboard_forPenny/firstsix_extdpth_uacross_fullbasin.png',bbox_inches='tight')
 
 
 
@@ -524,55 +579,138 @@ d1=0
 d2=30
 
 figure(figsize=(10,6))
-contourf(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,:].mean(dim='occupation'),21,vmin=-0.3,vmax=0.3,cmap=cm.RdBu_r,extend='both')
+contourf(distgrid[d1:d2],smprs,grdat['meridional velocity, v [m/s]'][:,d1:d2,:].mean(dim='occupation'),21,vmin=-0.3,vmax=0.3,cmap=cm.RdBu_r,extend='both')
 colorbar(ticks=arange(-0.4,0.5,0.1),label='[m/s]')
-contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,:].mean(dim='occupation'),arange(-0.4,0.5,0.1),colors='k')
-fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
-title('Mean across track velocity from LADCP',fontsize=20)
-ylim([1e3,0])
-xlim([0,100])
-savefig('../figures/LADCP/firstsix_mean_extdpth_uacross_shelfslope.png',bbox_inches='tight')
+contour(distgrid[d1:d2],smprs,grdat['meridional velocity, v [m/s]'][:,d1:d2,:].mean(dim='occupation'),arange(-0.4,0.5,0.1),colors='k')
+title('Mean meridional velocity from LADCP',fontsize=20)
 xlabel('distance [km]')
 ylabel('pressure [db]')
 ylim([3e3,0])
-xlim([0,300])
-savefig('../figures/LADCP/firstsix_mean_extdpth_uacross.png',bbox_inches='tight')
-savefig('../figures/LADCP/firstsix_mean_extdpth_uacross.pdf',bbox_inches='tight')
+xlim([0,250])
+savefig('../figures/Shipboard_forPenny/LADCP_umer_mean.png',bbox_inches='tight')
+savefig('../figures/Shipboard_forPenny/LADCP_umer_mean.pdf',bbox_inches='tight')
+
+figure(figsize=(10,6))
+contourf(distgrid[d1:d2],smprs,grdat['zonal velocity, u [m/s]'][:,d1:d2,:].mean(dim='occupation'),21,vmin=-0.3,vmax=0.3,cmap=cm.RdBu_r,extend='both')
+colorbar(ticks=arange(-0.4,0.5,0.1),label='[m/s]')
+contour(distgrid[d1:d2],smprs,grdat['zonal velocity, u [m/s]'][:,d1:d2,:].mean(dim='occupation'),arange(-0.4,0.5,0.1),colors='k')
+title('Mean zonal velocity from LADCP',fontsize=20)
+xlabel('distance [km]')
+ylabel('pressure [db]')
+ylim([3e3,0])
+xlim([0,250])
+savefig('../figures/Shipboard_forPenny/LADCP_uzon_mean.png',bbox_inches='tight')
+savefig('../figures/Shipboard_forPenny/LADCP_uzon_mean.pdf',bbox_inches='tight')
+
+grdat['distance [km]']
+
+grdat.occupation.values
+
+CTD=pickle.load(open('../pickles/Shipboard/CTD_xarray_1805_forJo.pickle','rb'))
+
+CTD['density'].sel(occupation='2014 (KN221)').plot()
+xlim(50,300)
+
+
+datdic={}
+for oo in grdat.occupation.values:
+    if 'KN221' in oo:
+        datdic['u_2014_KN221']=grdat['zonal velocity, u [m/s]'].sel(occupation=oo).values
+        datdic['v_2014_KN221']=grdat['meridional velocity, v [m/s]'].sel(occupation=oo).values
+        datdic['sig_2014_KN221']=CTD.density.sel(occupation=oo).values
+    elif 'JR302' in oo:
+        datdic['u_2014_JR302']=grdat['zonal velocity, u [m/s]'].sel(occupation=oo).values
+        datdic['v_2014_JR302']=grdat['meridional velocity, v [m/s]'].sel(occupation=oo).values
+        datdic['sig_2014_JR302']=CTD.density.sel(occupation=oo).values
+    else:
+        datdic['u_'+oo]=grdat['zonal velocity, u [m/s]'].sel(occupation=oo).values
+        datdic['v_'+oo]=grdat['meridional velocity, v [m/s]'].sel(occupation=oo).values
+        datdic['sig_'+oo]=CTD.density.sel(occupation=oo).values
+datdic['pressure']=grdat['pressure [db]'].values
+datdic['distance']=grdat['distance [km]'].values
+
+datdic.keys()
+
+io.savemat(open('../data/Shipboard/forJo/LADCP_gridded_180503.mat','wb'),datdic)
+
+
+# datdic={}
+# for oo in grdat.occupation.values:
+#     datdic[oo]=grdat['zonal velocity, u [m/s]'].sel(occupation=oo).values
+# datdic['pressure']=grdat['pressure [db]'].values
+# datdic['distance']=grdat['distance [km]'].values
+#
+# io.savemat(open('../data/Shipboard/forJo/LADCP_u_gridded_180427.mat','wb'),datdic)
+#
+#
+# datdic={}
+#Ou for oo in grdat.occupation.values:
+#     datdic[oo]=grdat['meridional velocity, v [m/s]'].sel(occupation=oo).values
+# datdic['pressure']=grdat['pressure [db]'].values
+# datdic['distance']=grdat['distance [km]'].values
+#
+# io.savemat(open('../data/Shipboard/forJo/LADCP_v_gridded_180427.mat','wb'),datdic)
+#
+#
+# datdic={}
+# for oo in grdat.occupation.values:
+#     datdic[oo]=CTD.density.sel(occupation=oo).values
+# datdic['pressure']=grdat['pressure [db]'].values
+# datdic['distance']=grdat['distance [km]'].values
+#
+# io.savemat(open('../data/Shipboard/forJo/LADCP_sig0_gridded_180427.mat','wb'),datdic)
+
+xxxxxxxxxxxxxxxxxxxxxxx
+# figure(figsize=(10,6))
+# contourf(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,:].mean(dim='occupation'),21,vmin=-0.3,vmax=0.3,cmap=cm.RdBu_r,extend='both')
+# colorbar(ticks=arange(-0.4,0.5,0.1),label='[m/s]')
+# contour(distgrid[d1:d2],smprs,grdat['across track velocity [m/s]'][:,d1:d2,:].mean(dim='occupation'),arange(-0.4,0.5,0.1),colors='k')
+# # fill_between(fullbathdist,fullbathbath,3000*ones(len(fullbathbath)),color='k',zorder=22)
+# title('Mean across track velocity from LADCP',fontsize=20)
+# ylim([1e3,0])
+# xlim([0,100])
+# savefig('../figures/Shipboard_forPenny/firstsix_mean_extdpth_uacross_shelfslope.png',bbox_inches='tight')
+# xlabel('distance [km]')
+# ylabel('pressure [db]')
+# ylim([3e3,0])
+# xlim([0,250])
+# savefig('../figures/Shipboard_forPenny/LADCP_uacross_mean.png',bbox_inches='tight')
+# savefig('../figures/Shipboard_forPenny/LADCP_uacross_mean.pdf',bbox_inches='tight')
 
 ########################################################################################################
 ## Choose a distance range and plot vertical profiles of across-track velocity for each year (as well as mean)
 # In mean -- looks like 80-200 gets everything
 # Individual sections -- that should def do it
 ########################################################################################################
-grdat
-grdat['pressure [db]'].values
-
-distgrid[12:18]
-colvec=['b','orange','purple','lightgreen','red','cyan']
-
-for rr in range(6):
-    figure(1000)
-    plot(nanmean(vtot[:,12:18,rr],axis=1),smprs,color=colvec[rr],label=(grdat['occupation'].values[rr]));
-    figure()
-    plot(vtot[:,12:18,rr],smprs,color=colvec[rr]);
-    title(grdat['occupation'].values[rr])
-    ylim([2600,1600])
-    axvline(0,color='k')
-    axvline(-0.1,color='k')
-    xlim([-0.3,0.1])
-    xlabel('across track velocity [m/s]')
-    ylabel('pressure [db]')
-    savefig('../figures/LADCP/profiles/LADCP_'+grdat['occupation'].values[rr]+'_120-170.pdf',bbox_inches='tight')
-figure(1000)
-ylim([3e3,0])
-legend(loc=(1.05,0.5))
-axvline(0,color='k')
-axvline(-0.1,color='k')
-xlabel('across track velocity [m/s]')
-ylabel('pressure [db]')
-title('Average profile between 120km and 170km')
-savefig('../figures/LADCP/profiles/LADCP_meanprofcomp_120-170.pdf',bbox_inches='tight')
-
-
-
-pickle.dump(grdat,open('../pickles/Shipboard/LADCP_xarray.pickle','wb'))
+# grdat
+# grdat['pressure [db]'].values
+#
+# distgrid[12:18]
+# colvec=['b','orange','purple','lightgreen','red','cyan']
+#
+# for rr in range(6):
+#     figure(1000)
+#     plot(nanmean(vtot[:,12:18,rr],axis=1),smprs,color=colvec[rr],label=(grdat['occupation'].values[rr]));
+#     figure()
+#     plot(vtot[:,12:18,rr],smprs,color=colvec[rr]);
+#     title(grdat['occupation'].values[rr])
+#     ylim([2600,1600])
+#     axvline(0,color='k')
+#     axvline(-0.1,color='k')
+#     xlim([-0.3,0.1])
+#     xlabel('across track velocity [m/s]')
+#     ylabel('pressure [db]')
+#     savefig('../figures/Shipboard_forPenny/LADCP_profiles/LADCP_'+grdat['occupation'].values[rr]+'_120-170.pdf',bbox_inches='tight')
+# figure(1000)
+# ylim([3e3,0])
+# legend(loc=(1.05,0.5))
+# axvline(0,color='k')
+# axvline(-0.1,color='k')
+# xlabel('across track velocity [m/s]')
+# ylabel('pressure [db]')
+# title('Average profile between 120km and 170km')
+# savefig('../figures/Shipboard_forPenny/LADCP_profiles/LADCP_meanprofcomp_120-170.pdf',bbox_inches='tight')
+#
+#
+#
+# pickle.dump(grdat,open('../pickles/Shipboard/LADCP_xarray.pickle','wb'))

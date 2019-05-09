@@ -27,13 +27,13 @@ for vv in newgrid:
 bathdist=hstack((-20,bathdist))
 bathbath=hstack((bathbath[0],bathbath))
 
-
-
 import scipy.signal as sig
 # Design the Buterworth filter
 N  = 2    # Filter order
 Wn = 0.02 # Cutoff frequency
 B, A = sig.butter(N, Wn, output='ba')
+
+
 
 
 def pwf(field,colo,nofilt=0,labit='',xr=daily):
@@ -91,6 +91,10 @@ daily['xport plus']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middist
 
 sref=34.9
 
+srefb=34.8
+
+srefc=35
+
 cc={}
 cc['trans']=daily.xport[:6,:,:].sum('depth').sum('distance')
 cc['trans plus']=daily['xport plus'][:6,:,:].sum('depth').sum('distance')
@@ -100,6 +104,57 @@ cc['trans min vel']=(ccvel[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').su
 # cc['trans min vel plus sal']=(ccvel.where(daily.salinity<34)[:,:-1,:]*depthdiffmat*middistmat/1e3).sum('depth').sum('distance')
 cc['fresh']=(daily['across track velocity'][:6,:-1,:]*depthdiffmat[:6,:]*middistmat[:6,:]*(daily.salinity[:6,:-1,:]-sref)/sref).sum('depth').sum('distance')
 cc['fresh plus']=(daily['across track velocity'][:6,:-1,:]*depthdiffmat[:6,:]*middistmat_plus[:6,:]*(daily.salinity[:6,:-1,:]-sref)/sref).sum('depth').sum('distance')
+
+cc['fresh 34.8']=(daily['across track velocity'][:6,:-1,:]*depthdiffmat[:6,:]*middistmat[:6,:]*(daily.salinity[:6,:-1,:]-srefb)/srefb).sum('depth').sum('distance')
+cc['fresh plus 34.8']=(daily['across track velocity'][:6,:-1,:]*depthdiffmat[:6,:]*middistmat_plus[:6,:]*(daily.salinity[:6,:-1,:]-srefb)/srefb).sum('depth').sum('distance')
+
+cc['fresh 35.0']=(daily['across track velocity'][:6,:-1,:]*depthdiffmat[:6,:]*middistmat[:6,:]*(daily.salinity[:6,:-1,:]-srefc)/srefc).sum('depth').sum('distance')
+cc['fresh plus 35.0']=(daily['across track velocity'][:6,:-1,:]*depthdiffmat[:6,:]*middistmat_plus[:6,:]*(daily.salinity[:6,:-1,:]-srefc)/srefc).sum('depth').sum('distance')
+
+cc['trans plus'].std()
+
+cc['fresh'].mean()
+cc['fresh plus'].mean()
+
+date1=datetime.datetime(2014,8,15)
+daily.date[0].values
+
+sig.filtfilt(B,A, field)
+
+date1=datetime.datetime(2014,8,15)
+
+## Print max and min (freshwater) transports
+middate=datetime.datetime(2015,5,1,0)
+for key in cc:
+    print(key)
+    print(max(abs(sig.filtfilt(B,A,cc[key].sel(date=slice(date1,middate))))))
+    print(daily.date[argmax(abs(sig.filtfilt(B,A,cc[key].sel(date=slice(date1,middate)))))].values)
+
+
+lastdate=datetime.datetime(2016,7,30)
+for key in cc:
+    print(key)
+    print(max(abs(sig.filtfilt(B,A,cc[key].sel(date=slice(middate,lastdate))))))
+    print(daily.date.sel(date=slice(middate,lastdate))[argmax(abs(sig.filtfilt(B,A,cc[key].sel(date=slice(middate,lastdate)))))].values)
+
+mdate1=datetime.datetime(2015,10,1)
+mdate2=datetime.datetime(2016,9,1)
+for key in cc:
+    print(key)
+    print(min(abs(sig.filtfilt(B,A,cc[key].sel(date=slice(mdate1,mdate2))))))
+    print(daily.date.sel(date=slice(mdate1,mdate2))[argmin(abs(sig.filtfilt(B,A,cc[key].sel(date=slice(mdate1,mdate2)))))].values)
+
+for key in cc:
+    print(key)
+    print(std(cc[key]).values)
+
+
+## Print (freshwater) transport for first two weeks of August
+
+date2=datetime.datetime(2014,9,1)
+for key in cc:
+        print(key)
+        print(cc[key].sel(date=slice(date1,date2)).mean().values)
 
 
 figure(figsize=(10,3))
@@ -282,7 +337,7 @@ plot(CFlon,CFlat,'g*',label='moorings');
 legend()
 
 
-
+adcp_14['depth'][:,0]
 
 #interpolate adcp onto salinity distances and depths
 def interptosal(velfield,veldistvec,velprs,salfield,newdist):
@@ -297,15 +352,15 @@ def interptosal(velfield,veldistvec,velprs,salfield,newdist):
         salvel1[pp,:]=distfunc(newdist)
     #interpolate to depth
     for dd in range(len(newdist)):
-        prsfunc=interpolate.interp1d(hstack((0,velprs)),hstack((salvel1[0,dd],salvel1[:,dd])))
+        prsfunc=interpolate.interp1d(hstack((0,velprs[~isnan(salvel1[:,dd])],180)),hstack((salvel1[0,dd],salvel1[~isnan(salvel1[:,dd]),dd],salvel1[~isnan(salvel1[:,dd]),dd][-1])))
         salvel2[:,dd]=prsfunc(newprs)
 
     return salvel2,newprs
 
 salvel={}
 salprs={}
-salvel[key14],salprs[key14]=interptosal(adcp_14['across track velocity'],adcp_dist,adcp_14['depth'][:,0],sal[key14],dist[key14])
-salvel[key16],salprs[key16]=interptosal(adcp_16['across track velocity'],adcp_dist[:-3],adcp_16['depth'][:,0],sal[key16],dist[key16])
+salvel[key14],salprs[key14]=interptosal(adcp_14['across track velocity'][adcp_14['depth'][:,0]<180,:],adcp_dist,adcp_14['depth'][:,0][adcp_14['depth'][:,0]<180],sal[key14],dist[key14])
+salvel[key16],salprs[key16]=interptosal(adcp_16['across track velocity'][adcp_16['depth'][:,0]<180,:],adcp_dist[:-3],adcp_16['depth'][:,0][adcp_16['depth'][:,0]<180],sal[key16],dist[key16])
 
 plot(adcp_dist,adcp_14['across track velocity'][0,:])
 xlim([-20,50])
@@ -316,6 +371,9 @@ contourf(dist[key14],-salprs[key14],salvel[key14])
 dist[key14][8]
 
 dist[key16][8]
+
+sref=34.9
+
 # freshwater transport calcs
 middist_fresh={}
 middistmat_fresh={}
@@ -338,6 +396,7 @@ for kk in [key14,key16]:
 datechoose={}
 datechoose[key14]=0
 datechoose[key16]=-1
+
 
 for kk in [key14,key16]:
         figure(figsize=(12,4))
@@ -377,9 +436,90 @@ for kk in [key14,key16]:
         ylim([190,0])
         savefig('../figures/compare_shipmoor/salfreshprofcomp_coastal'+str(kk[:4])+savename+'.pdf')
 
+def salvelcomp_paper():
+    figure(figsize=(10,4))
+    for kk in [key14,key16]:
+            subplot(121)
+            if kk==key14:
+                kline='-'
+            elif kk==key16:
+                kline='--'
+            plot(squeeze(sal[kk][:len(salprs[kk]),:minind_fresh[kk]]).mean(axis=1),salprs[kk],'r',linestyle=kline,label='CTD within ADCP coastal current: '+str('{:5.2f}'.format(shipfresh[kk]))+' mSv')
+            plot(squeeze(sal[kk][:len(salprs[kk]),moordistind[kk]]).mean(axis=1),salprs[kk],color='orange',linestyle=kline,label='CTD within mooring range: '+str('{:5.2f}'.format(shipfresh_moorloc[kk]))+' mSv')
+            plot(daily.salinity.isel(date=datechoose[kk]).where(daily.distance<distvec[1]).mean(dim='distance').T,daily.depth,'k',linestyle=kline,
+            label='Moorings, daily: '+str('{:5.2f}'.format(cc['fresh'][datechoose[kk]].values))+' mSv ('+str('{:5.2f}'.format(cc['fresh plus'][datechoose[kk]].values))+' mSv)')
+            if kk==key14:
+                plot(daily.salinity.where(daily.distance<distvec[1])[:,:,:30].mean(dim='date').mean(dim='distance').T,daily.depth,'b',linestyle=kline,
+                label='Moorings, monthly: '+str('{:5.2f}'.format(mean(cc['fresh'][:30].values)))+' mSv ('+str('{:5.2f}'.format(mean(cc['fresh plus'][:30].values)))+' mSv)')
+            if kk==key16:
+                plot(daily.salinity.where(daily.distance<distvec[1])[:,:,-30:].mean(dim='date').mean(dim='distance').T,daily.depth,'b',linestyle=kline,
+                label='Moorings, monthly: '+str('{:5.2f}'.format(mean(cc['fresh'][-30:].values)))+' mSv ('+str('{:5.2f}'.format(mean(cc['fresh plus'][:30].values)))+' mSv)')
+            ylabel('depth [m]')
+            ylim([190,0])
+            xlabel('mean coastal current salinity')
+            legend()
+            subplot(122)
+            plot(mean(salvel[kk][:len(salprs[kk]),:minind_fresh[kk]],axis=1),salprs[kk],'r',linestyle=kline,label='CTD within ADCP coastal current: '+str('{:5.2f}'.format(shipfresh[kk]))+' mSv')
+            plot(mean(salvel[kk][:len(salprs[kk]),moordistind[kk]],axis=1),salprs[kk],color='orange',linestyle=kline,label='CTD within mooring range: '+str('{:5.2f}'.format(shipfresh_moorloc[kk]))+' mSv')
+            plot(daily['across track velocity'].isel(date=datechoose[kk]).where(daily.distance<distvec[1]).mean(dim='distance').T,daily.depth,'k',linestyle=kline,
+            label='Moorings, daily: '+str('{:5.2f}'.format(cc['fresh'][datechoose[kk]].values))+' mSv ('+str('{:5.2f}'.format(cc['fresh plus'][datechoose[kk]].values))+' mSv)')
+            if kk==key14:
+                plot(daily['across track velocity'].where(daily.distance<distvec[1])[:,:,:30].mean(dim='date').mean(dim='distance').T,daily.depth,'b',linestyle=kline,
+                label='Moorings, monthly: '+str('{:5.2f}'.format(mean(cc['fresh'][:30].values)))+' mSv ('+str('{:5.2f}'.format(mean(cc['fresh plus'][:30].values)))+' mSv)')
+            if kk==key16:
+                plot(daily['across track velocity'].where(daily.distance<distvec[1])[:,:,-30:].mean(dim='date').mean(dim='distance').T,daily.depth,'b',linestyle=kline,
+                label='Moorings, monthly: '+str('{:5.2f}'.format(mean(cc['fresh'][-30:].values)))+' mSv ('+str('{:5.2f}'.format(mean(cc['fresh plus'][:30].values)))+' mSv)')
+            gca().set_yticklabels('')
+            ylim([190,0])
+            tight_layout()
+            xlabel('mean coastal current velocity [m/s]')
+
+salvelcomp_paper()
+
+def salvelcomp_paper():
+            figure(figsize=(9,5))
+            subplot(121)
+            kk=key14
+            plot(squeeze(sal[kk][:len(salprs[kk]),:minind_fresh[kk]]).mean(axis=1),salprs[kk],'-',color='grey',label='Deployment, 2014')
+            plot(squeeze(sal[kk][:len(salprs[kk]),:minind_fresh[kk]]).mean(axis=1),salprs[kk],'--',color='grey',label='Recovery, 2016')
+            plot(squeeze(sal[kk][:len(salprs[kk]),:minind_fresh[kk]]).mean(axis=1),salprs[kk],'r',label='Full Shipboard')
+            kk=key16
+            plot(squeeze(sal[kk][:len(salprs[kk]),:minind_fresh[kk]]).mean(axis=1),salprs[kk],'r--')
+            kk=key14
+            plot(squeeze(sal[kk][:len(salprs[kk]),moordistind[kk]]).mean(axis=1),salprs[kk],color='orange',label='Shipboard within mooring range')
+            kk=key16
+            plot(squeeze(sal[kk][:len(salprs[kk]),moordistind[kk]]).mean(axis=1),salprs[kk],color='orange',linestyle='--',label='')
+            kk=key14
+            plot(daily.salinity.isel(date=datechoose[kk]).where(daily.distance<distvec[1]).mean(dim='distance').T,daily.depth,'k',label='Mooring daily average')
+            kk=key16
+            plot(daily.salinity.isel(date=datechoose[kk]).where(daily.distance<distvec[1]).mean(dim='distance').T,daily.depth,'k--',label='')
+            plot(daily.salinity.where(daily.distance<distvec[1])[:,:,:30].mean(dim='date').mean(dim='distance').T,daily.depth,'b',label='Mooring monthly average')
+            plot(daily.salinity.where(daily.distance<distvec[1])[:,:,-30:].mean(dim='date').mean(dim='distance').T,daily.depth,'b--',label='')
+            ylabel('depth [m]')
+            ylim([190,0])
+            xlabel('mean coastal current salinity')
+            legend()
+            subplot(122)
+            for kk in [key14,key16]:
+                if kk==key14:
+                    kline='-'
+                elif kk==key16:
+                    kline='--'
+                plot(mean(salvel[kk][:len(salprs[kk]),:minind_fresh[kk]],axis=1),salprs[kk],'r',linestyle=kline)
+                plot(mean(salvel[kk][:len(salprs[kk]),moordistind[kk]],axis=1),salprs[kk],color='orange',linestyle=kline)
+                plot(daily['across track velocity'].isel(date=datechoose[kk]).where(daily.distance<distvec[1]).mean(dim='distance').T,daily.depth,'k',linestyle=kline,)
+                if kk==key14:
+                    plot(daily['across track velocity'].where(daily.distance<distvec[1])[:,:,:30].mean(dim='date').mean(dim='distance').T,daily.depth,'b',linestyle=kline)
+                if kk==key16:
+                    plot(daily['across track velocity'].where(daily.distance<distvec[1])[:,:,-30:].mean(dim='date').mean(dim='distance').T,daily.depth,'b',linestyle=kline)
+                gca().set_yticklabels('')
+                ylim([190,0])
+                tight_layout()
+                xlabel('mean coastal current velocity [m/s]')
+            savefig('../figures/paperfigs/salvelcomp_coastal.pdf',bbox_inches='tight')
 
 
-
+salvelcomp_paper()
 
 psf(cc['fresh'],ccol,0,100,'Coastal current freshwater flux')
 psf(cc['fresh plus'],'grey',0,100,'Coastal current freshwater flux')
