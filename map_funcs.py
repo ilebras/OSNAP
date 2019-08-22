@@ -24,6 +24,7 @@ import os, sys, datetime, string
 # Default er uten maske
 import numpy as np
 
+osnap=pickle.load(open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','rb'))
 
 def laplace_X(F,M):
     """1D Laplace Filter in X-direction (axis=1)"""
@@ -173,6 +174,55 @@ def findSubsetIndices(min_lat,max_lat,min_lon,max_lon,lats,lons):
 
     res[0]=minI; res[1]=maxI; res[2]=minJ; res[3]=maxJ;
     return res
+
+
+def SimpleMap():
+
+    lat_start=50
+    lat_end = 65
+    lon_start=-75
+    lon_end  =5
+
+    """Get the etopo1 data"""
+    etopo1name=predir+'ETOPO1_Ice_g_gmt4.grd'
+    etopo1 = Dataset(etopo1name,'r')
+
+    lons = etopo1.variables["x"][:]
+    lats = etopo1.variables["y"][:]
+
+    res = findSubsetIndices(lat_start-5,lat_end+5,lon_start-40,lon_end+10,lats,lons)
+
+    lon,lat=np.meshgrid(lons[int(res[0]):int(res[1])],lats[int(res[2]):int(res[3])])
+    bathy = etopo1.variables["z"][int(res[2]):int(res[3]),int(res[0]):int(res[1])]
+    bathySmoothed = laplace_filter(bathy,M=None)
+
+    map,x,y,CS0=mapmeat(lon_start,lat_start,lon_end,lat_end,lon,lat,bathySmoothed)
+    map.drawmeridians(range(lon_start+5,lon_end+10,20),labels=[0,0,0,1],linewidth=0.0001)
+    map.drawparallels(arange(lat_start,lat_end+2,5),labels=[1,0,0,0],linewidth=0.0001)
+    return map
+
+
+def mapmeat(lon_start,lat_start,lon_end,lat_end,lon,lat,bathySmoothed):
+
+    lon_0= (lon_end + lon_start)/2.0
+    lat_0= - (abs(lat_end)+abs(lat_start))/2.0
+
+
+    map = Basemap(lat_0=lat_0,lon_0=lon_0,llcrnrlat=lat_start,urcrnrlat=lat_end,
+                llcrnrlon=lon_start,urcrnrlon=lon_end,
+                resolution='l',projection='stere')
+
+    x, y = map(lon,lat)
+    CS0 = map.contour(x,y,bathySmoothed,[-3000,-2000,-1000],colors='grey')
+
+    map.drawcoastlines()
+    map.fillcontinents()
+
+    eastind=osnap.LONGITUDE>-43
+    map.plot(osnap.LONGITUDE.values[eastind],osnap.LATITUDE.values[eastind],color='k',latlon=True,linewidth=4)
+
+    return map,x,y,CS0
+
 
 # def makeMap(zoomlev):
 #     if zoomlev=='CF':

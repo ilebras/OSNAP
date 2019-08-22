@@ -7,30 +7,9 @@
 from aux_funcs import *
 
 dat=pickle.load(open(datadir+'OSNAP2016recovery/pickles/xarray/CF_xarray_notid_1809lpfilt_noextrap_wMLPV.pickle','rb'))
-
 ooi=pickle.load(open(datadir+'OSNAP2016recovery/pickles/OOI/OOI_HYPM_xray.pickle','rb'))
-
 oom=pickle.load(open(datadir+'OSNAP2016recovery/pickles/OOI/OOI_denmerged_xray.pickle','rb'))
 
-
-# Wait for the OOI HYPM from Femke
-loco=io.loadmat(datadir+'IrmingerSea/MLDloco.mat')
-
-loco_date=date_from_matlab(loco['LOCO_MLD'][:,0])
-loco_mld=loco['LOCO_MLD'][:,1]
-
-#
-# ML=io.loadmat(datadir+'IrmingerSea/OOICIS_MLDs.mat')
-# ml_mat=ma.array(ML['MIX'].T)
-# # ml_mat[ml_mat==0]=ma.masked
-# ooi_ml=xr.Dataset({'MLD': (['date','mooring'],ml_mat,)},
-#                      coords={'date': ml_date, 'mooring': ['OOI sfc','OOI FLA','OOI FLB','CIS']})
-# ooi_max_ml=ooi_ml.MLD[:,:3].resample(date='1D').max()
-# plot(ooi_max_ml.date,ooi_max_ml,'k.')
-
-
-
-years=matplotlib.dates.YearLocator()
 months=matplotlib.dates.MonthLocator()
 threemonth=matplotlib.dates.MonthLocator(bymonthday=1,interval=3)
 monthFMT=matplotlib.dates.DateFormatter('%B')
@@ -41,20 +20,13 @@ d2=27.73
 d3=27.77
 
 def plotPV(moornum,axx,tit):
-    hh=axx.pcolor(dat.date,dat.depth[::10],log10(dat.PV[moornum,::10,:]),cmap=cm.rainbow_r,vmin=-11.5,vmax=-10)
-    # axx.plot(dat.date,dat.MLplus[:,moornum],'.',color='grey')
-    # axx.plot(dat.date,dat.ML[:,moornum],color='white',linewidth=5)
-    # axx.plot(dat.date,dat.ML[:,moornum],color='k',linewidth=3)
+    hh=axx.pcolor(dat.date.resample(date='W'),dat.depth[::10],log10(dat.PV[moornum,::10,:].resample(date='W').mean(dim='date')),cmap=cm.RdYlBu_r,vmin=-11.5,vmax=-10)
     axx.plot(dat.date,dat.ML[:,moornum],'.',color='k',markersize=9)
     axx.plot(dat.date,dat.ML[:,moornum],'.',color='yellow',markersize=5,zorder=101)
-    # axx.plot(dat.date,dat.ML[:,moornum],color='yellow',zorder=101)
-    # axx.plot(dat.date,dat.ML[:,moornum],'ko')
     if moornum==4:
-        axx.contour(dat.date.values,dat.depth.values,dat['potential density'][moornum,:,:].values,levels=[d1,d2],colors='k',zorder=100)
+        axx.contour(dat.date.resample(date='W').values,dat.depth.values,dat['potential density'][moornum,:,:].resample(date='W').mean(dim='date').values,levels=[d1,d2],colors='k',zorder=100)
     else:
-        axx.contour(dat.date.values,dat.depth.values,dat['potential density'][moornum,:,:].values,levels=[d1,d2,d3],colors='k',zorder=100)
-    # hh=axx.contourf(dat.date.values,dat.depth.values,dat['salinity'][moornum,:,:].values,levels=[],zorder=80,cmap=cm.rainbow_r)
-    # hh=axx.contourf(dat.date.values,dat.depth.values,dat['salinity'][moornum,:,:].values,levels=arange(34.9,35.05,0.01),zorder=80,cmap=cm.rainbow)
+        axx.contour(dat.date.resample(date='W').values,dat.depth.values,dat['potential density'][moornum,:,:].resample(date='W').mean(dim='date').values,levels=[d1,d2,d3],colors='k',zorder=100)
     axx.set_title(tit)
     return hh
 

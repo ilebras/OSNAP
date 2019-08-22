@@ -19,6 +19,8 @@ import xarray as xr
 import seawater as sw
 import palettable as pal
 import matplotlib.gridspec as gridspec
+import cmocean
+
 
 from scipy import signal
 import csv
@@ -37,6 +39,42 @@ rc('axes', labelsize='Large')
 
 datadir='/home/isabela/Documents/projects/OSNAP/data/'
 figdir='/home/isabela/Documents/projects/OSNAP/figures/'
+
+
+##################################################################################
+##################################################################################
+##### A couple "convection specific" parameters
+##################################################################################
+##################################################################################
+
+###densities (note: its critical that this vector be the same as in the gridded density products)
+denvec=arange(27.5,27.85,0.005)
+
+d1=27.65
+d2=27.73
+d3=27.77
+
+p1=argmin(abs(denvec-d1))
+p2=argmin(abs(denvec-d2))
+p3=argmin(abs(denvec-d3))
+
+dbnds=[d1,d2,d3]
+
+
+uppercol='#ae017e'
+deepcol='#1c9099'
+
+##################################################################################
+##################################################################################
+
+
+years=matplotlib.dates.YearLocator()
+months=matplotlib.dates.MonthLocator()
+threemonth=matplotlib.dates.MonthLocator(bymonthday=1,interval=3)
+monthFMT=matplotlib.dates.DateFormatter('%B')
+yearFMT=matplotlib.dates.DateFormatter('\n %Y')
+
+
 
 ## 2nd order 50 day default filter
 import scipy.signal as sig
@@ -88,6 +126,7 @@ icol='#e31a1c'
 egicol='purple'
 
 
+
 colors = [(12,44,132),(78,179,211) ,(255,237,160),(217,95,14),(240,59,32)]#(237,248,177),,
 sal_cmap = make_cmap(colors,position=[0,0.9,0.96,0.99,1],bit=True)#0.9,
 
@@ -128,8 +167,19 @@ salmat,tmpmat=meshgrid(salvec,tmpvec)
 #         pdenmat[jj,ii]=gsw.sigma0(SA_vec[ii],CT_vec[jj])
 # pickle.dump(pdenmat,open('../pickles/aux/pdenmat.pickle','wb'))
 
-
 pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickle','rb'))
+
+# # Potential density for properties at 750 - more relevant for IIW
+# SA_vec=gsw.SA_from_SP(salvec,zeros(len(salvec)),CFlon[3],CFlat[4])
+# CT_vec=gsw.CT_from_pt(SA_vec,tmpvec)
+# pdenmat2=zeros((shape(salmat)))
+# for ii in range(len(salvec)):
+#     for jj in range(len(tmpvec)):
+#         pdenmat2[jj,ii]=gsw.pot_rho_t_exact(SA_vec[ii],tmpvec[jj],750,0)-1e3
+# pickle.dump(pdenmat2,open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','wb'))
+
+pdenmat2=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','rb'))
+
 
 
 def run_ave(vec,rundiv):
@@ -291,6 +341,17 @@ CFlon=hstack((CFlon,-41-8.409/60))
 CFlat=hstack((CFlat,59+54.244/60))
 distvec=cumsum(hstack((0,sw.dist(CFlat,CFlon)[0])))
 
+MMlon=[-41.1118,-40.6905,-40.2772,-38.5665,-37.7995]
+MMlat=[59.9030,59.8597,59.8145,59.646,59.5788]
+
+
+###OOI locations
+[ooi_lat,ooi_lon]=pickle.load(open(datadir+'OSNAP2016recovery/pickles/OOI/OOI_locs.pickle','rb'))
+
+ooi_dist=round(sw.dist([CFlat[0],ooi_lat['prf']],[CFlon[0],ooi_lon['prf']])[0][0])
+oom_dist=round(sw.dist([CFlat[0],ooi_lat['fla']],[CFlon[0],ooi_lon['fla']])[0][0])
+
+
 lon0=60
 
 # xdist=sw.dist([CFlat[-2],CFlat[-2]],[CFlon[0],CFlon[-2]])[0][0]
@@ -331,6 +392,7 @@ bathbath=hstack((bathy['bath'][0],bathy['bath'][:1000].flatten()))
 fullbathdist=bathy['dist'].flatten()
 fullbathbath=bathy['bath'].flatten()
 
+osnap_bathy=io.loadmat(datadir+'OSNAPbathy_Fli.mat')
 
 # ## This is a quick rewrite of Dan Torres' matlab script con2sal.m
 
@@ -370,8 +432,6 @@ fullbathbath=bathy['bath'].flatten()
 # %    seawater, 1983. _Unesco Tech. Pap. in Mar. Sci._, No. 44, 53 pp.
 # %=========================================================================
 #
-
-
 def con2sal(c,t,p):
     import seawater as sw
 

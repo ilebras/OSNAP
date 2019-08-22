@@ -252,7 +252,7 @@ def takewav_makefig(dd,moornum):
         dx.axhline(scale_avg_signif, color='k', linestyle='--', linewidth=1.)
         dx.plot(date, scale_avg, 'k-', linewidth=1.5)
         dx.set_title('{}--{} hour scale-averaged power'.format(pmin,pmax))
-        [dx.axvline(dd,color=clist[ii],linewidth=3) for ii,dd in enumerate(dlist)]
+        # [dx.axvline(dd,color=clist[ii],linewidth=3) for ii,dd in enumerate(dlist)]
         # dx.set_xlabel('Time (hours)')
         dx.set_ylabel(r'Average variance [{}]'.format(units))
         if moornum ==8:
@@ -265,6 +265,9 @@ def takewav_makefig(dd,moornum):
 
         return nomd,spowdic
 
+clist=['#a1d99b','#74c476','#41ab5d','#238b45','#006d2c','#00441b']
+dlist=['2014-9-20','2015-2-20','2015-4-20','2015-9-20','2016-2-1','2016-4-1']
+
 spowdic={}
 for moornum in range(4,9):
     aqdlist=AQDlist(moornum)
@@ -274,12 +277,10 @@ for moornum in range(4,9):
         spowdic[moornum][nomd]=spd_tmp
 
 
+
 import pickle
 pickle.dump(spowdic,open(datadir+'pickles/spectral/scale_avg_power_2-24hour.pickle','wb'),protocol=2)
 
-
-clist=['#a1d99b','#74c476','#41ab5d','#238b45','#006d2c','#00441b']
-dlist=['2014-9-20','2015-2-20','2015-4-20','2015-9-20','2016-2-1','2016-4-1']
 
 def spowcomp():
     for moor in [5,6,7,8]:

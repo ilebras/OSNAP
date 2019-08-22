@@ -20,6 +20,10 @@ ooi_lon['flb']=ooi_pos['lon'].flatten()[0][1][0][0]
 ooi_lon['sfc']=ooi_pos['lon'].flatten()[0][2][0][0]
 ooi_lon['prf']=ooi_pos['lon'].flatten()[0][3][0][0]
 
+
+pickle.dump([ooi_lat,ooi_lon],open(datadir+'OSNAP2016recovery/pickles/OOI/OOI_locs.pickle','wb'),protocol=2)
+
+
 dat=io.loadmat(datadir+'IrmingerSea/OOI_CTDs_allM_ilebras1905_griddedonly.mat')
 
 grd_date=date_from_matlab(dat['TIME'].flatten())
@@ -40,6 +44,7 @@ ooi_xray=xr.concat([ooi_all[moor] for moor in moorvec],dim='moor').interpolate_n
 
 ooi_daily=ooi_xray.resample(date='1D').mean(dim='date')
 
+
 def pltall(moor):
     # figure()
     (ooi_daily['temperature']).sel(moor=moor).T.plot(figsize=(12,3))
@@ -58,61 +63,21 @@ pltall('flb')
 
 pltall('sfc')
 
+
+
 SA=gsw.SA_from_SP(ooi_daily.salinity,ooi_daily.prs,ooi_lon['sfc'],ooi_lat['sfc'])
 PT=gsw.pt0_from_t(SA,ooi_daily.temperature,ooi_daily.prs)
 CT=gsw.CT_from_pt(SA,PT)
 PDEN=gsw.sigma0(SA,CT)
 
-ooi_daily
 
 ooi_dnew=xr.Dataset({'sal': (['date','moor','prs'],ooi_daily.salinity.values[:,:3,:]),
                      'ptmp': (['date','moor','prs'],PT[:,:3,:]),
                      'pden': (['date','moor','prs'],PDEN[:,:3,:])},
                      coords={'date': ooi_daily.date.values, 'prs': dat['Pi'].flatten(),'moor':moorvec[:3]})
 
-ooi_dnew
-
 ooi_dnew=ooi_dnew.interpolate_na(dim='prs')
 
-def pltden(moor):
-    ooi_dnew['pden'].sel(moor=moor).T.plot(vmin=27,vmax=28,figsize=(12,3))
-    axhline(90)
-    ylim(2500,0)
-
-
-pltden('fla')
-
-def pltden_prf(moor):
-    plot(ooi_dnew['pden'].sel(moor=moor).T,ooi_dnew.prs,'o')
-    xlim()
-    ylim(2500,0)
-    axhline(90)
-
-pltden_prf('sfc')
-
-
-pltden_prf('fla')
-
-pltden_prf('flb')
-
-pltden('sfc')
-pltden('fla')
-pltden('flb')
-
-def compden(pmin,pmax):
-    plot(ooi_dnew['pden'].sel(moor='fla').where(ooi_dnew.prs<pmax).where(ooi_dnew.prs>pmin),ooi_dnew['pden'].sel(moor='sfc').where(ooi_dnew.prs<pmax).where(ooi_dnew.prs>pmin),'.');
-    plot([27.2,27.8],[27.2,27.8],'k-')
-
-def plt_dendiff(m1,m2):
-    figure(figsize=(12,3))
-    pcolor(ooi_daily.date,ooi_daily.prs,(ooi_dnew['pden'].sel(moor=m1)-ooi_dnew['pden'].sel(moor=m2)).T,cmap=cm.RdBu_r,vmin=-0.1,vmax=0.1)
-    ylim(1000,0)
-    colorbar()
-
-plt_dendiff('sfc','fla')
-plt_dendiff('sfc','flb')
-
-plt_dendiff('fla','flb')
 
 ####################
 ## Load Femke's ML depth ANALYSIS
@@ -131,13 +96,12 @@ ooi_date = array([datetime.datetime.fromordinal(int(matlab_datenum)) + datetime.
 
 ooi_depth=-gsw.z_from_p(dat['OOI'][0][0][0].flatten(),dat['OOI'][0][0][7][0])
 
-
-contourf(log10(dat['OOI'][0][0][-2]),levels=51,cmap=cm.rainbow_r,vmin=-11.5,vmax=-10)
-colorbar()
+pdenmat=dat['OOI'][0][0][10]
 
 ooi=xr.Dataset({'salinity': (['prs','date'],dat['OOI'][0][0][2]),
                      'temperature': (['prs','date'], dat['OOI'][0][0][3]),
-                     'potential density': (['prs','date'], dat['OOI'][0][0][10]),
+                     'potential density': (['prs','date'], pdenmat),
+                     'pden_mid': (['prs_mid','date'], pdenmat[:-1,:]+diff(pdenmat,axis=0)),
                      'oxygen': (['prs','date'], dat['OOI'][0][0][5]),
                      'PV': (['prs_mid','date'], dat['OOI'][0][0][-2]),
                      'depth':(['prs'],ooi_depth)},
@@ -151,10 +115,6 @@ pickle.dump(ooi,open(datadir+'OSNAP2016recovery/pickles/OOI/OOI_HYPM_xray.pickle
 #################### save pickle of all 4 OOI moorings ############
 ####################################################################
 
-ooi_dnew
-
-ooi
-
 prfonly=xr.Dataset({'sal': (['date','prs'],ooi.salinity.values.T),
                      'ptmp': (['date','prs'],ooi.temperature.values.T),
                      'pden': (['date','prs'],ooi['potential density'].values.T)},
@@ -163,9 +123,8 @@ prfonly=xr.Dataset({'sal': (['date','prs'],ooi.salinity.values.T),
 
 ooi_all=xr.concat([ooi_dnew,prfonly],dim='moor')
 
-ooi_all
 
-
+pickle.dump(ooi_all,open(datadir+'OSNAP2016recovery/pickles/OOI/OOI_all_props.pickle','wb'),protocol=2)
 
 ####################################################################
 #################### Mixed Layer calcs #############################

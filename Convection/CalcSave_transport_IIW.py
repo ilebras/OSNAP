@@ -45,75 +45,25 @@ egic['meanvel']=egic['trans']/egic['area']
 
 for ii in range(0,200,20):
     figure()
-    (daily['potential density'][sep:,:-1,:].where((daily['potential density']<27.74)&(daily['potential density']>=27.68)).isel(date=ii).T).plot()
-    (daily['potential density'][sep:,:-1,:].where((daily['potential density']<27.8)&(daily['potential density']>=27.74)).isel(date=ii).T).plot()
-
+    (daily['potential density'][sep:,:-1,:].where((daily['potential density']<d2)&(daily['potential density']>=d1)).isel(date=ii).T).plot()
+    (daily['potential density'][sep:,:-1,:].where((daily['potential density']<d3)&(daily['potential density']>=d2)).isel(date=ii).T).plot()
 
 uIIW={}
-uIIW['trans']=daily.xport.where((daily['potential density']<27.74)&(daily['potential density']>=27.68)).sum('distance').sum('depth')
+uIIW['trans']=daily.xport.where((daily['potential density']<d2)&(daily['potential density']>=d1)).sum('distance').sum('depth')
+uIIW['trans cf5+']=daily.xport.where(daily.distance>=45).where((daily['potential density']<d2)&(daily['potential density']>=d1)).sum('distance').sum('depth')
 
 dIIW={}
-dIIW['trans']=daily.xport.where((daily['potential density']<27.8)&(daily['potential density']>=27.74)).sum('distance').sum('depth')
+dIIW['trans']=daily.xport.where((daily['potential density']<d3)&(daily['potential density']>=d2)).sum('distance').sum('depth')
+dIIW['trans cf5+']=daily.xport.where(daily.distance>=45).where((daily['potential density']<d3)&(daily['potential density']>=d2)).sum('distance').sum('depth')
 
 IIW={}
-IIW['trans']=daily.xport.where((daily['potential density']<27.8)&(daily['potential density']>=27.68)).sum('distance').sum('depth')
+IIW['trans']=daily.xport.where((daily['potential density']<d3)&(daily['potential density']>=d1)).sum('distance').sum('depth')
 
 
-def savefilt(field):
-    field['trans filt']=sig.filtfilt(B,A,field['trans'])
-
-    return field
+pickle.dump([uIIW,dIIW,IIW,egic],open(datadir+'OSNAP2016recovery/pickles/convection_xport/IIWtrans_direct.pickle','wb'),protocol=2)
 
 
-egic=savefilt(egic)
-uIIW=savefilt(uIIW)
-dIIW=savefilt(dIIW)
-IIW=savefilt(IIW)
-
-#################################################################################
-######## Make 3 panel (freshwater) transport decomp for each current
-####################################################################################
-
-def eachpanel(field,colo,axit,labit='',xr=daily,pnofilt=1,letlab='',ls='-'):
-    if pnofilt==1:
-        axit.plot(xr.date,field,alpha=0.5,color=colo,label='',linewidth=0.75)
-    axit.plot(xr.date,sig.filtfilt(B,A, field),linewidth=2,color=colo,label=labit,linestyle=ls)
-    axit.set_xlabel('')
-    axit.set_ylabel('')
-    axit.text(0.01, 0.85,letlab,transform = axit.transAxes,fontsize=15)
-
-years=matplotlib.dates.YearLocator()
-months=matplotlib.dates.MonthLocator()
-threemonth=matplotlib.dates.MonthLocator(bymonthday=1,interval=3)
-monthFMT=matplotlib.dates.DateFormatter('%B')
-yearFMT=matplotlib.dates.DateFormatter('\n %Y')
-
-
-def plottrans():
-    f,ax3=subplots(1,1,figsize=(8,2.5),sharex=True)
-    # eachpanel(egic['trans'],egicol,ax1,labit='Slope current transport')
-    # eachpanel(IIW['trans'],'k',ax1,labit='Total IIW transport')
-    eachpanel(uIIW['trans'],'k',ax3,labit='upper IIW transport')
-    eachpanel(dIIW['trans'],'C7',ax3,labit='deep IIW transport')
-    # ax1.legend(loc=2)
-    ax3.legend(loc=2)
-    ax3.set_xlim([datetime.datetime(2014,8,1),datetime.datetime(2016,8,15)])
-    ax3.xaxis.set_major_locator(years)
-    ax3.xaxis.set_minor_locator(threemonth)
-    ax3.xaxis.set_minor_formatter(monthFMT)
-    ax3.xaxis.set_major_formatter(yearFMT)
-    ax3.set_yticks(arange(0,15,4))
-    # ax1.set_ylabel('[Sv]')
-    ax3.set_ylabel('[Sv]')
-    # ax1.set_ylim(5,35)
-    savefig(figdir+'MixedLayer/pres/IIW_trans.pdf',bbox_inches='tight')
-
-
-plottrans()
-
-How much is vel, how much is layer thickness!?
-
-XXXXXXXXXXXXXXX
+"XXXXXXXXXXXXXXX
 # def implement_fitsin(field):
 #     figure(figsize=(9,9))
 #     # fit a sin to the filtered transport
