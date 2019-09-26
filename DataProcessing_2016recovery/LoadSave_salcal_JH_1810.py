@@ -4,6 +4,8 @@ from aux_funcs import *
 # Load all T and S into large dictionaries
 #####################################################################
 
+datadir
+
 sal={}
 tmp={}
 date={}
@@ -18,11 +20,11 @@ for moornum in range(1,8):
 
     #choose ctdlist for each mooring
     if moornum==7:
-        ctdlist=glob.glob(datadir+'MCTD_Data_CF/MAT/CF'+str(moornum)+'*mat_ilebras.mat')
+        ctdlist=glob.glob(datadir+'OSNAP2016recovery/MCTD_Data_CF/MAT/CF'+str(moornum)+'*mat_ilebras.mat')
     else:
-        ctdlist=glob.glob(datadir+'MCTD_Data_CF/NetCDF/*CF'+str(moornum)+'*.nc')
+        ctdlist=glob.glob(datadir+'OSNAP2016recovery/MCTD_Data_CF/NetCDF/*CF'+str(moornum)+'*.nc')
     if moornum==7:
-        ctdlist=hstack((ctdlist,glob.glob(datadir+'RBR/CF'+str(moornum)+'*xr420*_ilebras.mat')))
+        ctdlist=hstack((ctdlist,glob.glob(datadir+'OSNAP2016recovery/RBR/CF'+str(moornum)+'*xr420*_ilebras.mat')))
     #load in each sal,tmp set
     for dd in ctdlist:
         if moornum==7:
@@ -50,6 +52,8 @@ for moornum in range(1,8):
         date[moornum][prskey]=date_hrly
         time[moornum][prskey]=time_hrly
 
+figure(figsize=(12,3))
+plot(date[7][500],tmp[7][500])
 
 ###################################################################
 #####Replace salinity with (daily averaged!) dip calibrated data ##########

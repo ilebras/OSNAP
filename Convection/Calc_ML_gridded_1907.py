@@ -1,22 +1,12 @@
 from aux_funcs import *
 
-grdat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_10m.nc')
+grdat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_5m.nc')
 
 #make sure to work on masked density
 grdat['mden']=grdat.pden.where(grdat.mask==True)
 
-for ii in range(4):
-    figure()
-    grdat.mden[ii,:].plot()
-    (grdat['ML'][ii,:]/10).plot()
-    axhline(30,color='k')
-    axhline(60,color='k')
-    axhline(150,color='k')
-    ylim(200,0)
-
-grdat.depth
 MLmat={}
-denthreshvec=arange(0.001,0.01,0.001)
+denthreshvec=arange(0.001,0.011,0.001)
 for dd in denthreshvec:
     MLmat[dd]=NaN*zeros((len(grdat.distance),len(grdat.date)))
     for ii in range(len(grdat.distance)):
@@ -39,10 +29,13 @@ for ii in range(len(grdat.distance)):
     plot(grdat.date,MLmat[0.007][ii,:],'k',linewidth=4)
     legend()
 
-
 ##############################################################################################################################
 ########### Make a decision about which mixed layer to use
-grdat['ML']=(['distance','date'],MLmat[0.007])
+MLmat.keys()
+
+dict_keys([0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.007, 0.008, 0.009000000000000001, 0.010000000000000002])
+
+grdat['ML']=(['distance','date'],MLmat[0.010000000000000002])
 
 grdat['ML'][-2,:].plot()
 
@@ -50,5 +43,5 @@ grdat['ML'][-2,:]
 
 ##############################################################################################################################
 ########### Save 25m gridded data xarray binned into density space as a netcdf file:
-grdat.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_10m_wML.nc','w',format='netCDF4')
+grdat.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_5m_wML.nc','w',format='netCDF4')
 ##############################################################################################################################

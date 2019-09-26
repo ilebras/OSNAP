@@ -1,6 +1,7 @@
 ## Save properties in density space as well as gridded density fields for use in other plotting scripts (so I don't have to re-run all this...)
 from aux_funcs import *
 
+
 #mooring resolution gridded CF data
 dat=pickle.load(open(datadir+'OSNAP2016recovery/pickles/xarray/CF_xarray_notid_1808lpfilt.pickle','rb'))
 
@@ -70,6 +71,7 @@ grdlon=hstack((CFlon[4:6],CFlon[-1],ooi_lon['fla']))
 grdlat=hstack((CFlat[4:6],CFlat[-1],ooi_lat['fla']))
 
 grid_dist=hstack(([distvec[4:6],distvec[-1],oom_dist]))
+
 #make it into an xarray!
 grdat=xr.Dataset({'pden': (['distance','depth','date'],gridded[0]),'psal': (['distance','depth','date'],gridded[1]),'ptmp': (['distance','depth','date'],gridded[2]),
                   'mask': (['distance','depth','date'],gridded[3]),'moor': (['distance'],['cf5','cf6','m1','ooi_merged']),
@@ -92,7 +94,7 @@ grdat_PV=xr.Dataset({'pden': (['distance','depth','date'],gridded[0]),'psal': ([
 
 ##############################################################################################################################
 ########### Save gridded data xarray as a netcdf file:
-grdat_PV.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_10m.nc','w',format='netCDF4')
+grdat_PV.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_5m.nc','w',format='netCDF4')
 ##############################################################################################################################
 
 ##############################################################################################################################
@@ -140,5 +142,5 @@ dendat=makedendat()
 
 ##############################################################################################################################
 ########### Save gridded data xarray binned into density space as a netcdf file:
-dendat.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/density_gridded_props_cf5-oom_from10m.nc','w',format='netCDF4')
+dendat.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/density_gridded_props_cf5-oom_from5m.nc','w',format='netCDF4')
 ##############################################################################################################################

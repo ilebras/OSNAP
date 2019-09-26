@@ -50,20 +50,30 @@ for ii in range(0,200,20):
 
 uIIW={}
 uIIW['trans']=daily.xport.where((daily['potential density']<d2)&(daily['potential density']>=d1)).sum('distance').sum('depth')
+uIIW['area']=(onesxr.where((daily['potential density']<d2)&(daily['potential density']>=d1))[sep:,:-1,:]*depthdiffmat[sep:,:,:]*middistmat[sep:,:,:]/1e3).sum('depth').sum('distance')
 uIIW['trans cf5+']=daily.xport.where(daily.distance>=45).where((daily['potential density']<d2)&(daily['potential density']>=d1)).sum('distance').sum('depth')
+uIIW['meanvel']=uIIW['trans']/uIIW['area']
 
 dIIW={}
 dIIW['trans']=daily.xport.where((daily['potential density']<d3)&(daily['potential density']>=d2)).sum('distance').sum('depth')
+dIIW['area']=(onesxr.where((daily['potential density']<d3)&(daily['potential density']>=d2))[sep:,:-1,:]*depthdiffmat[sep:,:,:]*middistmat[sep:,:,:]/1e3).sum('depth').sum('distance')
+dIIW['meanvel']=dIIW['trans']/dIIW['area']
 dIIW['trans cf5+']=daily.xport.where(daily.distance>=45).where((daily['potential density']<d3)&(daily['potential density']>=d2)).sum('distance').sum('depth')
 
 IIW={}
 IIW['trans']=daily.xport.where((daily['potential density']<d3)&(daily['potential density']>=d1)).sum('distance').sum('depth')
 
+lessthan={}
+lessthan['trans']=daily.xport.where(daily['potential density']<d1).sum('distance').sum('depth')
 
-pickle.dump([uIIW,dIIW,IIW,egic],open(datadir+'OSNAP2016recovery/pickles/convection_xport/IIWtrans_direct.pickle','wb'),protocol=2)
+morethan={}
+morethan['trans']=daily.xport.where((daily['potential density']>=d3)&(daily['potential density']<27.8)).sum('distance').sum('depth')
 
 
-"XXXXXXXXXXXXXXX
+pickle.dump([uIIW,dIIW,IIW,egic,lessthan,morethan],open(datadir+'OSNAP2016recovery/pickles/convection_xport/IIWtrans_direct.pickle','wb'),protocol=2)
+
+
+XXXXXXXXXXXXXXX
 # def implement_fitsin(field):
 #     figure(figsize=(9,9))
 #     # fit a sin to the filtered transport

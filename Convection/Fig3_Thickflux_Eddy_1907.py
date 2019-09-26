@@ -1,6 +1,6 @@
 from aux_funcs import *
 
-dendat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/density_gridded_props_cf5-oom_from10m.nc')
+dendat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/density_gridded_props_cf5-oom_from5m.nc')
 
 WM={}
 WM['upper']=dendat.thickness[:,p1:p2,:].sum(dim='den')
@@ -57,12 +57,13 @@ moorvec=['CF5','CF6','M1']
 def plot_eddyvar(axx):
     field='u'
     for ii,xx in enumerate([CF5,CF6,M1]):
+        dstep=24
         if ii==2:
-            dstep=12
+            elfieldo=xx[field]
         else:
-            dstep=24
-        Z,X = sig.butter(2,1./dstep/40, output='ba')
-        xx_resamp=xx[field].rolling(date=dstep).std()
+            elfieldo=xx[field][::2]
+        Z,X = sig.butter(2,1./dstep/20, output='ba')
+        xx_resamp=elfieldo.rolling(date=dstep).std()
         xx_max=xx_resamp.resample(date='1D').mean()
         axx.plot(xx_max.date,(xx_max.values)**2,color=colvec[ii],alpha=0.4)
         xx_sm=sig.filtfilt(Z,X,xx_resamp[~isnan(xx_resamp)].values)
@@ -72,8 +73,7 @@ def plot_eddyvar(axx):
         leg=axx.legend(loc=(1.05,0.2),fontsize=14)
         for line in leg.get_lines():
             line.set_linewidth(3)
-    axx.set_ylim(0,0.018)
-
+    axx.set_ylim(0,0.02)
 
 
 def cont_thick(field1,field2,axx,maxt,hlevs,labit):
@@ -82,7 +82,7 @@ def cont_thick(field1,field2,axx,maxt,hlevs,labit):
     axx.contourf(dendat.date.values,dendat.distance.values,field2.values, [0.75,1.25], colors='grey',alpha=0.5,hatches=['\\\\'],)
     axx.clabel(dd,fmt='%d')
     axx.set_title(labit,fontsize=14)
-    colorbar(hh,ax=axx,ticks=linspace(0,maxt,4),pad=0.04,label='layer thickness [m]')
+    colorbar(hh,ax=axx,ticks=linspace(0,maxt,4),pad=0.03,label='layer thickness [m]')
     axx.set_ylabel('distance [km]')
     ax2=axx.twinx()
     if 'Deep' in labit:
@@ -97,8 +97,8 @@ def cont_thick(field1,field2,axx,maxt,hlevs,labit):
 
 def plot_thickhov_eddy():
     f,axi=subplots(3,1,figsize=(10,6),constrained_layout=True)
-    cont_thick(WM['d_sm'],WM['d_sm_out'],axi[1],1500,[500,1000],'b) Deep IIW: $\sigma_{\Theta}=$ 27.73 - 27.77')
-    cont_thick(WM['u_sm'],WM['u_sm_out'],axi[0],750,[500],'a) Upper IIW: $\sigma_{\Theta}=$ 27.65 - 27.73')
+    cont_thick(WM['d_sm'],WM['d_sm_out'],axi[1],1500,[500,1000],'b) Deep ISIW: $\sigma_{\Theta}=$ 27.73 - 27.77')
+    cont_thick(WM['u_sm'],WM['u_sm_out'],axi[0],750,[500],'a) Upper ISIW: $\sigma_{\Theta}=$ 27.65 - 27.73')
     plot_eddyvar(axi[2])
     for axx in axi:
         axx.set_xlim([datetime.datetime(2014,9,5),datetime.datetime(2016,7,15)])
@@ -113,8 +113,8 @@ def plot_thickhov_eddy():
 
     axi[-1].xaxis.set_minor_formatter(monthFMT)
     axi[-1].xaxis.set_major_formatter(yearFMT)
-    savefig(figdir+'MixedLayer/paperfigs/Fig2.png',bbox_inches='tight',dpi=300)
-    savefig(figdir+'MixedLayer/paperfigs/Fig2.pdf',bbox_inches='tight')
-
+    axi[-1].set_yticks(arange(0,0.025,0.01))
+    savefig(figdir+'MixedLayer/paperfigs/Fig3.png',bbox_inches='tight',dpi=300)
+    savefig(figdir+'MixedLayer/paperfigs/Fig3.pdf',bbox_inches='tight')
 
 plot_thickhov_eddy()
