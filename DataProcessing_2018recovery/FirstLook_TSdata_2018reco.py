@@ -1,31 +1,19 @@
 from aux_funcs import *
 
-# m1dir=glob.glob(datadir+'OSNAP2018recovery/M1/*')
-# xr.open_dataset(m1dir[2])
-
-# dirtest=glob.glob('/home/isabela/Documents/projects/MOC_coherence/data/*')[0]
-#
-# dirtest
-#
-# dtest=io.loadmat(dirtest)
-#
-# dtest.keys()
-
 fig18='/home/isabela/Documents/projects/OSNAP/figures_2018recovery/overview/'
 
-
 # dat={}
-# for moornum in range(1,8):
-#     dlist=glob.glob(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(moornum)+'*')
+# for moornum in range(5,8):
+#     dlist=glob.glob(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(moornum)+'_MCTD*')
 #
 #     dat[moornum]=xr.open_dataset(dlist[0]).resample(TIME='1H').mean(dim='TIME')
 #     for dd in dlist[1:]:
 #         tmp=xr.open_dataset(dd).resample(TIME='1H').mean(dim='TIME')
-#         dat[moornum]=xr.concat([dat[moornum],tmp],dim='INST')
-
-dat={}
-for ii in range(1,8):
-    dat[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_hourlymerged.nc')
+#         dat[moornum]=xr.concat([dat[moornum],tmp],dim='DEPTH')
+#
+# dat={}
+# for ii in range(1,8):
+#     dat[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_hourlymerged.nc')
 
 dat.keys()
 
@@ -47,7 +35,7 @@ def plot_overview(dat,moornum,xlab):
 
 def plot_TS(dat,moornum,xlab):
     figure(figsize=(5,4))
-    for ii in range(len(dat.INST)):
+    for ii in range(len(dat.DEPTH)):
         plot(dat.PSAL[ii,:],dat.TEMP[ii,:],'.')
     xlabel('salinity')
     ylabel('temperature')
@@ -84,14 +72,32 @@ def plot_TSall():
 
 plot_TSall()
 
-# for ii in range(1,8):
-#     dat[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_hourlymerged.nc','w',format='netCDF4')
+for ii in range(1,8):
+    dat[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_2018recovery_hourlymerged.nc','w',format='netCDF4')
 
 dat_daily={}
 for ii in range(1,8):
     dat_daily[ii]=dat[ii].resample(TIME='1D').mean(dim='TIME')
-    dat_daily[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_dailymerged.nc','w',format='netCDF4')
 
+
+def add_SA_CT_PT(xray):
+    SA_out=gsw.SA_from_SP(xray['PSAL'],xray['PRES'],xray.LONGITUDE,xray.LATITUDE)
+    PT_out=gsw.pt0_from_t(SA_out,xray['TEMP'],xray['PRES'])
+    CT_out=gsw.CT_from_pt(SA_out,PT_out)
+    PD_out=gsw.sigma0(SA_out,CT_out)
+    xray['ASAL']=(('TIME','DEPTH'),SA_out)
+    xray['PTMP']=(('TIME','DEPTH'),PT_out)
+    xray['CTMP']=(('TIME','DEPTH'),CT_out)
+    xray['PDEN']=(('TIME','DEPTH'),PD_out)
+
+
+
+for ii in range(1,8):
+    add_SA_CT_PT(dat_daily[ii])
+
+
+for ii in range(1,8):
+    dat_daily[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_2018recovery_dailymerged.nc','w',format='netCDF4')
 
 def plot_overview(dat,moornum,xlab):
     f,[ax1,ax2,ax3,ax4,ax5]=subplots(5,1,figsize=(12,15),sharex=True)
@@ -115,7 +121,7 @@ for mm in range(1,8):
 
 def plot_TS(dat,moornum,xlab):
     figure(figsize=(5,4))
-    for ii in range(len(dat.INST)):
+    for ii in range(len(dat.DEPTH)):
         plot(dat.PSAL[:,ii],dat.TEMP[:,ii],'.')
     xlabel('salinity')
     ylabel('temperature')

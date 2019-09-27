@@ -10,7 +10,7 @@ moorname='CF1'
 
 # Load corrected "daily dic" version
 
-[date_all,month_all,prs_all,sal_all,tmp_all]=pickle.load(open('../pickles/TSdailydic/TS_daily_dic_wJHdipcal.pickle','rb'))
+[date_all,month_all,prs_all,sal_all,tmp_all]=pickle.load(open(datadir+'OSNAP2016recovery/pickles/TSdailydic/TS_daily_dic_wJHdipcal.pickle','rb'))
 
 date=date_all[1]
 tmp=tmp_all[1]

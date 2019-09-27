@@ -26,7 +26,7 @@ for moornum in range(1,8):
     if moornum==7:
         ctdlist=hstack((ctdlist,glob.glob(datadir+'OSNAP2016recovery/RBR/CF'+str(moornum)+'*xr420*_ilebras.mat')))
     #load in each sal,tmp set
-    for dd in ctdlist:
+    for dd in ctdlist
         if moornum==7:
             dat = io.loadmat(dd)
             tmp_hrly=hrly_ave([float(tt) for tt in dat['temp'][:].flatten()],aveconst)
