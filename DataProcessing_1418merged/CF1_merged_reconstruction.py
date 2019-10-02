@@ -1,6 +1,4 @@
-from aux_funcs import *
-
-figdir='/home/isabela/Documents/projects/OSNAP/figures_1418_merged/'
+from firstfuncs_1618 import *
 
 dat16=xr.open_dataset(datadir+'OSNAP2016recovery/mcat_nc/CF1_2016recovery_dailymerged.nc')
 
@@ -88,6 +86,7 @@ def plot_saltmp_diff():
     ax2.set_ylabel('temperature difference')
 
 plot_saltmp_diff()
+savefig(figdir+'merging_overview/CF1_saltmpdiff.png')
 
 ptmp_r50={}
 ptmp_r50['from100']=dat18.PTMP.sel(DEPTH=100)+mean(dat18.PTMP.sel(DEPTH=50)-dat18.PTMP.sel(DEPTH=100))

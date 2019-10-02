@@ -1,6 +1,4 @@
-from aux_funcs import *
-
-figdir='/home/isabela/Documents/projects/OSNAP/figures_1418_merged/'
+from firstfuncs_1618 import *
 
 dat16=xr.open_dataset(datadir+'OSNAP2016recovery/mcat_nc/CF2_2016recovery_dailymerged.nc')
 
@@ -65,9 +63,50 @@ def plot_saltmp_diff():
     ax2.set_ylabel('temperature difference')
 
 plot_saltmp_diff()
+savefig(figdir+'merging_overview/CF2_saltmpdiff.png')
+
 
 #############################################################################
 ###### No apparent seasonality, going to go with constant for both I think.
 ##### Kind of interesting in its own right...
 #############################################################################
-#### Refer to CF1 script for guidance on next steps if necessary
+ptmp_recon={}
+# ptmp_recon[50]=dat18.PTMP.sel(DEPTH=200)+mean(dat16.PTMP.sel(DEPTH=50)-dat16.PTMP.sel(DEPTH=200))
+ptmp_recon[100]=dat18.PTMP.sel(DEPTH=200)+mean(dat18.PTMP.sel(DEPTH=100)-dat18.PTMP.sel(DEPTH=200))
+
+
+psal_recon={}
+# psal_recon[50]=dat18.PSAL.sel(DEPTH=200)+mean(dat16.PSAL.sel(DEPTH=50)-dat16.PSAL.sel(DEPTH=200))
+psal_recon[100]=dat18.PSAL.sel(DEPTH=200)+mean(dat18.PSAL.sel(DEPTH=100)-dat18.PSAL.sel(DEPTH=200))
+
+###############################################################################
+##### Save a reconstructed product which keeps the 100m data which is present
+#### Note that this reconstruction should be taken with a grain of salt
+####
+################################################################################
+
+dat18_recontmp=dat18.copy()
+
+for dd in [100]:
+    dat18_recontmp['PSAL'].sel(DEPTH=dd)[isnan(dat18['PSAL'].sel(DEPTH=dd))]=psal_recon[dd][isnan(dat18['PSAL'].sel(DEPTH=dd))].values
+    dat18_recontmp['PTMP'].sel(DEPTH=dd)[isnan(dat18['PTMP'].sel(DEPTH=dd))]=ptmp_recon[dd][isnan(dat18['PTMP'].sel(DEPTH=dd))].values
+    dat18_recontmp['PRES'].sel(DEPTH=dd)[isnan(dat18['PRES'].sel(DEPTH=dd))]=mean(dat18['PRES'].sel(DEPTH=dd))
+
+
+ptmp_recon[50]=dat18_recontmp.PTMP.sel(DEPTH=100)+mean(dat16.PTMP.sel(DEPTH=50)-dat16.PTMP.sel(DEPTH=100))
+psal_recon[50]=dat18_recontmp.PSAL.sel(DEPTH=100)+mean(dat16.PSAL.sel(DEPTH=50)-dat16.PSAL.sel(DEPTH=100))
+
+dat18_recon50=xr.Dataset({'PRES': (['TIME'], 50*ones(len(dat18['TIME']))),
+            'PSAL': (['TIME'], psal_recon[50]),
+            'PTMP': (['TIME'],  ptmp_recon[50]),},
+            coords={'TIME': dat18['TIME'].values,
+                    'DEPTH': 50,})
+
+
+dat18_recon=xr.concat([dat18_recon50,dat18_recontmp],dim='DEPTH')
+
+
+plot_overview(dat16,dat18_recon)
+savefig(figdir+'merging_overview/CF2_overview_1618recon.png')
+
+dat18_recon.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF2_recon_2018recovery_dailymerged.nc','w',format='netCDF4')

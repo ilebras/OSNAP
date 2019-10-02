@@ -1,4 +1,4 @@
-from aux_funcs import *
+from firstfuncs_1618 import *
 
 figdir='/home/isabela/Documents/projects/OSNAP/figures_1418_merged/'
 
