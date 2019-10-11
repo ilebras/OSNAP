@@ -20,7 +20,7 @@ dat['PV_sm']=NaN*dat['PV']
 dat['pden_sm']=NaN*dat['pden']
 
 
-### smooth out in depth firstI
+### smooth out in depth first
 for tt,na in enumerate(dat.date.values):
     for mm,na in enumerate(dat.distance.values):
         nanind=~isnan(dat['PV'][mm,:,tt])
@@ -98,6 +98,19 @@ for dd,na in enumerate(ooi.prs_mid.values):
 MLcol='#41ab5d' #'#10b2dd'#
 PVcbar=cm.plasma_r
 
+
+## Try smoothing ML, too
+dat['ML_sm']=NaN*dat['ML']
+for mm,na in enumerate(dat.distance.values):
+        nanind=~isnan(dat['ML'][mm,:])
+        if sum(nanind)>10:
+            B, A = sig.butter(2,0.2, output='ba')
+            dat['ML_sm'][mm,nanind]=sig.filtfilt(B,A,dat['ML'][mm,nanind].values)
+        else:
+            dat['ML_sm'][mm,:]=NaN
+
+dat['ML_sm'][2,:].plot()
+
 ML_weekly=dat.ML.resample(date='3D').mean(dim='date')
 dencol='k'
 
@@ -117,8 +130,8 @@ def plotPV(moornum,axx,tit,moor='na'):
     else:
         hh=axx.contourf(dat.date.values,dat.mid_depth.values,log10(dat.PV_sm[moornum,:,:].values),51,vmin=-11.25,vmax=-10,cmap=PVcbar)
         axx.contour(dat.date.values,dat.mid_depth.values,log10(dat.PV_sm[moornum,:,:].values),levels=[-11],colors='red',linewidths=3)
-    axx.plot(ML_weekly.date,ML_weekly[moornum,:].T,color=MLcol,linewidth=3)
-    # axx.plot(dat.date,dat.ML[moornum,:].T,color=MLcol,linewidth=2)
+    # axx.plot(ML_weekly.date,ML_weekly[moornum,:].T,color=MLcol,linewidth=3)
+    axx.plot(dat.date,dat.ML_sm[moornum,:].T,color=MLcol,linewidth=3)
     if moornum==4:
         denlab=axx.contour(dat.date.values,dat.depth.values,dat['pden_sm'][moornum,:,:].values,levels=[d1,d2],colors=dencol,zorder=100,linewidths=3)
     else:
@@ -211,7 +224,7 @@ def PV_presplot():
     gs1=gridspec.GridSpecFromSubplotSpec(3,1, subplot_spec = outer[0],hspace=0.2)
     ax=plt.subplot(gs0[0])
     vel=pltveldensec(ax)
-    caxvel=f.add_axes([0.41, 0.135, 0.01, 0.15])
+    caxvel=f.add_axes([0.39, 0.135, 0.01, 0.15])
     colorbar(vel,ax=ax,ticks=arange(-0.4,0.5,0.2),label='velocity [m/s]',cax=caxvel)
 
     tf=14
@@ -355,6 +368,68 @@ def PPV_only():
 PPV_only()
 
 
+def CF5_only():
+    f=figure(figsize=(10,3))
+    gs1=gridspec.GridSpec(1,1, hspace=0.2)
+
+    ax1=plt.subplot(gs1[0])
+    # ax2=plt.subplot(gs1[1])
+    # ax3=plt.subplot(gs1[2])
+    # hh,denlab=plotPV(3,ax3,'OOI: Irminger gyre interior',moor='ooi')
+    # labspot=datetime.datetime(2014,11,1).toordinal()
+    # # ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,225),(labspot,800),(labspot,1250)])
+    # hh,denlab=plotPV(2,ax2,'M1: Edge of the boundary current')
+    # # labspot=datetime.datetime(2015,7,1).toordinal()
+    # ax2.clabel(denlab,fmt='%1.2f',manual=[(labspot,300),(labspot,600),(labspot,1100)])
+    hh,denlab=plotPV(0,ax1,'CF5: Boundary current core')
+    labspot=datetime.datetime(2015,7,1).toordinal()
+    ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,600),(labspot,1100)])
+    make_hh=plt.cm.ScalarMappable(cmap=PVcbar)
+    make_hh.set_array(log10(dat.PV_sm[0,:,:].values))
+    make_hh.set_clim(-10,-11.25)
+    cbar_axhh = f.add_axes([0.93, 0.25, 0.02, 0.5])
+    cbarhh=colorbar(make_hh, cax=cbar_axhh,label='\n log$_{10}$( PPV ) [m$^{-1}$ s$^{-1}$]',ticks=arange(-9.75,-11.5,-0.25))
+    cbarhh.ax.plot([0, 1], [-11]*2, 'r',linewidth=3)
+
+    dpmin=150
+    ax1.set_ylim(1300,dpmin)
+    # ax2.set_ylim(1500,dpmin)
+    ax1.set_yticks([1000,500])
+    # ax2.set_yticks([1500,1000,500])
+    # ax3.set_ylim(1500,dpmin)
+    # ax3.set_yticks([1500,1000,500])
+    #
+
+    ax1.set_ylabel('depth [m]')
+    # for axx in [ax1,ax2,ax3]:
+    axx=ax1
+    axx.set_xlim([datetime.datetime(2014,9,1),datetime.datetime(2016,7,5)])
+    axx.xaxis.set_major_locator(years)
+    axx.xaxis.set_minor_locator(threemonth)
+    #
+    # for axx in [ax1,ax2]:
+    #     axx.set_xticklabels('')
+    # fs=12
+    #
+    ax1.xaxis.set_minor_formatter(monthFMT)
+    ax1.xaxis.set_major_formatter(yearFMT)
+    labcol=dencol
+    # ecoli='w'
+    ax1.text(datetime.datetime(2015,7,1),800,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    ax1.text(datetime.datetime(2015,4,1),1200,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    # sday=15
+    # ax2.text(datetime.datetime(2014,9,sday),600,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax2.text(datetime.datetime(2014,9,sday),1000,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax3.text(datetime.datetime(2014,9,sday),700,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax3.text(datetime.datetime(2014,9,sday),975,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax3.text(datetime.datetime(2016,4,1),1100,'Mixed\nLayer\nDepth',fontsize=16,color=MLcol,weight='bold')
+
+    savefig(figdir+'MixedLayer/paperfigs/CF5only_Fig1.png',bbox_inches='tight',dpi=300)
+    savefig(figdir+'MixedLayer/paperfigs/CF5only_Fig1.pdf',bbox_inches='tight')
+
+CF5_only()
+
+
 def velsec_only():
     f,ax=subplots(1,1,figsize=(4,3))
     vel=pltveldensec(ax)
@@ -374,3 +449,22 @@ def velsec_only():
     savefig(figdir+'MixedLayer/paperfigs/velseconly_Fig1.pdf',bbox_inches='tight')
 
 velsec_only()
+
+
+def Denmaponly():
+    f=figure(figsize=(4,3))
+
+    map=SimpleMap()
+    m = plt.cm.ScalarMappable(cmap=cm.YlGn)
+    m.set_array(en1416_janmar.values)
+    m.set_clim(27.3,27.8)
+    caxden=f.add_axes([0.93, 0.2, 0.02, 0.6])
+    cbar=colorbar(m,cax=caxden,label='surface $\sigma_{\Theta}$ [kg m$^{-3}$]',boundaries=np.linspace(27.3,27.8,51),ticks=arange(27.3,28.1,0.1))
+
+    x1,y1=map(-45,54.5)
+
+    savefig(figdir+'MixedLayer/paperfigs/Denmaponly_Fig1.png',bbox_inches='tight',dpi=300)
+    savefig(figdir+'MixedLayer/paperfigs/Denmaponly_Fig1.pdf',bbox_inches='tight')
+
+
+Denmaponly()

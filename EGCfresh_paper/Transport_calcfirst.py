@@ -616,11 +616,11 @@ def TSplot():
         text(34.0,0.11,'PW',color='k',fontsize=20)
         ylabel('Potential temperature [$^\circ$C]')
         axvline(34.9,color='k')
-        savefig('../figures/paperfigs/TSall.pdf',bbox_inches='tight')
+        # savefig('../figures/paperfigs/TSall.pdf',bbox_inches='tight')
 
 TSplot()
 
-
+daily
 def partTS(date1,date2,textit,ax2,velvers=0):
     # if velvers==1:
     #     ax2.hexbin(daily['salinity'].values.flatten(),daily['temperature'].values.flatten(),cmap=cm.Greys,bins='log',gridsize=200)
@@ -689,21 +689,23 @@ def plot4TS_seas_symm(vv=0):
     plt.tight_layout()
     cbaxes = f.add_axes([1.01, 0.3, 0.04, 0.4])
     cbar=colorbar(axts,label='[log # measurements]',cax=cbaxes, drawedges=False)
-    savefig('../figures/paperfigs/TS_seasonal_symm.pdf',bbox_inches='tight',)
+    # savefig('../figures/paperfigs/TS_seasonal_symm.pdf',bbox_inches='tight',)
 
 plot4TS_seas_symm()
 
 def TSwinter():
     f,axi,=subplots(1,1,figsize=(4.5,3.5))
     partTS('2015-01-01','2015-04-1','',axi)
-    axi.text(32.5,4.5,'WINTER',fontsize=18)
+    axi.text(32.5,4.5,'',fontsize=18)
     xlim(32,35.05)
     ylim(-2,6)
     xlabel('Salinity')
     ylabel('Potential temperature [$^\circ$C]')
-    text(32.75,0.5,'shelf',color='purple',fontsize=17)
-    text(34.1,4.5,'slope',color='red',fontsize=17,)
-    savefig('/home/isabela/Documents/conferences/1810_OSU/presentation/figures/TSwinter.pdf',bbox_inches='tight')
+    # text(32.75,0.5,'shelf',color='purple',fontsize=17)
+    # text(34.1,4.5,'slope',color='red',fontsize=17,)
+    axi.set_ylim(3.2,5)
+    axi.set_xlim(34.865,34.98)
+    # savefig('/home/isabela/Documents/conferences/1810_OSU/presentation/figures/TSwinter.pdf',bbox_inches='tight')
 TSwinter()
 
 #############################################################

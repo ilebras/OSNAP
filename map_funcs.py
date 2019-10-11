@@ -129,7 +129,7 @@ def LevelColormap(levels, cmap=None):
     return matplotlib.colors.LinearSegmentedColormap(
         '%s_levels' % cmap.name, cdict, 256)
 
-predir='/home/isabela/Documents/projects/bathymetry/etopo1/'
+predir='/home/isabela/DATA/bathymetry/etopo1/'
 
 def findSubsetIndices(min_lat,max_lat,min_lon,max_lon,lats,lons):
 

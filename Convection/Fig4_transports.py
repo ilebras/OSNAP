@@ -24,10 +24,10 @@ def plot_Fig4():
     # ax0.set_ylabel('Transport [Sv]')
     ax0.set_title('a) Total boundary current transport',fontsize=14)
     # ax1.set_yticks(range(0,31,10))
-    plot_trans(ax1,lt['trans'],'darkorange','< ISIW')
+    plot_trans(ax1,lt['trans'],'darkorange','lighter waters')
     plot_trans(ax1,uIIW['trans'],uppercol,'upper ISIW')
     plot_trans(ax1,dIIW['trans'],deepcol,'deep ISIW')
-    plot_trans(ax1,mt['trans'],'brown','> ISIW')
+    plot_trans(ax1,mt['trans'],'brown','denser waters')
     ax1.set_title('b) Transport within each density layer',fontsize=14)
     # ax1.set_ylabel('Ratio of transports')
     ax1.legend(loc=(1.02,0.1),fontsize=13)
@@ -54,10 +54,10 @@ def plot_Fig4_nolet():
     # ax0.set_ylabel('Transport [Sv]')
     ax0.set_title('Total boundary current transport',fontsize=14)
     # ax1.set_yticks(range(0,31,10))
-    plot_trans(ax1,lt['trans'],'darkorange','< ISIW')
+    plot_trans(ax1,lt['trans'],'darkorange','lighter waters')
     plot_trans(ax1,uIIW['trans'],uppercol,'upper ISIW')
     plot_trans(ax1,dIIW['trans'],deepcol,'deep ISIW')
-    plot_trans(ax1,mt['trans'],'brown','> ISIW')
+    plot_trans(ax1,mt['trans'],'brown','denser waters')
     ax1.set_title('Transport within each density layer',fontsize=14)
     # ax1.set_ylabel('Ratio of transports')
     ax1.legend(loc=(1.02,0.1),fontsize=13)
@@ -74,8 +74,36 @@ def plot_Fig4_nolet():
     f.text(0.05, 0.5, 'Transport [Sv]', va='center', rotation='vertical',fontsize=13)
     savefig(figdir+'MixedLayer/paperfigs/Noletters_Fig4.pdf',bbox_inches='tight')
 
-
 plot_Fig4_nolet()
+
+def plot_Fig4_onepan():
+    f,ax1=subplots(1,1, sharex=True,figsize=(9,3),)
+    # plot_trans_only(ax0,egic['trans'],'k','total')
+    # ax0.set_ylim(10,27)
+    # # ax0.set_ylabel('Transport [Sv]')
+    # ax0.set_title('Total boundary current transport',fontsize=14)
+    # # ax1.set_yticks(range(0,31,10))
+    plot_trans(ax1,lt['trans'],'darkorange','lighter waters')
+    plot_trans(ax1,uIIW['trans'],uppercol,'upper ISIW')
+    plot_trans(ax1,dIIW['trans'],deepcol,'deep ISIW')
+    plot_trans(ax1,mt['trans'],'brown','denser waters')
+    ax1.set_title('Transport within each density layer',fontsize=14)
+    # ax1.set_ylabel('Ratio of transports')
+    ax1.legend(loc=(1.02,0.1),fontsize=13)
+    # plot_transdecomp(ax3,uIIW,uppercol)
+    # plot_transdecomp(ax4,dIIW,deepcol)
+    ax2=ax1
+    ax2.set_xlim([datetime.datetime(2014,9,5),datetime.datetime(2016,7,15)])
+
+    ax2.xaxis.set_major_locator(years)
+    ax2.xaxis.set_minor_locator(threemonth)
+    ax2.xaxis.set_minor_formatter(monthFMT)
+    ax2.xaxis.set_major_formatter(yearFMT)
+    ax2.set_ylim(0,13)
+    f.text(0.05, 0.5, 'Transport [Sv]', va='center', rotation='vertical',fontsize=13)
+    savefig(figdir+'MixedLayer/paperfigs/Onepan_Fig4.pdf',bbox_inches='tight')
+
+plot_Fig4_onepan()
 
 def plot_transdecomp(axi,field,col):
     ls=2

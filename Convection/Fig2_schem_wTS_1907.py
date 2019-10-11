@@ -122,6 +122,49 @@ def plot_denschem_TS():
 plot_denschem_TS()
 
 
+def plot_denschem_TS_botrow():
+    f,[ax1,ax2]=subplots(1,2,sharex='col',sharey='col',figsize=(9,2.5))
+    subplots_adjust(wspace=0.4,hspace=0.3)
+
+    ax2.set_xlabel('distance [km]')
+    ax2.set_ylabel('depth [m]')
+    for ii,dd in enumerate(dat.distance):
+        ax2.text(dd-5,-5,moorvec[ii],fontsize=13)
+
+    cbax=f.add_axes([0.95,0.25,0.02,0.5])
+
+    dd1='2015-2-1'
+    dd2='2015-3-1'
+    ssal,dens=plotdensec(ax2,dd1,dd2)
+    colorbar(ssal,cax=cbax,label='salinity',ticks=[34,34.8,34.92,34.96,35])
+    mlab=TScomp(ax1,dd1,dd2)
+
+    ax1.set_xlabel('salinity')
+    ax1.set_ylabel('pot. temperature [$^\circ$C]')
+
+    ax1.scatter(0,0,s=20,color='k',label='20m')
+    ax1.scatter(0,0,s=200,color='k',label='200m')
+    ax1.scatter(0,0,s=50,color=ooicol,edgecolor=ooicol,label='OOI: Irminger gyre interior',alpha=0.8)
+    ax1.scatter(0,0,s=50,color=m1col,edgecolor=m1col,label='M1: Offshore of the boundary current',alpha=0.8)
+    ax1.scatter(0,0,s=50,color=cf6col,edgecolor=cf6col,label='CF6: Deeper boundary current',alpha=0.8)
+    ax1.scatter(0,0,s=50,color=cf5col,edgecolor=cf5col,label='CF5: Boundary current maximum',alpha=0.8)
+    ax1.legend(loc=(0,-0.6),ncol=3)
+
+    fs=13
+
+    ax1.text(34.95,4.6,'uISIW',fontsize=fs,weight='bold')
+    ax1.text(34.867,3.44,'dISIW',fontsize=fs,weight='bold')
+
+    ax2.text(110,300,'upper ISIW',fontsize=fs+1,weight='bold')
+    ax2.text(110,900,'deep ISIW',fontsize=fs+1,weight='bold')
+    ax1.set_xticks(arange(34.88,34.98,0.04))
+
+
+    savefig(figdir+'MixedLayer/paperfigs/Botrow_Fig2.png',bbox_inches='tight',dpi=300)
+    savefig(figdir+'MixedLayer/paperfigs/Botrow_Fig2.pdf',bbox_inches='tight')
+
+plot_denschem_TS_botrow()
+
 def plot_denschem_TS_YR2():
 
     f,axi=subplots(2,2,sharex='col',sharey='col',figsize=(9,6))
