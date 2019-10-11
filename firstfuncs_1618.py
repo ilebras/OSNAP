@@ -5,7 +5,7 @@
 from pylab import *
 from scipy import io,interpolate
 from scipy.interpolate import griddata,interp1d
-from scipy import signal
+from scipy import signal as sig
 from netCDF4 import Dataset
 import gsw
 import glob
