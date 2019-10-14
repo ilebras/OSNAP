@@ -16,7 +16,6 @@ def quickpresplot(xray):
     figure(figsize=(14,6))
     plot(xray.TIME,xray.PRES);
 
-
 #data return is every 0.5 hour
 #here is a (2nd order butterworth) 40hour lowpass filter:
 def lowpassfilt(xray,tstep):

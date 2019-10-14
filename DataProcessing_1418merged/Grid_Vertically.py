@@ -12,11 +12,11 @@ def load_mcat(moornum):
     elif (moornum==4) | (moornum==7):
         dat16=xr.open_dataset(datadir+'OSNAP2016recovery/mcat_nc/CF'+str(moornum)+'_corr_2016recovery_dailymerged.nc')
         dat18=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(moornum)+'_corr_2018recovery_dailymerged.nc')
-    elif moornum==6:
+    elif (moornum==5) | (moornum==7):
         dat16=xr.open_dataset(datadir+'OSNAP2016recovery/mcat_nc/CF'+str(moornum)+'_2016recovery_dailymerged.nc')
         dat18=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(moornum)+'_corr_2018recovery_dailymerged.nc')
     elif moornum==8:
-        dat16=xr.open_dataset(datadir+'OSNAP2018recovery/M1_netcdf/M1_mcat_0114_0215_daily.nc')
+        dat16=xr.open_dataset(datadir+'OSNAP2016recovery/M1_netcdf/M1_mcat_0114_0215_daily.nc')
         dat18=xr.open_dataset(datadir+'OSNAP2018recovery/M1_netcdf/M1_mcat_0316_daily.nc')
     else:
         dat16=xr.open_dataset(datadir+'OSNAP2016recovery/mcat_nc/CF'+str(moornum)+'_2016recovery_dailymerged.nc')

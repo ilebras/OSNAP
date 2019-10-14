@@ -1,4 +1,6 @@
-from aux_funcs import *
+from firstfuncs_1618 import *
+
+figdir='/home/isabela/Documents/projects/OSNAP/figures_gridded/'
 
 dat=pickle.load(open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','rb'))
 eastind=dat.LONGITUDE>-45
