@@ -18,22 +18,10 @@ quickpresplot(m1_18)
 m1_18_daily=m1_18.resample(TIME='1D').mean(dim='TIME')
 
 
-def add_SA_CT_PT(xray):
-    SA_out=gsw.SA_from_SP(xray['PSAL'],xray['PRES'],xray.LONGITUDE,xray.LATITUDE)
-    if 'PTMP' in list(xray.data_vars):
-        PT_out=xray['PTMP']
-    else:
-        PT_out=gsw.pt0_from_t(SA_out,xray['TEMP'],xray['PRES'])
-    CT_out=gsw.CT_from_pt(SA_out,PT_out)
-    PD_out=gsw.sigma0(SA_out,CT_out)
-    xray['ASAL']=(('TIME','DEPTH'),SA_out)
-    xray['PTMP']=(('TIME','DEPTH'),PT_out)
-    xray['CTMP']=(('TIME','DEPTH'),CT_out)
-    xray['PDEN']=(('TIME','DEPTH'),PD_out)
 
 add_SA_CT_PT(m1_18_daily)
 
-m1_18_daily.to_netcdf(datadir+'OSNAP2018recovery/M1_netcdf/M1_mcat_0316_daily.nc','w',format='netCDF4')
+m1_18_daily.to_netcdf(datadir+'OSNAP2018recovery/Daily_netcdf/M1_mcat_2018recovery_daily.nc','w',format='netCDF4')
 
 
 #Note: M1, 2014-2016 is two deployments -- merge their netcdfs
@@ -55,7 +43,7 @@ m1_16_daily['LONGITUDE']=-41.125
 add_SA_CT_PT(m1_16_daily)
 
 
-m1_16_daily.to_netcdf(datadir+'OSNAP2016recovery/M1_netcdf/M1_mcat_0114_0215_daily.nc','w',format='netCDF4')
+m1_16_daily.to_netcdf(datadir+'OSNAP2016recovery/Daily_netcdf/M1_mcat_2016recovery_daily.nc','w',format='netCDF4')
 
 figure(figsize=(14,6))
 plot(m1_16_daily.TIME,m1_16_daily.TEMP);
@@ -64,9 +52,10 @@ plot(m1_16_daily.TIME,m1_16_daily.TEMP);
 
 # 2016-2018 data is dip-calibrated and in netcdf format.
 #Here's my data merging strategy so far:
+# From FirstLook_TSdata_Grid_2018reco.py
 CF_18_daily={}
 for ii in range(1,8):
-    CF_18_daily[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_2018recovery_dailymerged.nc')
+    CF_18_daily[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/Daily_netcdf/CF'+str(ii)+'_mcat_2018recovery_daily.nc')
 
 
 #Get 2014-2016 data there:
@@ -108,7 +97,7 @@ for ii in range(2,8):
                         'LATITUDE': CFlat[ii-1],
                         'LONGITUDE': CFlon[ii-1]})
     add_SA_CT_PT(CF_16_daily[ii])
-    CF_16_daily[ii].to_netcdf(datadir+'OSNAP2016recovery/mcat_nc/CF'+str(ii)+'_2016recovery_dailymerged.nc','w',format='netCDF4')
+    CF_16_daily[ii].to_netcdf(datadir+'OSNAP2016recovery/Daily_netcdf/CF'+str(ii)+'_mcat_2016recovery_daily.nc','w',format='netCDF4')
 
 ## note: I had some issues with CF1, so I took it out for now. The already produced xarray should be fine (and in fact I'm not using it atm)
 ## but user should know that this will not produce it again.

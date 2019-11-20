@@ -1,6 +1,6 @@
 from firstfuncs_1618 import *
 
-figdir='/home/isabela/Documents/projects/OSNAP/figures_gridded/'
+figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/'
 
 dat=pickle.load(open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','rb'))
 eastind=dat.LONGITUDE>-45
@@ -17,10 +17,12 @@ SA_vec=gsw.SA_from_SP(salvec,zeros(len(salvec)),CFlon[3],CFlat[4])
 CT_vec=gsw.CT_from_pt(SA_vec,tmpvec)
 pdenmat=zeros((shape(salmat)))
 pdenmat2=zeros((shape(salmat)))
+sigma1mat=zeros((shape(salmat)))
 for ii in range(len(salvec)):
     for jj in range(len(tmpvec)):
         pdenmat[jj,ii]=gsw.sigma0(SA_vec[ii],CT_vec[jj])
         pdenmat2[jj,ii]=gsw.pot_rho_t_exact(SA_vec[ii],tmpvec[jj],750,0)-1e3
+        sigma1mat[jj,ii]=gsw.sigma1(SA_vec[ii],CT_vec[jj])
 
 
 #
@@ -132,7 +134,7 @@ layer['lower']['sal']=(dat.PSAL.mean(dim='TIME').where(dat.LONGITUDE>lonbnd).whe
 layer['lower']['tmp']=(dat.PTMP.mean(dim='TIME').where(dat.LONGITUDE>lonbnd).where(dat.PDEN.mean(dim='TIME')>=denlim)*dat.AREA.where(dat.LONGITUDE>lonbnd).where(dat.PDEN.mean(dim='TIME')>=denlim)).sum(dim='DEPTH')/dat.AREA.where(dat.LONGITUDE>lonbnd).where(dat.PDEN.mean(dim='TIME')>=denlim).sum(dim='DEPTH')
 layer['lower']['pden']=(dat.PDEN.mean(dim='TIME').where(dat.LONGITUDE>lonbnd).where(dat.PDEN.mean(dim='TIME')>=denlim)*dat.AREA.where(dat.LONGITUDE>lonbnd).where(dat.PDEN.mean(dim='TIME')>=denlim)).sum(dim='DEPTH')/dat.AREA.where(dat.LONGITUDE>lonbnd).where(dat.PDEN.mean(dim='TIME')>=denlim).sum(dim='DEPTH')
 
-NA_wbnd=-40
+NA_wbnd=-41
 
 def twolayer_timemean():
     f,axx=subplots(4,1,sharex=True,figsize=(5,12))
@@ -180,6 +182,8 @@ tweight['AW']['pden']=(layer['upper']['pden']*layer['upper']['xport']).where(dat
 tweight['AW']['xport']=layer['upper']['xport'].where(dat.LONGITUDE>NA_wbnd).sum(dim='LONGITUDE')
 
 
+
+
 tweight['UW']={}
 tweight['UW']['sal']=(layer['upper']['sal']*layer['upper']['xport']).sum(dim='LONGITUDE')/layer['upper']['xport'].sum(dim='LONGITUDE')
 tweight['UW']['tmp']=(layer['upper']['tmp']*layer['upper']['xport']).sum(dim='LONGITUDE')/layer['upper']['xport'].sum(dim='LONGITUDE')
@@ -203,12 +207,18 @@ tweight['DW']['xport']=layer['lower']['xport'].sum(dim='LONGITUDE')
 
 wmvec=['AW','PW','DW','UW']
 
+for wm in ['AW','PW','DW']:
+    print(tweight[wm]['xport'].values)
+    print(tweight[wm]['sal'].values)
+
+
 salind=salvec>34
 
 def plot_TS_bylayer():
     figure(figsize=(9,5.5))
     scatter([tweight[wm]['sal'] for wm in wmvec],[tweight[wm]['tmp'] for wm in wmvec],s=[abs(tweight[wm]['xport'].values)**2*4 for wm in wmvec],c=['r','b','b','purple'],zorder=50,linewidth=3)
     den=contour(salvec,tmpvec,pdenmat,levels=arange(24.13,29,0.2),colors='grey',zorder=1)
+    den=contour(salvec,tmpvec,sigma1mat,levels=[32.75],colors='green',zorder=1,linewidths=4)
     contour(salvec[salind],tmpvec,pdenmat[:,salind],levels=[denlim],colors='k',zorder=100,linewidth=3)
     text(34.5,4.75,'PW ($S_2,T_2$)',color='k',fontsize=18)
     text(35.075,9.35,'AW ($S_1,T_1$)',color='k',fontsize=18)
@@ -276,6 +286,9 @@ q_S_test=tweight['DW']['sal']*tweight['DW']['xport']+tweight['UW']['sal']*tweigh
 q_T_test=tweight['DW']['tmp']*tweight['DW']['xport']+tweight['UW']['tmp']*tweight['UW']['xport']
 
 
+for wm in ['AW','PW','DW']:
+    print(tweight[wm]['xport'].values)
+    print(tweight[wm]['sal'].values)
 
 for key in tweight:
     print(key,tweight[key]['xport'])

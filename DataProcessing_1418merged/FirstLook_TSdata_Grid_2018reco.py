@@ -10,12 +10,11 @@ fig18='/home/isabela/Documents/projects/OSNAP/figures_2018recovery/overview/'
 #     for dd in dlist[1:]:
 #         tmp=xr.open_dataset(dd).resample(TIME='1H').mean(dim='TIME')
 #         dat[moornum]=xr.concat([dat[moornum],tmp],dim='DEPTH')
-#
-# dat={}
-# for ii in range(1,8):
-#     dat[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_hourlymerged.nc')
 
-dat.keys()
+dat={}
+for ii in range(1,8):
+    dat[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_2018recovery_hourlymerged.nc')
+
 
 def plot_overview(dat,moornum,xlab):
     f,[ax1,ax2,ax3,ax4,ax5]=subplots(5,1,figsize=(12,15),sharex=True)
@@ -73,7 +72,7 @@ def plot_TSall():
 plot_TSall()
 
 for ii in range(1,8):
-    dat[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_2018recovery_hourlymerged.nc','w',format='netCDF4')
+    dat[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_mcat_2018recovery_hourlymerged.nc','w',format='netCDF4')
 
 dat_daily={}
 for ii in range(1,8):
@@ -97,7 +96,7 @@ for ii in range(1,8):
 
 
 for ii in range(1,8):
-    dat_daily[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_2018recovery_dailymerged.nc','w',format='netCDF4')
+    dat_daily[ii].to_netcdf(datadir+'OSNAP2018recovery/Daily_netcdf/CF'+str(ii)+'_mcat_2018recovery_daily.nc','w',format='netCDF4')
 
 def plot_overview(dat,moornum,xlab):
     f,[ax1,ax2,ax3,ax4,ax5]=subplots(5,1,figsize=(12,15),sharex=True)

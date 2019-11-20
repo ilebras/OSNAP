@@ -24,7 +24,7 @@ import os, sys, datetime, string
 # Default er uten maske
 import numpy as np
 
-osnap=pickle.load(open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','rb'))
+# osnap=pickle.load(open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','rb'))
 
 def laplace_X(F,M):
     """1D Laplace Filter in X-direction (axis=1)"""

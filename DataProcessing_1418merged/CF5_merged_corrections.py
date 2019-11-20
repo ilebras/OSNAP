@@ -77,4 +77,4 @@ zoominbot(dat16,dat18,[100,250])
 savefig(figdir+'merging_overview/CF5_precorr_top_overview.png')
 
 
-dat18_corr.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF5_corr_2018recovery_dailymerged.nc','w',format='netCDF4')
+dat18_corr.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF5_mcat_corr_2018recovery_daily.nc','w',format='netCDF4')

@@ -121,6 +121,7 @@ eg['freshc']=-(daily['xport over 27.8'][sep:,:-1,:].where(daily.salinity<=srefb)
 (cc['freshc']+egic['freshc']).sel(date=slice('2014-08-01','2016-04-30')).mean()
 (cc['freshc']+egic['freshc']).sel(date=slice('2014-08-01','2016-04-30')).mean()/140
 
+
 def decompose(cur,srefchoose):
     cur['abar']=nanmean(cur['area'])
     cur['vbar']=nanmean(cur['meanvel'])

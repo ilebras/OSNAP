@@ -1,8 +1,8 @@
 from firstfuncs_1618 import *
 
-dat16=xr.open_dataset(datadir+'OSNAP2016recovery/mcat_nc/CF2_2016recovery_dailymerged.nc')
+dat16=xr.open_dataset(datadir+'OSNAP2016recovery/Daily_netcdf/CF2_mcat_2016recovery_daily.nc')
 
-dat18=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF2_2018recovery_dailymerged.nc')
+dat18=xr.open_dataset(datadir+'OSNAP2018recovery/Daily_netcdf/CF2_mcat_2018recovery_daily.nc')
 
 
 def plot_overview(dat1,dat2):
@@ -19,7 +19,7 @@ def plot_overview(dat1,dat2):
     ax3.set_ylabel('practical salinity []')
 
 plot_overview(dat16,dat18)
-savefig(figdir+'merging_overview/CF2_overview_1618.png')
+savefig(figdir+'merging_overview_mcats/CF2_overview_1618.png')
 
 
 def TSplot(dat1,dat2):
@@ -31,7 +31,7 @@ def TSplot(dat1,dat2):
 
 
 TSplot(dat16,dat18)
-savefig(figdir+'merging_overview/CF2_TS_1618.png')
+savefig(figdir+'merging_overview_mcats/CF2_TS_1618.png')
 
 #############################################################################
 ###### For this case, I'm going to use the first deployment as a baseline
@@ -63,7 +63,7 @@ def plot_saltmp_diff():
     ax2.set_ylabel('temperature difference')
 
 plot_saltmp_diff()
-savefig(figdir+'merging_overview/CF2_saltmpdiff.png')
+savefig(figdir+'merging_overview_mcats/CF2_saltmpdiff.png')
 
 
 #############################################################################
@@ -82,7 +82,6 @@ psal_recon[100]=dat18.PSAL.sel(DEPTH=200)+mean(dat18.PSAL.sel(DEPTH=100)-dat18.P
 ###############################################################################
 ##### Save a reconstructed product which keeps the 100m data which is present
 #### Note that this reconstruction should be taken with a grain of salt
-####
 ################################################################################
 
 dat18_recontmp=dat18.copy()
@@ -94,7 +93,9 @@ for dd in [100]:
 
 
 ptmp_recon[50]=dat18_recontmp.PTMP.sel(DEPTH=100)+mean(dat16.PTMP.sel(DEPTH=50)-dat16.PTMP.sel(DEPTH=100))
+mean(dat16.PTMP.sel(DEPTH=50)-dat16.PTMP.sel(DEPTH=100))
 psal_recon[50]=dat18_recontmp.PSAL.sel(DEPTH=100)+mean(dat16.PSAL.sel(DEPTH=50)-dat16.PSAL.sel(DEPTH=100))
+mean(dat16.PSAL.sel(DEPTH=50)-dat16.PSAL.sel(DEPTH=100))
 
 dat18_recon50=xr.Dataset({'PRES': (['TIME'], 50*ones(len(dat18['TIME']))),
             'PSAL': (['TIME'], psal_recon[50]),
@@ -107,6 +108,6 @@ dat18_recon=xr.concat([dat18_recon50,dat18_recontmp],dim='DEPTH')
 
 
 plot_overview(dat16,dat18_recon)
-savefig(figdir+'merging_overview/CF2_overview_1618recon.png')
+savefig(figdir+'merging_overview_mcats/CF2_overview_1618recon.png')
 
-dat18_recon.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF2_recon_2018recovery_dailymerged.nc','w',format='netCDF4')
+dat18_recon.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF2_mcat_recon_2018recovery_daily.nc','w',format='netCDF4')

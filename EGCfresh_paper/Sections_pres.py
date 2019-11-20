@@ -12,6 +12,8 @@ from aux_funcs import *
 dat=pickle.load(open(datadir+'OSNAP2016recovery/pickles/xarray/CF_xarray_gridplot_notid_1810JHIL.pickle','rb'))
 dat['across track velocity']=-1*dat['across track velocity']
 
+dat
+
 #################################################################################
 # Make mean and var sections of all fields
 #################################################################################

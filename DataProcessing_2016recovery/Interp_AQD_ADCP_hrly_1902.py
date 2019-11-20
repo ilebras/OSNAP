@@ -38,8 +38,6 @@ def HTS(vec): #turn vector from half hour to hour time step by simple quick aver
 import calendar
 
 
-
-
 dmin=datetime.datetime(2014,8,10,0)
 dmax=datetime.datetime(2016,8,1,0)
 dlen=int(divmod((dmax-dmin).total_seconds(),60*60)[0])+1

@@ -75,6 +75,27 @@ theta=1.164248016423335
 
 
 ##################################################################################
+##### SA_CT_PT
+##################################################################################
+
+def add_SA_CT_PT(xray):
+    if 'PRES' in list(xray.data_vars):
+            PRES_out=xray['PRES']
+    else:
+            PRES_out=-gsw.p_from_z(xray['DEPTH'])
+    SA_out=gsw.SA_from_SP(xray['PSAL'],PRES_out,xray.LONGITUDE,xray.LATITUDE)
+    if 'PTMP' in list(xray.data_vars):
+        PT_out=xray['PTMP']
+    else:
+        PT_out=gsw.pt0_from_t(SA_out,xray['TEMP'],PRES_out)
+    CT_out=gsw.CT_from_pt(SA_out,PT_out)
+    PD_out=gsw.sigma0(SA_out,CT_out)
+    xray['ASAL']=(('TIME','DEPTH'),SA_out)
+    xray['PTMP']=(('TIME','DEPTH'),PT_out)
+    xray['CTMP']=(('TIME','DEPTH'),CT_out)
+    xray['PDEN']=(('TIME','DEPTH'),PD_out)
+
+##################################################################################
 ##### fit a sin
 ##################################################################################
 
@@ -184,7 +205,7 @@ salmat,tmpmat=meshgrid(salvec,tmpvec)
 #         pdenmat[jj,ii]=gsw.sigma0(SA_vec[ii],CT_vec[jj])
 # pickle.dump(pdenmat,open('../pickles/aux/pdenmat.pickle','wb'))
 
-pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickle','rb'))
+# pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickle','rb'))
 
 # # Potential density for properties at 750 - more relevant for IIW
 # SA_vec=gsw.SA_from_SP(salvec,zeros(len(salvec)),CFlon[3],CFlat[4])
@@ -195,7 +216,7 @@ pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickl
 #         pdenmat2[jj,ii]=gsw.pot_rho_t_exact(SA_vec[ii],tmpvec[jj],750,0)-1e3
 # pickle.dump(pdenmat2,open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','wb'))
 
-pdenmat2=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','rb'))
+# pdenmat2=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','rb'))
 
 
 

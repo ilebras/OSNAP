@@ -91,5 +91,5 @@ plotonevar(dat18,'PDEN',200,350)
 dat16_corr=dat16.where(dat16.DEPTH!=350).dropna(dim='DEPTH')
 dat18_corr=dat18.where(dat18.DEPTH!=350).dropna(dim='DEPTH')
 
-dat16_corr.to_netcdf(datadir+'OSNAP2016recovery/mcat_nc/CF4_corr_2016recovery_dailymerged.nc','w',format='netCDF4')
-dat18_corr.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF4_corr_2018recovery_dailymerged.nc','w',format='netCDF4')
+dat16_corr.to_netcdf(datadir+'OSNAP2016recovery/mcat_nc/CF4_mcat_corr_2016recovery_daily.nc','w',format='netCDF4')
+dat18_corr.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF4_mcat_corr_2018recovery_daily.nc','w',format='netCDF4')

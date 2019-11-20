@@ -19,4 +19,5 @@ for ii in range(len(dat.TIME)):
         CT=gsw.CT_from_pt(SA,dat['PTMP'][ii,:,jj])
         dat['PDEN'][ii,:,jj]=gsw.sigma0(SA,CT)
 
+dat.to_netcdf(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.nc','w',format='netCDF4')
 pickle.dump(dat,open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','wb'))

@@ -1,8 +1,8 @@
 from firstfuncs_1618 import *
 
-dat16=xr.open_dataset(datadir+'OSNAP2016recovery/mcat_nc/CF6_2016recovery_dailymerged.nc')
+dat16=xr.open_dataset(datadir+'OSNAP2016recovery/Daily_netcdf/CF6_mcat_2016recovery_daily.nc')
 
-dat18=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF6_2018recovery_dailymerged.nc')
+dat18=xr.open_dataset(datadir+'OSNAP2018recovery/Daily_netcdf/CF6_mcat_2018recovery_daily.nc')
 
 
 def plot_overview(dat1,dat2,savename):
@@ -17,7 +17,7 @@ def plot_overview(dat1,dat2,savename):
     ax3.plot(dat1.TIME,dat1.PSAL)
     ax3.plot(dat2.TIME,dat2.PSAL)
     ax3.set_ylabel('practical salinity []')
-    savefig(figdir+'merging_overview/'+savename+'.png')
+    savefig(figdir+'merging_overview_mcats/'+savename+'.png')
 
 plot_overview(dat16,dat18,'CF6_overview_1618')
 
@@ -27,7 +27,7 @@ def TSplot(dat1,dat2,savename):
     plot(dat2.PSAL,dat2.PTMP,'o',alpha=0.3)
     xlabel('practical salinity []')
     ylabel('pot. temperature [$^\circ$C]')
-    savefig(figdir+'merging_overview/'+savename+'.png')
+    savefig(figdir+'merging_overview_mcats/'+savename+'.png')
 
 
 TSplot(dat16,dat18,'CF6_TS_1618')
@@ -57,7 +57,98 @@ def zoominbot(d1,d2):
         ax4.set_ylabel('pot. density anomaly')
 
 zoominbot(dat16,dat18)
-savefig(figdir+'merging_overview/CF6_precorr_overview.png')
+savefig(figdir+'merging_overview_mcats/CF6_precorr_overview.png')
+
+#############################################
+### A closer look at mid-depth salinity time series
+#############################################
+
+dat18.DEPTH
+dat16.DEPTH
+
+def sal_checkout():
+    figure(figsize=(16,12))
+    subplot(311)
+    dat16.sel(DEPTH=800).PSAL.plot()
+    dat18.sel(DEPTH=750).PSAL.plot()
+    gca().set_xticklabels('')
+    xlabel('')
+    ylim(34.88,34.98)
+    grid('on')
+    subplot(312)
+    dat16.sel(DEPTH=1050).PSAL.plot()
+    dat18.sel(DEPTH=1000).PSAL.plot()
+    gca().set_xticklabels('')
+    xlabel('')
+    ylim(34.88,34.98)
+    grid('on')
+    subplot(313)
+    dat16.sel(DEPTH=1550).PSAL.plot()
+    dat18.sel(DEPTH=1500).PSAL.plot()
+    ylim(34.88,34.98)
+    grid('on')
+    savefig(figdir+'merging_overview_mcats/CF6_middepth_sals_sep.png',bbox_inches='tight')
+
+    figure(figsize=(16,4))
+    dat16.sel(DEPTH=300).PSAL.plot()
+    dat18.sel(DEPTH=250).PSAL.plot()
+
+    dat16.sel(DEPTH=550).PSAL.plot()
+    dat18.sel(DEPTH=500).PSAL.plot()
+
+    dat16.sel(DEPTH=800).PSAL.plot()
+    dat18.sel(DEPTH=750).PSAL.plot()
+
+    dat16.sel(DEPTH=1050).PSAL.plot()
+    dat18.sel(DEPTH=1000).PSAL.plot()
+
+    dat16.sel(DEPTH=1550).PSAL.plot()
+    dat18.sel(DEPTH=1500).PSAL.plot()
+    ylim(34.88,34.98)
+    title('')
+    grid('on')
+    savefig(figdir+'merging_overview_mcats/CF6_middepth_sals_tog.png',bbox_inches='tight')
+
+    figure(figsize=(16,4))
+
+    dat16.sel(DEPTH=300).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+    dat18.sel(DEPTH=250).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+
+    dat16.sel(DEPTH=550).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+    dat18.sel(DEPTH=500).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+
+    dat16.sel(DEPTH=800).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+    dat18.sel(DEPTH=750).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+
+    dat16.sel(DEPTH=1050).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+    dat18.sel(DEPTH=1000).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+
+    dat16.sel(DEPTH=1550).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+    dat18.sel(DEPTH=1500).PSAL.resample(TIME='M').mean(dim='TIME').plot()
+    ylim(34.88,34.98)
+    title('')
+    grid('on')
+    savefig(figdir+'merging_overview_mcats/CF6_middepth_sals_smo.png',bbox_inches='tight')
+
+    tstd='2W'
+    figure(figsize=(16,4))
+
+
+
+    dat16.sel(DEPTH=800).PSAL.resample(TIME=tstd).std(dim='TIME').plot()
+    dat18.sel(DEPTH=750).PSAL.resample(TIME=tstd).std(dim='TIME').plot()
+
+    dat16.sel(DEPTH=1050).PSAL.resample(TIME=tstd).std(dim='TIME').plot()
+    dat18.sel(DEPTH=1000).PSAL.resample(TIME=tstd).std(dim='TIME').plot()
+
+    dat16.sel(DEPTH=1550).PSAL.resample(TIME=tstd).std(dim='TIME').plot()
+    dat18.sel(DEPTH=1500).PSAL.resample(TIME=tstd).std(dim='TIME').plot()
+    # ylim(34.88,34.98)
+    title('')
+    grid('on')
+    savefig(figdir+'merging_overview_mcats/CF6_middepth_sals_std.png',bbox_inches='tight')
+
+sal_checkout()
 
 dat18_corr=dat18.copy()
 dat18_corr['PSAL'][:,-1]=dat18['PSAL'].sel(DEPTH=1500)
@@ -86,4 +177,4 @@ savefig(figdir+'merging_overview/CF6_corr_overview.png')
 plot(dat18_corr.PSAL,dat18_corr.PTMP,'.')
 savefig(figdir+'merging_overview/CF6_corr_TS.png')
 
-dat18_corr.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF6_corr_2018recovery_dailymerged.nc','w',format='netCDF4')
+dat18_corr.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF6_mcat_corr_2018recovery_daily.nc','w',format='netCDF4')

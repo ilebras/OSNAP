@@ -8,7 +8,6 @@ from map_funcs import *
 
 dat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_5m_wML.nc')
 
-
 # osnap=pickle.load(open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','rb'))
 # osnap_locs=xr.Dataset(coords={'lon':osnap.LONGITUDE.values,'lat':osnap.LATITUDE.values})
 # osnap_locs.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/osnap_locs.nc','w',format='netCDF4')

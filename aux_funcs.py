@@ -167,7 +167,7 @@ salmat,tmpmat=meshgrid(salvec,tmpvec)
 #         pdenmat[jj,ii]=gsw.sigma0(SA_vec[ii],CT_vec[jj])
 # pickle.dump(pdenmat,open('../pickles/aux/pdenmat.pickle','wb'))
 
-pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickle','rb'))
+# pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickle','rb'))
 
 # # Potential density for properties at 750 - more relevant for IIW
 # SA_vec=gsw.SA_from_SP(salvec,zeros(len(salvec)),CFlon[3],CFlat[4])
@@ -178,7 +178,7 @@ pdenmat=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat.pickl
 #         pdenmat2[jj,ii]=gsw.pot_rho_t_exact(SA_vec[ii],tmpvec[jj],750,0)-1e3
 # pickle.dump(pdenmat2,open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','wb'))
 
-pdenmat2=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','rb'))
+# pdenmat2=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/aux/pdenmat2.pickle','rb'))
 
 
 

@@ -158,4 +158,4 @@ plot(dat18_recon['PRES']);
 plot_overview(dat16_recon,dat18_recon)
 savefig(figdir+'merging_overview/CF1_overview_1618recon.png')
 
-dat18_recon.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF1_recon_2018recovery_dailymerged.nc','w',format='netCDF4')
+dat18_recon.to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF1_mcat_recon_2018recovery_daily.nc','w',format='netCDF4')
