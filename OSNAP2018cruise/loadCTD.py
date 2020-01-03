@@ -88,17 +88,15 @@ def loadCTD_bin(datalist):
 
 grdat=loadCTD_bin(bin_list)
 
+
+
+
 for ss in seclab:
     plot(grdat.lon[seclab[ss]],grdat.lat[seclab[ss]],'o',label=ss)
     plot(grdat.lon[startsec[ss]],grdat.lat[startsec[ss]],'kx',label='')
     legend(loc=(1.05,0))
 
 
-
-scatter(grdat.lon,grdat.lat,c=grdat.dist)
-
-for ss in seclab:
-    print(ss,grdat.sta[seclab[ss]].sortby(grdat.dist).values)
 
 #
 # uni['dendiff']={}
@@ -125,12 +123,9 @@ for ss in seclab:
     suptitle('Section '+ss)
     gca().invert_yaxis()
 
-
-#save 1m binned CTD into a pickle to load elsewhere
-pickle.dump(grdat,open('pickles/CTD_1mbin.pickle','wb'))
-
-print('done!')
-
+#save 1m binned CTD into a netcdf to load elsewhere
+seclab
+grdat.to_netcdf('OSNAP2018cruise/data/CTD_1mbin.nc','w')
 
 XXXXXXXXXXXX
 # Keep this around for now

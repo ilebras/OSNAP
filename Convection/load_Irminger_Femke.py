@@ -108,7 +108,9 @@ ooi=xr.Dataset({'salinity': (['prs','date'],dat['OOI'][0][0][2]),
                      coords={'date': ooi_date, 'prs': dat['OOI'][0][0][0].flatten(),
                      'prs_mid': dat['OOI'][0][0][-4][:,0], 'lat':dat['OOI'][0][0][7].flatten(),'lon':dat['OOI'][0][0][6].flatten()})
 
+ooi
 
+ooi.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/OOI_HYPM_xray_fromFemke.nc','w',format='netCDF4')
 pickle.dump(ooi,open(datadir+'OSNAP2016recovery/pickles/OOI/OOI_HYPM_xray.pickle','wb'),protocol=2)
 
 ####################################################################

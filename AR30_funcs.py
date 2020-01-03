@@ -15,7 +15,7 @@ import seawater as sw
 
 from seabird import cnv
 
-datadir='/home/isabela/Documents/cruises/OSNAP2018_AR30-06/Chipods/AR30/Data/'
+datadir='/home/isabela/Documents/projects/OSNAP/data/Shipboard/AR30_2018/'
 figdir='/home/isabela/Documents/projects/OSNAP/figures/'
 
 startsec={}
@@ -128,7 +128,7 @@ uni['sal']['vmin']=28
 uni['sal']['vmax']=35.2
 uni['tmp']={}
 uni['tmp']['cmap']=cm.RdYlBu_r
-uni['tmp']['vmin']=0
+uni['tmp']['vmin']=1
 uni['tmp']['vmax']=10
 uni['den']={}
 uni['den']['cmap']=pden_cmap
@@ -162,3 +162,21 @@ uni['N2']['cmap']=cm.YlGn
 uni['sal_1m']=uni['sal']
 uni['tmp_1m']=uni['tmp']
 uni['turner_1m']=uni['turner']
+
+
+salvec=linspace(31,36,103)
+tmpvec=linspace(-3,16,103)
+salmat,tmpmat=meshgrid(salvec,tmpvec)
+
+SA_vec=gsw.SA_from_SP(salvec,zeros(len(salvec)),-44,59.5)
+SA_vec_1000=gsw.SA_from_SP(salvec,1e3*ones(len(salvec)),-44,59.5)
+
+CT_vec=gsw.CT_from_pt(SA_vec,tmpvec)
+pdenmat=zeros((shape(salmat)))
+pdenmat2=zeros((shape(salmat)))
+sigma1mat=zeros((shape(salmat)))
+for ii in range(len(salvec)):
+    for jj in range(len(tmpvec)):
+        pdenmat[jj,ii]=gsw.sigma0(SA_vec[ii],CT_vec[jj])
+        pdenmat2[jj,ii]=gsw.pot_rho_t_exact(SA_vec[ii],tmpvec[jj],750,0)-1e3
+        sigma1mat[jj,ii]=gsw.sigma1(SA_vec[ii],CT_vec[jj])

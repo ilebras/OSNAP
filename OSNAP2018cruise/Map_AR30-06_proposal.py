@@ -26,8 +26,6 @@ def mapmeat(lon_start,lat_start,lon_end,lat_end,lon,lat,bathySmoothed):
     CS0 = map.contour(x,y,bathySmoothed,[-3000,-2000,-1000,-500,-200],colors='grey',alpha=0.5)
     # NA = map.contour(x,y,bathySmoothed,[0],colors='black')
 
-
-
     CS0.axis='tight'
 
     return map,x,y,CS0

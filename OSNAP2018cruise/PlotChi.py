@@ -2,10 +2,8 @@ from AR30_funcs import *
 
 datadir='/home/isabela/Documents/cruises/OSNAP2018_AR30-06/Chipods/AR30/Data/'
 
-ctd=pickle.load(open('OSNAP2018cruise/pickles/CTD_1mbin.pickle','rb'))
+ctd=xr.open_dataset('OSNAP2018cruise/data/CTD_1mbin.nc')
 
-
-ctd
 
 stanum=len(ctd.sta)
 zsm=20
@@ -49,7 +47,7 @@ for ii in range(stanum):
     if sum(~isnan(ctd.sal[:,ii]))>1:
         maxprs[ii]=max(ctd.prs[~isnan(ctd.sal[:,ii])])
 
-data[sdv[0]][4]
+ctd
 
 grdat=xr.Dataset({'epsilon': (['prs','sta','sn_dir'],  dstack((data[sdv[0]][4],data[sdv[1]][4]))),
                   'chi': (['prs','sta','sn_dir'],  dstack((data[sdv[0]][5],data[sdv[1]][5]))),
@@ -61,9 +59,9 @@ grdat=xr.Dataset({'epsilon': (['prs','sta','sn_dir'],  dstack((data[sdv[0]][4],d
                   'tmp_1m': (['prs_ctd','sta'],ctd.tmp),
                   'sal_1m': (['prs_ctd','sta'],ctd.sal),
                   'den_1m': (['prs_ctd','sta'],ctd.den),
-                  'deni_1m': (['prsi_ctd','sta'],ctd.deni),
+                  'deni_1m': (['prsi_ctd','sta'],ctd.dendiff),
                   'turner_1m': (['prsi_ctd','sta'],ctd.turner),
-                  'turner_wden_1m': (['prsi_ctd','sta'],ctd.turner_wden),
+                  # 'turner_wden_1m': (['prsi_ctd','sta'],ctd.turner_wden),
                   'lat': (['sta'], ctd.lat),#data[sdv[0]][0][0]
                   'lon': (['sta'], ctd.lon),
                   'dist': (['sta'], ctd.dist),
@@ -75,8 +73,6 @@ grdat=xr.Dataset({'epsilon': (['prs','sta','sn_dir'],  dstack((data[sdv[0]][4],d
                         'sn_dir': sdv})
 
 grdat
-
-grdat.prs[8:13]
 
 def pline(var,ss,axxx):
     if ss=='section 5':
@@ -233,7 +229,6 @@ propsec()
 savefig('/home/isabela/Documents/proposals/2019Feb_OSNAP_mixing/OSNAPmixing-proposal/figures/PrelimSections.png',bbox_inches='tight',dpi=1e3)
 savefig('/home/isabela/Documents/proposals/2019Feb_OSNAP_mixing/OSNAPmixing-proposal/figures/PrelimSections.pdf',bbox_inches='tight')
 
-grdat
 
 (grdat.sal[:,seclab['section 2'],:]).min()
 

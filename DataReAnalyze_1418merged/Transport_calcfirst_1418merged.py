@@ -41,6 +41,38 @@ daily['xport plus']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middist
 onesxr=daily.salinity/daily.salinity
 
 sep=9
+
+
+PWS={}
+PWS['U']=daily['xport plus'].where(daily['potential density']<27.54).sum('depth').sum('distance')
+
+PWS['U'].plot()
+PWS['U'].resample(date='1M').mean().plot()
+PWS['U'].resample(date='1M').mean().min()
+PWS['U'].resample(date='1M').mean().max()
+
+PWS['S']=(daily['xport plus']*daily['salinity']).where(daily['potential density']<27.54).sum('depth').sum('distance')/(daily['xport plus'].where(daily['potential density']<27.54).sum('depth').sum('distance'))
+
+PWS['S'].plot()
+PWS['S'].resample(date='1M').mean().plot()
+PWS['S'].resample(date='1M').mean().min()
+PWS['S'].resample(date='1M').mean().max()
+
+def get_S_fromFWT(FWT,TRANS,sref):
+    S=sref*(1-FWT/TRANS)
+    return S
+
+S_suth=get_S_fromFWT(90e-3,2,34.8)
+S_suth
+
+S_lbmin=get_S_fromFWT(40e-3,2,34.9)
+S_lbmin
+
+S_lbmax=get_S_fromFWT(108e-3,6.3,34.9)
+S_lbmax
+
+S_suth/S_lbmin*33.77
+
 cc={}
 # cc['trans']=daily.xport[:sep,:,:].sum('depth').sum('distance')
 cc['trans']=daily['xport plus'][:sep,:,:].sum('depth').sum('distance')

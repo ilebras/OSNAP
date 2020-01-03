@@ -58,10 +58,10 @@ tmpbounds = array([-1,3,4.2,4.7,6,10])
 tmpnorm = mpl.colors.BoundaryNorm(tmpbounds, tmpcmap.N)
 
 
-month1='-2-'
+month1='-1-'
 month2='-4-'
 
-def SimpleMap(which='None'):
+def SimpleMap(yy,which='None'):
 
     lat_start=50
     lat_end  =66
@@ -82,39 +82,59 @@ def SimpleMap(which='None'):
     bathySmoothed = laplace_filter(bathy,M=None)
 
     map,x,y,CS0=mapmeat(lon_start,lat_start,lon_end,lat_end,lon,lat,bathySmoothed)
-    map.drawmeridians(range(lon_start+3,lon_end+10,10),labels=[0,0,0,1],linewidth=0.0001,fontsize=12)
+    map.drawmeridians(range(lon_start+3,lon_end+10,20),labels=[0,0,0,1],linewidth=0.0001,fontsize=12)
     map.drawparallels(arange(lat_start,lat_end+2,5),labels=[1,0,0,0],linewidth=0.0001,fontsize=12)
     # [map.plot(ooi_lon[ll],ooi_lat[ll],'o',latlon=True) for ll in ooi_lat]
-    map.plot(CFlon,CFlat,'k*',latlon=True,zorder=101,markersize=20)
+    map.plot(CFlon[4],CFlat[4],'k*',latlon=True,zorder=101,markersize=20)
     if which=='depth':
-            map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
-            c=dat.da_mld.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,latlon=True,norm=MLnorm,cmap=MLcmap,zorder=100)
-            colorbar(label='ML depth [m]')
+            out=map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
+            c=dat.da_mld.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,latlon=True,vmin=0,vmax=1750,zorder=100)
+            # colorbar(label='ML depth [m]')
     elif which=='dens':
-            map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
+            out=map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
             c=dat.da_mlpd.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,latlon=True,norm=norm,cmap=dencmap,zorder=100)
-            colorbar(label='ML pot. density')
+            # colorbar(label='ML pot. density')
     elif which=='sal':
-            map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
+            out=map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
             c=dat.da_mls.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,latlon=True,norm=salnorm,cmap=salcmap,zorder=100)
-            colorbar(label='ML salinity')
+            # colorbar(label='ML salinity')
     elif which=='tmp':
-            map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
+            out=map.scatter(dat.profilelon.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,dat.profilelat.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,
             c=dat.da_mlt.sel(date=slice(str(yy)+month1+'1',str(yy)+month2+'1')).values,latlon=True,norm=tmpnorm,cmap=tmpcmap,zorder=100)
-            colorbar(label='ML pot. temperature')
-    return map
+            # colorbar(label='ML pot. temperature')
+    return map,out
 
+def sumplot():
+    f,axx=subplots(3,2,figsize=(10,9),sharex=True,sharey=True)
+    for ii,yy in enumerate(range(2014,2017)):
+        subplot(3,2,2*ii+1)
+        map,dp=SimpleMap(yy,which='depth')
+        ylabel(str(yy),fontsize=16,labelpad=35)
+        subplot(3,2,2*ii+2)
+        map,dn=SimpleMap(yy,which='dens')
 
-for yy in range(2013,2019):
-    figure(figsize=(13,5))
-    subplot(121)
-    map=SimpleMap(which='sal')
-    title(yy)
-    subplot(122)
-    map=SimpleMap(which='tmp')
-    title(yy)
-    savefig(figdir+'MixedLayer/ArgoMLclim/ArgoML_saltmp_FebMar_'+str(yy)+'.png',bbox_inches='tight')
+    p0 = axx[-1,0].get_position().get_points().flatten()
+    p1 = axx[-1,1].get_position().get_points().flatten()
+    ax_cbar = f.add_axes([p0[0], 0.05, p0[2]-p0[0], 0.02])
+    colorbar(dp, cax=ax_cbar, orientation='horizontal',label='mixed layer depth [m]')
+    ax_cbar2 = f.add_axes([p1[0], 0.05, p1[2]-p1[0], 0.02])
+    colorbar(dn, cax=ax_cbar2, orientation='horizontal',label='mixed layer pot. density anomaly [kg m$^{-3}$]')
+    suptitle('January - March mixed layer properties\nfrom Holte et al. (2017) Argo float analysis',fontsize=14)
 
+    savefig(figdir+'MixedLayer/ArgoMLclim/ArgoML_asummary_dpthden_JanMarinc.png',bbox_inches='tight')
+
+sumplot()
+
+# for yy in range(2013,2019):
+#     figure(figsize=(13,5))
+#     subplot(121)
+#     map=SimpleMap(which='sal')
+#     title(yy)
+#     subplot(122)
+#     map=SimpleMap(which='tmp')
+#     title(yy)
+#     savefig(figdir+'MixedLayer/ArgoMLclim/ArgoML_saltmp_FebMar_'+str(yy)+'.png',bbox_inches='tight')
+#
 
 
 for yy in range(2013,2019):
@@ -125,4 +145,4 @@ for yy in range(2013,2019):
     subplot(122)
     map=SimpleMap(which='dens')
     title(yy)
-    savefig(figdir+'MixedLayer/ArgoMLclim/ArgoML_dpthden_FebMar_'+str(yy)+'.png',bbox_inches='tight')
+    savefig(figdir+'MixedLayer/ArgoMLclim/ArgoML_dpthden_JanMarinc_'+str(yy)+'.png',bbox_inches='tight')
