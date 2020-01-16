@@ -15,9 +15,9 @@ bathy['section 3']=io.loadmat(datadir+'ar30_bathy/sect3_clean.mat')
 ctd
 
 vma=xr.open_dataset('OSNAP2018cruise/data/VMADCP_os.nc')
-
-############ This merging process is not quite working -- will have to fix!!
-dat=xr.merge([vma,ctd],compat='override')
+#
+# ############ This merging process is not quite working -- will have to fix!!
+# dat=xr.merge([vma,ctd],compat='override')
 
 figdirplus=figdir+'AR30/1912_LongSecFocus/'
 ####################################### PLOT ######################################################
@@ -41,7 +41,26 @@ quickmap()
 
 
 for ss in seclist:
-    plot(dat.lon[seclab[ss]],dat.lat[seclab[ss]],'x',label=ss)
+    plot(ctd.lon[seclab[ss]],ctd.lat[seclab[ss]],'x',label=ss)
+
+ctd
+
+def plot_TS_core():
+    f,axx=subplots(1,1,figsize=(5,4))
+    distch=80
+    for ii,ss in enumerate(seclist[::-1]):
+        plot(ctd.sal[:,seclab[ss]].where(ctd.dist[seclab[ss]]<distch).values.flatten(),ctd.tmp[:,seclab[ss]].where(ctd.dist[seclab[ss]]<distch).values.flatten(),'o',label=ss,alpha=0.2,color='C'+str(3-ii))
+        legend(loc=(1.05,0))
+        den=axx.contour(salvec,tmpvec,pdenmat,colors='k',linewidths=2,levels=arange(27.5,28,0.1))
+        axx.set_ylim(1.5,6.5)
+        axx.set_xlim(34.825,34.975)
+        xlabel('salinity')
+        ylabel('temperature')
+        title('Properties within '+str(distch)+'km of shore')
+        savefig(figdirplus+'TS_intwater_core_LongSecs_Ar30.png',bbox_inches='tight')
+
+plot_TS_core()
+
 
 def plot_TS():
     f,axx=subplots(1,1,figsize=(5,4))
@@ -83,6 +102,9 @@ def plotvar(var,tit):
     savefig(figdirplus+'Section_'+var+'_LongSecs_Ar30.png',bbox_inches='tight')
 
 
+uni['o2']={'cmap':cm.rainbow,'vmin':1000,'vmax':1030}
+
+plotvar('o2','Oxygen')
 
 plotvar('sal','Salinity')
 

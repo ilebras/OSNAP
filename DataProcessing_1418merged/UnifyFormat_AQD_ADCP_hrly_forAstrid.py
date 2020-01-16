@@ -9,7 +9,7 @@ def quickpresplot(xray):
 # Not going to filter these, so that Astrid can apply same exact filtering!
 
 
-""################## CF moorings
+################## CF moorings
 for yr in ['2016','2018']:
     for moornum in range(6,7):
         aqdir=glob.glob(datadir+'OSNAP'+yr+'recovery/AQD_Data_CF/*CF'+str(moornum)+'*')

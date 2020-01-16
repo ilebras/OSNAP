@@ -73,8 +73,11 @@ plot(diff(int.volume))
 
 plot(diff(int.saltstorage))
 plot(diff(int.TIME))
+
+int['saltstorage_corr']=int.saltstorage-(int.saltstorage.mean()/int.volume.mean())*int.volume
+
 # Get storage terms
-units['SU_storage_I']=(['TIME_I'],diff(int.saltstorage)/[float(xx) for xx in diff(int.TIME)]*1e3) # time gives nanoseconds(1e-9), so multiply by 1e3 to get Sv.
+units['SU_storage_I']=(['TIME_I'],diff(int.saltstorage_corr)/[float(xx) for xx in diff(int.TIME)]*1e3) # time gives nanoseconds(1e-9), so multiply by 1e3 to get Sv.
 
 units['U_storage_I']=(['TIME_I'],diff(int.volume)/[float(xx) for xx in diff(int.TIME)]*1e3)
 

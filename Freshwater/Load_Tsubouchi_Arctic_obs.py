@@ -40,6 +40,8 @@ dat=load_convert()
 
 def map_split():
     plot(dat.LONGITUDE,dat.LATITUDE,'o');
+    plot(dat.MLON,dat.MLAT,'x');
+    axhline(82)
     axhline(78)
     axhline(68)
 
@@ -53,20 +55,58 @@ def get_section(minlat,maxlat):
                     'PSAL':(['TIME','LONGITUDE','DEPTH'],dat.PSAL.values[:,latind,:]),
                     'LATITUDE':(['LONGITUDE'],dat.LATITUDE.values[latind]),
                     'MLAT':(['MLON'],dat.MLAT.values[mlind]),
-                    'VELO_I':(['TIME','MLON','DEPTH'],dat.finabsvel.values[:,mlind,:]),
+                    'VELO':(['TIME','MLON','DEPTH'],dat.finabsvel.values[:,mlind,:]),
                     'frac':(['TIME','MLON','DEPTH'],dat.frac.values[:,mlind,:]),},
                     coords={'TIME':dat.TIME.values,'DEPTH':dat.DEPTH.values,'LONGITUDE':dat.LONGITUDE.values[latind],'MLON':dat.MLON.values[mlind]})
-    return sec
+
+    sec_final=sec.interp(LONGITUDE=sec.MLON.values).drop('LONGITUDE').rename({'MLON':'LONGITUDE'})
+    sec_final=sec_final.assign_coords(LON_LONG=sec.LONGITUDE.values)
+    sec_final['LAT_LONG']=('LON_LONG',sec.LATITUDE.values)
+    return sec_final
 
 fs=get_section(78,82)
-fs.PSAL.mean(dim='TIME').plot()
-fs['VELO_I']=
-
 bso=get_section(68,78)
-bso.PSAL.mean(dim='TIME').plot()
 
-fs=fs.transpose('TIME','DEPTH','LONGITUDE','MLON')
-bso=bso.transpose('TIME','DEPTH','LONGITUDE','MLON')
+
+bso.LON_LONG.values
+
+fs=fs.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
+bso=bso.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
+
+ind=10
+plot(fs.LONGITUDE[:ind],fs.VELO.mean('DEPTH').mean('TIME')[:ind],'o')
+plot(fs.LONGITUDE[:ind],fs.PSAL.mean('DEPTH').mean('TIME')[:ind],'o')
+plot(fs.LON_LONG[:ind],fs.LAT_LONG[:ind],'x')
+
+ind=-20
+plot(fs.LONGITUDE[ind:],fs.LATITUDE[ind:],'o')
+plot(fs.LON_LONG[ind:],fs.LAT_LONG[ind:],'x')
+
+########################################################################################################
+##################################  ADD AREA AND TRANSPORT ################################################
+########################################################################################################
+
+def get_AREA_TRANS(sec):
+    sec['DISTDIFF']=('LONGITUDE',sw.dist(sec.LAT_LONG.values,sec.LON_LONG.values)[0]*1e3)
+    sec['DEPTHDIFF']=('DEPTH',diff(hstack((0,sec.DEPTH.values[:-1]+diff(sec.DEPTH.values)/2,sec.DEPTH.values[-1]+diff(sec.DEPTH.values)[-1]/2))))
+    sec['AREA']=sec['DISTDIFF']*sec['DEPTHDIFF']*sec['frac']
+    sec['TRANS']=sec['AREA']*sec['VELO']/1e6
+    return sec
+
+
+fs=get_AREA_TRANS(fs)
+bso=get_AREA_TRANS(bso)
+
+sec=bso
+
+plot(sec.LAT_LONG.values,sec.LON_LONG.values,'o')
+
+sw.dist(sec.LAT_LONG.values,sec.LON_LONG.values)[0]*1e3
+
+bso.DISTDIFF.plot()
+
+fs.TRANS.sum('DEPTH').sum('LONGITUDE').plot()
+bso.TRANS.sum('DEPTH').sum('LONGITUDE').plot()
 
 def add_PDEN(xray):
     if 'PRES' in list(xray.data_vars):
@@ -90,9 +130,5 @@ def add_PDEN(xray):
 fs=add_PDEN(fs)
 bso=add_PDEN(bso)
 
-fs
-
-
-
-fs.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_fs_xray_1912.nc')
-bso.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_bso_xray_1912.nc')
+fs.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_fs_xray_2001.nc')
+bso.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_bso_xray_2001.nc')

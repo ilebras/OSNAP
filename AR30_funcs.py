@@ -164,6 +164,11 @@ uni['tmp_1m']=uni['tmp']
 uni['turner_1m']=uni['turner']
 
 
+uni['o2']={}
+uni['o2']['vmin']=4
+uni['o2']['vmax']=9
+uni['o2']['cmap']=cm.rainbow
+
 salvec=linspace(31,36,103)
 tmpvec=linspace(-3,16,103)
 salmat,tmpmat=meshgrid(salvec,tmpvec)

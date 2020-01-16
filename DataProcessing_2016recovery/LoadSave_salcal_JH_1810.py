@@ -1,5 +1,5 @@
 from aux_funcs import *
-
+datadir=datadir+'OSNAP2016recovery/'
 #####################################################################
 # Load all T and S into large dictionaries
 #####################################################################
@@ -26,7 +26,7 @@ for moornum in range(1,8):
     if moornum==7:
         ctdlist=hstack((ctdlist,glob.glob(datadir+'OSNAP2016recovery/RBR/CF'+str(moornum)+'*xr420*_ilebras.mat')))
     #load in each sal,tmp set
-    for dd in ctdlist
+    for dd in ctdlist:
         if moornum==7:
             dat = io.loadmat(dd)
             tmp_hrly=hrly_ave([float(tt) for tt in dat['temp'][:].flatten()],aveconst)
@@ -208,7 +208,70 @@ for key in date:
         month[key][key2]=[dd.month for dd in date[key][key2]]
 
 
-pickle.dump([date,month,prs,sal,tmp],
-            open('../pickles/TSdailydic/TS_daily_dic_wJHIL.pickle','wb'))
+#just to be consistent with nomenclature as the below is copied from another script.
+#(want to save as netcdf from this file directly and circumvent pickle nonsense.)
+date_all=date.copy()
+month_all=month.copy()
+prs_all=prs.copy()
+sal_all=sal.copy()
+tmp_all=tmp.copy()
+
+#confirm that length/start date lines up
+for ii in range(1,8):
+    for kk in prs_all[ii]:
+        print(ii,shape(prs_all[ii][kk]),date_all[ii][kk][0])
+#confirmed this is true (but only within moorings, which is fine)
+
+#make sal, ptmp, and pressure matrices
+prs_mat={}
+sal_mat={}
+ptmp_mat={}
+date_vec={}
+for ii in range(2,8):
+    dpths=list(date_all[ii].keys())
+    print(dpths)
+    date_vec[ii]=date_all[ii][dpths[-1]]
+    prs_mat[ii]=zeros((len(date_vec[ii]),len(dpths)))
+    sal_mat[ii]=prs_mat[ii].copy()
+    ptmp_mat[ii]=prs_mat[ii].copy()
+    for kk in range(len(dpths)):
+        tmp_len=len(prs_all[ii][dpths[kk]])
+        prs_mat[ii][:tmp_len,kk]=prs_all[ii][dpths[kk]]
+        sal_mat[ii][:tmp_len,kk]=sal_all[ii][dpths[kk]]
+        ptmp_mat[ii][:tmp_len,kk]=tmp_all[ii][dpths[kk]]
+
+def add_SA_CT_PT(xray):
+    if 'PRES' in list(xray.data_vars):
+            PRES_out=xray['PRES']
+    else:
+            PRES_out=-gsw.p_from_z(xray['DEPTH'])
+    SA_out=gsw.SA_from_SP(xray['PSAL'],PRES_out,xray.LONGITUDE,xray.LATITUDE)
+    if 'PTMP' in list(xray.data_vars):
+        PT_out=xray['PTMP']
+    else:
+        PT_out=gsw.pt0_from_t(SA_out,xray['TEMP'],PRES_out)
+    CT_out=gsw.CT_from_pt(SA_out,PT_out)
+    PD_out=gsw.sigma0(SA_out,CT_out)
+    xray['ASAL']=(('TIME','DEPTH'),SA_out)
+    xray['PTMP']=(('TIME','DEPTH'),PT_out)
+    xray['CTMP']=(('TIME','DEPTH'),CT_out)
+    xray['PDEN']=(('TIME','DEPTH'),PD_out)
+
+#make an xarray for each mooring
+CF_16_daily={}
+for ii in range(2,8):
+    CF_16_daily[ii]=xr.Dataset({'PRES': (['TIME','DEPTH'], prs_mat[ii] ),
+                'PSAL': (['TIME','DEPTH'], sal_mat[ii]),
+                'PTMP': (['TIME','DEPTH'],  ptmp_mat[ii]),},
+                coords={'TIME': date_vec[ii],
+                        'DEPTH': list(prs_all[ii].keys()),
+                        'LATITUDE': CFlat[ii-1],
+                        'LONGITUDE': CFlon[ii-1]})
+    add_SA_CT_PT(CF_16_daily[ii])
+    CF_16_daily[ii].to_netcdf(datadir+'Daily_netcdf/CF'+str(ii)+'_mcat_2016recovery_daily.nc','w',format='netCDF4')
+
+
+# pickle.dump([date,month,prs,sal,tmp],
+#             open('../pickles/TSdailydic/TS_daily_dic_wJHIL.pickle','wb'))
 
 XXXXXXXXXXX

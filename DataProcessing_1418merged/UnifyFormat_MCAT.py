@@ -17,8 +17,6 @@ quickpresplot(m1_18)
 
 m1_18_daily=m1_18.resample(TIME='1D').mean(dim='TIME')
 
-
-
 add_SA_CT_PT(m1_18_daily)
 
 m1_18_daily.to_netcdf(datadir+'OSNAP2018recovery/Daily_netcdf/M1_mcat_2018recovery_daily.nc','w',format='netCDF4')

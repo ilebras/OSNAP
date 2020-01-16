@@ -10,8 +10,15 @@ osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
 fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_1912.nc')
 bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_1912.nc')
 ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
-
 so=xr.open_dataset(datadir+'NorESM/NorESM_source_storage_xray_1912.nc')
+
+vts=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_volumetransports_201001-201812.nc')
+startyear=2010
+startmonth=1
+endyear=2018
+endmonth=12
+vts['time']=array([datetime.datetime(m//12, m%12+1, 15) for m in range(startyear*12+startmonth-1, endyear*12+endmonth)])
+
 
 ################################################################################################################################
 ################################################################################################################################
@@ -23,6 +30,7 @@ def plot_volfluxes():
     f,axx=subplots(3,1,figsize=(11,8),sharex=True)
     for ii,sec in enumerate([osnap,ns,fs,bso]):
         (sec['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(label=labstr[ii],ax=axx[0])
+        # net_vt_OSNAP.plot(c
     (osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(ax=axx[1],label='Southern boundary')
     (fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(ax=axx[1],label='Northern boundary')
     (osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(ax=axx[1],label='Volume convergence')
@@ -32,11 +40,61 @@ def plot_volfluxes():
         axx[jj].set_ylabel('Transport [Sv]')
         axx[jj].legend(loc=(1.01,0.2))
         axx[jj].set_xlabel('')
-    savefig(figdir+'FW_massbal.png',bbox_inches='tight')
-
+    savefig(figdir+'FW_massbal_fromfields.png',bbox_inches='tight')
 
 plot_volfluxes()
 
+def plot_volfluxes_corr():
+    f,axx=subplots(3,1,figsize=(11,8),sharex=True)
+    # for ii,sec in enumerate([osnap,ns,fs,bso]):
+    #     (sec['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(label=labstr[ii],ax=axx[0])
+    vts.net_vt_OSNAP.plot(label=labstr[0],ax=axx[0])#,linestyle='--',color='C0')
+    vts.net_vt_NS.plot(label=labstr[1],ax=axx[0])#,linestyle='--',color='C1')
+    vts.net_vt_FS.plot(label=labstr[2],ax=axx[0])#,linestyle='--',color='C2')
+    vts.net_vt_BSO.plot(label=labstr[3],ax=axx[0])#,linestyle='--',color='C3')
+    (vts.net_vt_OSNAP+vts.net_vt_NS).plot(ax=axx[1],label='Southern boundary')
+    (vts.net_vt_FS+vts.net_vt_BSO).plot(ax=axx[1],label='Northern boundary')
+    (vts.net_vt_OSNAP+vts.net_vt_NS-vts.net_vt_FS-vts.net_vt_BSO).plot(ax=axx[1],label='Volume convergence')
+    so['FW+SI'].plot(label='Freshwater volume sources',ax=axx[2])
+    # (vts.net_vt_OSNAP+vts.net_vt_NS-vts.net_vt_FS-vts.net_vt_BSO).plot(ax=axx[2],label='Volume convergence')
+    (so['U_storage']).plot(label='Volume storage',ax=axx[2])
+    for jj in range(3):
+        axx[jj].set_ylabel('Transport [Sv]')
+        axx[jj].legend(loc=(1.01,0.2))
+        axx[jj].set_xlabel('')
+    savefig(figdir+'FW_massbal_fromdiag.png',bbox_inches='tight')
+
+plot_volfluxes_corr()
+
+
+def comp_calc():
+    f,axx=subplots(3,1,figsize=(11,8),sharex=True)
+    for ii,sec in enumerate([osnap]):
+        (sec['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(label='fields',ax=axx[0])
+    vts.net_vt_OSNAP.plot(label='diagnostics',ax=axx[0])
+    (fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(ax=axx[1],label='fields')
+    (vts.net_vt_FS+vts.net_vt_BSO).plot(ax=axx[1],label='diagnostics')
+    (osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(ax=axx[2],label='fields')
+    (vts.net_vt_OSNAP+vts.net_vt_NS-vts.net_vt_FS-vts.net_vt_BSO).plot(ax=axx[2],label='diagnostics')
+    axx[0].set_ylabel('OSNAP Transport [Sv]')
+    axx[1].set_ylabel('FS+BSO Transport [Sv]')
+    axx[2].set_ylabel('Volume convergence [Sv]')
+    axx[2].axhline(0,color='k')
+    axx[1].legend(loc=(1.01,0.2))
+    for jj in range(3):
+        axx[jj].set_xlabel('')
+
+(osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).mean()
+
+(vts.net_vt_OSNAP+vts.net_vt_NS).mean()
+(vts.net_vt_FS+vts.net_vt_BSO).mean()
+
+
+(vts.net_vt_OSNAP+vts.net_vt_NS-vts.net_vt_FS-vts.net_vt_BSO).mean()
+so['FW+SI'].mean()
+((osnap['TRANS']*osnap['PSAL']).sum(dim='DEPTH').sum(dim='LONGITUDE')+(ns['TRANS']*ns['PSAL']).sum(dim='DEPTH').sum(dim='LONGITUDE')-(fs['TRANS']*fs['PSAL']).sum(dim='DEPTH').sum(dim='LONGITUDE')-(bso['TRANS']*bso['PSAL']).sum(dim='DEPTH').sum(dim='LONGITUDE')).mean(dim='TIME')
+
+comp_calc()
 ################################################################################################################################
 ################################################################################################################################
 ###########################################      SALT BALANCE     #######################################################

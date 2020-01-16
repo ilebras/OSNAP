@@ -1,5 +1,4 @@
 from firstfuncs_1618 import *
-
 figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorESM/'
 
 ################################################################################################################################
@@ -7,14 +6,6 @@ figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorE
 ###########################################      LOAD     #######################################################
 ################################################################################################################################
 ################################################################################################################################
-
-#
-# # #### load osnap data and cut out the eastern portion
-# lonbnd=-44
-# dat=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.nc')
-# osnap_obs=dat.sel(LONGITUDE=slice(lonbnd,0))
-# osnap_obs['LATITUDE']=dat['LATITUDE'].values[dat.LONGITUDE>lonbnd]
-#
 
 #### load noresm and force formatting to be the same
 def load_noresm(whichone):
@@ -37,6 +28,9 @@ fs=load_noresm('FS')
 bso_redundant=load_noresm('BSO')
 ns=load_noresm('NS')
 
+ns.LATITUDE.values
+
+ns.LONGITUDE.values
 
 def fix_bso(bso1): #
     lonind=[0,2,4,5,7,9,10,12,14,16,17,19,21,22,23]
@@ -317,211 +311,3 @@ osnap.to_netcdf(datadir+'NorESM/NorESM_osnap_xray_1912.nc','w')
 fs.to_netcdf(datadir+'NorESM/NorESM_fs_xray_1912.nc','w')
 ns.to_netcdf(datadir+'NorESM/NorESM_ns_xray_1912.nc','w')
 bso.to_netcdf(datadir+'NorESM/NorESM_bso_xray_1912.nc','w')
-
-# osnap_obs['TRANS']=osnap_obs['AREA']*osnap_obs['VELO']
-################################################################################################################################
-################################################################################################################################
-###########################################      GET overturning    #######################################################
-################################################################################################################################
-################################################################################################################################
-
-denstep=0.01
-denvec=arange(25.9,28.3,denstep)
-def getpsi(east):
-    east['TRANS']=east['VELO']*east['AREA']/1e6
-    psimat=NaN*ones((len(denvec),len(east.TIME)))
-    for ii,dd in enumerate(denvec):
-            psimat[ii,:]=east['TRANS'].where(east['PDEN']>dd-denstep/2).where(east['PDEN']<=dd+denstep/2).sum(dim='DEPTH').sum(dim='LONGITUDE').values
-    east=east.assign_coords(DENLEV=(denvec))
-    east['TRANSDEN']=((['DENLEV','TIME']),psimat)
-    east['PSI']=east['TRANSDEN'].cumsum(dim='DENLEV')
-    east['SIGMAX']=(('TIME'),east.DENLEV[east.PSI.argmax(dim='DENLEV').values])
-    east['SIGMEAN']=east.DENLEV[east.PSI.mean(dim='TIME').argmax(dim='DENLEV').values]
-    east['MOC']=east.PSI.max(dim='DENLEV')
-    east['MOCMEAN']=east.PSI[east.PSI.mean(dim='TIME').argmax(dim='DENLEV').values,:]
-
-    return east
-
-osnap=getpsi(osnap)
-osnap_obs=getpsi(osnap_obs)
-
-def MOC_comp():
-    osnap.MOC.plot()
-    osnap.MOCMEAN.plot()
-    osnap_obs.MOC.plot()
-    osnap_obs.MOCMEAN.plot()
-    xlim(datetime.datetime(2014,1,1),datetime.datetime(2017,1,1))
-    figure()
-    osnap.SIGMAX.plot()
-    axhline(osnap.SIGMEAN)
-    osnap_obs.SIGMAX.plot()
-    axhline(osnap_obs.SIGMEAN,color='C1')
-    xlim(datetime.datetime(2014,1,1),datetime.datetime(2017,1,1))
-    figure()
-    osnap.TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
-    osnap_obs.TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
-
-MOC_comp()
-
-osnap.TRANS.sum(dim='LONGITUDE').sum(dim='DEPTH').mean()
-ns.TRANS.sum(dim='LONGITUDE').sum(dim='DEPTH').plot()
-
-################################################################################################################################
-################################################################################################################################
-###########################################      PLOT MEAN SECTION    #######################################################
-################################################################################################################################
-################################################################################################################################
-sigmax=osnap.SIGMEAN.values
-
-sigmax
-oslim=-40
-fslim=6
-
-
-univec['tmp']=['pot. temperature', arange(-1,11,0.5),cm.RdYlBu_r,range(0,11,2),'[$^\\circ$C]']
-univec['sal']=['salinity',arange(34,35.6,0.1),cm.PiYG_r, array([34., 34.5 ,35,35.5,]),'']
-vmax=0.1
-univec['VELO']=['across track velocity',arange(-vmax,vmax+0.01,0.01),cm.RdBu_r,arange(-vmax,vmax+0.05,0.05),'[m/s]']
-
-# VELOCITY, SALINITY, TEMPERATURE AND DENSITY MEANS OVER PERIOD OF OVERLAP
-def plot_each(dat,xxvar,axx,var,var2,ymax):
-    filled=axx.pcolor(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),cmap=univec[var2][2])#,extend='both')#univec[var2][1],
-    axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),levels=univec[var2][1][::2],colors='k')
-    axx.contour(xxvar,dat.DEPTH,dat['PDEN'].mean(dim='TIME'),levels=[sigmax],colors='k',linewidths=4) # add NorESM isopycnal of maximum overturning (for 2014-2016)
-    axx.set_facecolor('k')
-    axx.set_ylim(ymax,0)
-    return filled
-
-def plot_all_secs(var,var2,tit):
-    f,[ax1,ax2,ax3,ax4]=subplots(1,4,figsize=(20,4))
-    plot_each(fs,fs.LONGITUDE,ax1,var,var2,3000)
-    ax1.set_xlabel('Longitude [$^\circ$W]')
-    ax1.set_title('Fram Strait',fontsize=14)
-
-    plot_each(bso,bso.LATITUDE,ax2,var,var2,600)
-    ax2.set_xlabel('Latitude [$^\circ$N]')
-    ax2.set_title('Barents Sea Opening',fontsize=14)
-    fill=plot_each(osnap,osnap.LONGITUDE,ax3,var,var2,3500)
-    ax3.set_xlabel('Longitude [$^\circ$W]')
-    ax3.set_title('OSNAP East',fontsize=14)
-    fill=plot_each(ns,ns.LONGITUDE,ax4,var,var2,300)
-    ax4.set_xlabel('Longitude [$^\circ$W]')
-    ax4.set_title('North Sea',fontsize=14)
-    caxit=f.add_axes([0.93,0.1,0.01,0.8])
-    ax1.axvline(fslim,color='k',linewidth=4)
-    ax3.plot([oslim, oslim],[0,100],color='k',linewidth=4)
-    colorbar(fill,label=tit,cax=caxit)
-    savefig(figdir+'NorESM_sections_'+var2+'.png',bbox_inches='tight')
-
-
-
-plot_all_secs('PTMP','tmp','pot. temperature [$^\circ$C]')
-
-plot_all_secs('PSAL','sal','salinity')
-
-plot_all_secs('PDEN','pden','potential density [kg m$^{-3}$]')
-
-plot_all_secs('VELO','VELO','velocity [m s$^{-1}$]')
-
-
-############################################################################################
-################   WATER MASS PARTITIONING   #############################################
-
-AWS={}
-PWS={}
-DWS={}
-AWN={}
-PWN={}
-
-xray=osnap
-for var in ['PSAL','PTMP','PDEN','TRANS']:
-    if var=='TRANS':
-        DWS[var]=xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        PWS[var]=xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        AWS[var]=xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-    else:
-        DWS[var]=(xray[var]*xray['TRANS']).where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        PWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        AWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-
-
-#split up FS into PW and AW using definition in Tsubouchi et al. 2018, which is boundary between "EGC" + "Middle", 2W
-# Here I'm using 6E, as it better maximizes transport...? Check on this...
-#call all BSO water AW.
-for var in ['PSAL','PTMP','PDEN','TRANS']:
-    if var=='TRANS':
-        PWN[var]=-fs['TRANS'].where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        AWN[var]=-fs['TRANS'].where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')
-    else:
-        PWN[var]=(fs[var]*fs['TRANS']).where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')/fs['TRANS'].where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        AWN[var]=((fs[var]*fs['TRANS']).where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')+(bso[var]*bso['TRANS']).sum(dim='DEPTH').sum(dim='LONGITUDE'))/(fs['TRANS'].where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')+bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE'))
-
-
-# ylim(-20,20)
-# axhline(0,color='k')
-
-# legend(loc=(1.05,0.2))
-# axhline(0,color='k')
-def plot_WMprops_tvar():
-    f,axx=subplots(4,1,figsize=(12,20),sharex=True)
-    for ii,var in enumerate(['TRANS','PSAL','PTMP','PDEN']):
-            PWS[var].plot(label='PWS',ax=axx[ii])
-            AWS[var].plot(label='AWS',ax=axx[ii])
-            DWS[var].plot(label='DWS',ax=axx[ii])
-            AWN[var].plot(label='AWN',ax=axx[ii])
-            PWN[var].plot(label='PWN',ax=axx[ii])
-            axx[ii].set_ylabel(var)
-            axx[ii].set_xlabel('')
-    axx[0].legend()
-    savefig(figdir+'NorESM_WMtvar_all.png',bbox_inches='tight')
-
-plot_WMprops_tvar()
-
-def plot_WMprops_tvar_comp():
-    f,axx=subplots(4,1,figsize=(12,20),sharex=True)
-    for ii,var in enumerate(['TRANS','PSAL','PTMP','PDEN']):
-            PWS[var].plot(label='PWS',ax=axx[ii])
-            AWS[var].plot(label='AWS',ax=axx[ii])
-            DWS[var].plot(label='DWS',ax=axx[ii])
-
-
-            axx[ii].set_ylabel(var)
-            axx[ii].set_xlabel('')
-    axx[0].legend()
-    savefig(figdir+'NorESM_WMtvar_OSNAPcomp.png',bbox_inches='tight')
-
-
-plot_WMprops_tvar_comp()
-
-def plot_TS_bylayer():
-    figure(figsize=(5,4))
-    scatter(PWS['PSAL'].mean(dim='TIME'),PWS['PTMP'].mean(dim='TIME'),s=PWS['TRANS'].mean(dim='TIME')**2*4,zorder=50,linewidth=3,label='PWS')
-    scatter(AWS['PSAL'].mean(dim='TIME'),AWS['PTMP'].mean(dim='TIME'),s=AWS['TRANS'].mean(dim='TIME')**2*4,zorder=50,linewidth=3,label='AWS')
-    scatter(DWS['PSAL'].mean(dim='TIME'),DWS['PTMP'].mean(dim='TIME'),s=DWS['TRANS'].mean(dim='TIME')**2*4,zorder=50,linewidth=3,label='DWS')
-    scatter(AWN['PSAL'].mean(dim='TIME'),AWN['PTMP'].mean(dim='TIME'),s=AWN['TRANS'].mean(dim='TIME')**2*4,zorder=50,linewidth=3,label='AWN')
-    scatter(PWN['PSAL'].mean(dim='TIME'),PWN['PTMP'].mean(dim='TIME'),s=PWN['TRANS'].mean(dim='TIME')**2*4,zorder=51,linewidth=3,label='PWN')
-    contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
-    contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=5)
-    xlabel('salinity')
-    ylabel('pot.temperature [$^\circ$C]')
-    xlim(34,36)
-    ylim(-2,12)
-    lgnd=legend(loc=(1.05,0.2),ncol=2)
-    for ii in range(5):
-        lgnd.legendHandles[ii]._sizes = [40]
-    title('Transport-weighted water mass properties in NorESM')
-    savefig(figdir+'NorESM_WMTS.png',bbox_inches='tight')
-
-plot_TS_bylayer()
-
-############################################################################################
-################   Save sections + wm props for use elsewhere  #############################
-
-WM={}
-for ii,xrw in enumerate([PWS,AWS,DWS,AWN,PWN]):
-    WM[ii]=xr.concat([xrw['PDEN'],xrw['PSAL'],xrw['PTMP'],xrw['TRANS']],pd.Index(['PDEN','PSAL','PTMP','TRANS'],name='var'))
-
-WMall=xr.concat([WM[ww] for ww in WM],pd.Index(['PWS','AWS','DWS','AWN','PWN'],name='WM'))
-WMall=WMall.to_dataset('var')
-
-WMall.to_netcdf(datadir+'NorESM/NorESM_WMs_1912.nc','w')
