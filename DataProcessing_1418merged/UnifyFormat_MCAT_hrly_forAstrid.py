@@ -51,10 +51,15 @@ plot(m1_16_hourly.TIME,m1_16_hourly.TEMP);
 # From FirstLook_TSdata_Grid_2018reco.py
 CF_18_hourly={}
 for ii in range(1,8):
-    CF_18_hourly[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_mcat_2018recovery_hourlymerged.nc')
+    CF_18_hourly[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/Hourly_netcdf/CF'+str(ii)+'_mcat_2018recovery_hourlymerged.nc')
 
 
-CF_18_hourly
+# Here is the equivalent for first deployment (excluding CF1)
+#Produced in LoadSave_salcal_JH_1810_15min.py
+CF_16_hourly={}
+for ii in range(2,8):
+    CF_16_hourly[ii]=xr.open_dataset(datadir+'OSNAP2016recovery/Hourly_netcdf/CF'+str(ii)+'_mcat_2016recovery_hourlymerged.nc')
+
 
 #Get 2014-2016 data there:
 # [date_all,month_all,prs_all,sal_all,tmp_all]=pickle.load(open(datadir+'OSNAP2016recovery/pickles/TSdailydic/TS_daily_dic_wJHIL.pickle','rb'))
@@ -62,35 +67,35 @@ CF_18_hourly
 
 ## note: I had some issues with CF1, so I took it out for now. The already produced xarray should be fine (and in fact I'm not using it atm)
 ## but user should know that this will not produce it again.
-
-#make the CF1 reconstructed version too.
-test=CF_16_daily[5].PSAL
-
-[cf1date,cf1time,cf1prs,cf1mnprs,cf1sal,cf1tmp]=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/CF1recon/CF1_recon_JH1810.pickle', 'rb'))
+#
+# #make the CF1 reconstructed version too.
+# test=CF_16_daily[5].PSAL
+#
+# [cf1date,cf1time,cf1prs,cf1mnprs,cf1sal,cf1tmp]=pd.read_pickle(open(datadir+'OSNAP2016recovery/pickles/CF1recon/CF1_recon_JH1810.pickle', 'rb'))
 #make sal, ptmp, and pressure matrices
 
-for cc in cf1date:
-    print(len(cf1date[cc]))
-
-cf1keys=sort(list(cf1date.keys()))
-cf1_datevec=cf1date[cf1keys[0]]
-
-cf1_prs_mat=zeros((len(cf1_datevec),len(cf1keys)))
-cf1_sal_mat=cf1_prs_mat.copy()
-cf1_ptmp_mat=cf1_prs_mat.copy()
-for kk in range(len(cf1keys)):
-    cf1_prs_mat[:,kk]=cf1prs[cf1keys[kk]]
-    cf1_sal_mat[:,kk]=cf1sal[cf1keys[kk]]
-    cf1_ptmp_mat[:,kk]=cf1tmp[cf1keys[kk]]
-
-CF1_16_recon_daily=xr.Dataset({'PRES': (['TIME','DEPTH'], cf1_prs_mat),
-            'PSAL': (['TIME','DEPTH'], cf1_sal_mat),
-            'PTMP': (['TIME','DEPTH'],  cf1_ptmp_mat),},
-            coords={'TIME': cf1_datevec,
-                    'DEPTH': cf1keys,
-                    'LATITUDE': CFlat[0],
-                    'LONGITUDE': CFlon[0]})
-
-add_SA_CT_PT(CF1_16_recon_daily)
-
-CF1_16_recon_daily.to_netcdf(datadir+'OSNAP2016recovery/mcat_nc/CF1_recon_2016recovery_dailymerged.nc','w',format='netCDF4')
+# for cc in cf1date:
+#     print(len(cf1date[cc]))
+#
+# cf1keys=sort(list(cf1date.keys()))
+# cf1_datevec=cf1date[cf1keys[0]]
+#
+# cf1_prs_mat=zeros((len(cf1_datevec),len(cf1keys)))
+# cf1_sal_mat=cf1_prs_mat.copy()
+# cf1_ptmp_mat=cf1_prs_mat.copy()
+# for kk in range(len(cf1keys)):
+#     cf1_prs_mat[:,kk]=cf1prs[cf1keys[kk]]
+#     cf1_sal_mat[:,kk]=cf1sal[cf1keys[kk]]
+#     cf1_ptmp_mat[:,kk]=cf1tmp[cf1keys[kk]]
+#
+# CF1_16_recon_daily=xr.Dataset({'PRES': (['TIME','DEPTH'], cf1_prs_mat),
+#             'PSAL': (['TIME','DEPTH'], cf1_sal_mat),
+#             'PTMP': (['TIME','DEPTH'],  cf1_ptmp_mat),},
+#             coords={'TIME': cf1_datevec,
+#                     'DEPTH': cf1keys,
+#                     'LATITUDE': CFlat[0],
+#                     'LONGITUDE': CFlon[0]})
+#
+# add_SA_CT_PT(CF1_16_recon_daily)
+#
+# CF1_16_recon_daily.to_netcdf(datadir+'OSNAP2016recovery/mcat_nc/CF1_recon_2016recovery_dailymerged.nc','w',format='netCDF4')

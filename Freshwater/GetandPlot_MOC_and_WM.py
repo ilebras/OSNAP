@@ -8,7 +8,6 @@ ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
 fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_1912.nc')
 bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_1912.nc')
 
-
 # # #### load osnap data and cut out the eastern portion
 lonbnd=-44
 dat=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.nc')

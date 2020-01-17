@@ -1,19 +1,28 @@
-from aux_funcs import *
-
-fig18='/home/isabela/Documents/projects/OSNAP/figures_2018recovery/overview/'
-
-# dat={}
-# for moornum in range(5,8):
-#     dlist=glob.glob(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(moornum)+'_MCTD*')
-#
-#     dat[moornum]=xr.open_dataset(dlist[0]).resample(TIME='1H').mean(dim='TIME')
-#     for dd in dlist[1:]:
-#         tmp=xr.open_dataset(dd).resample(TIME='1H').mean(dim='TIME')
-#         dat[moornum]=xr.concat([dat[moornum],tmp],dim='DEPTH')
+from firstfuncs_1618 import *
 
 dat={}
+for moornum in range(6,8):
+    dlist=glob.glob(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(moornum)+'_MCTD*')
+
+    dat[moornum]=xr.open_dataset(dlist[0]).resample(TIME='1H').mean(dim='TIME')
+    for dd in dlist[1:]:
+        tmp=xr.open_dataset(dd).resample(TIME='1H').mean(dim='TIME')
+        dat[moornum]=xr.concat([dat[moornum],tmp],dim='DEPTH')
+    dat[moornum]=dat[moornum].transpose('TIME','DEPTH')
+    add_SA_CT_PT(dat[moornum])
+    dat[moornum]=dat[moornum].drop('PSAL_QC').drop('TEMP_QC').drop('CNDC').drop('CNDC_QC').drop('PRES_QC')
+
+for ii in range(5,8):
+    dat[ii].to_netcdf(datadir+'OSNAP2018recovery/Hourly_netcdf/CF'+str(ii)+'_mcat_2018recovery_hourly.nc','w',format='netCDF4')
+
+
+# for ii in range(1,8):
+#     dat[ii].to_netcdf(datadir+'OSNAP2018recovery/Hourly_netcdf/CF'+str(ii)+'_mcat_2018recovery_hourlymerged.nc','w',format='netCDF4')
+
+####These exist for all moorings. Theres a parallel set without "merged" which I made just for moorings 5-7 for Astrid's analysis
+dat={}
 for ii in range(1,8):
-    dat[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_2018recovery_hourlymerged.nc')
+    dat[ii]=xr.open_dataset(datadir+'OSNAP2018recovery/Hourly_netcdf/CF'+str(ii)+'_2018recovery_hourlymerged.nc')
 
 
 def plot_overview(dat,moornum,xlab):
@@ -71,23 +80,13 @@ def plot_TSall():
 
 plot_TSall()
 
-for ii in range(1,8):
-    dat[ii].to_netcdf(datadir+'OSNAP2018recovery/mcat_nc/CF'+str(ii)+'_mcat_2018recovery_hourlymerged.nc','w',format='netCDF4')
+
 
 dat_daily={}
 for ii in range(1,8):
     dat_daily[ii]=dat[ii].resample(TIME='1D').mean(dim='TIME')
 
 
-def add_SA_CT_PT(xray):
-    SA_out=gsw.SA_from_SP(xray['PSAL'],xray['PRES'],xray.LONGITUDE,xray.LATITUDE)
-    PT_out=gsw.pt0_from_t(SA_out,xray['TEMP'],xray['PRES'])
-    CT_out=gsw.CT_from_pt(SA_out,PT_out)
-    PD_out=gsw.sigma0(SA_out,CT_out)
-    xray['ASAL']=(('TIME','DEPTH'),SA_out)
-    xray['PTMP']=(('TIME','DEPTH'),PT_out)
-    xray['CTMP']=(('TIME','DEPTH'),CT_out)
-    xray['PDEN']=(('TIME','DEPTH'),PD_out)
 
 
 

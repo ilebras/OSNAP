@@ -209,26 +209,21 @@ tmp_all=tmp.copy()
 #confirm that length/start date lines up
 for ii in range(1,8):
     for kk in prs_all[ii]:
-        print(ii,shape(prs_all[ii][kk]),date_all[ii][kk][0])
-#confirmed this is true (but only within moorings, which is fine)
+        print(ii,shape(prs_all[ii][kk]),date_all[ii][kk][0],date_all[ii][kk][-1])
+#lots of different time starts here... will have to rethink strategy
 
-#make sal, ptmp, and pressure matrices
-prs_mat={}
-sal_mat={}
-ptmp_mat={}
-date_vec={}
+#make an xarray for each instrument.
+#then resample at 1H, and merge to get one for each mooring
+CF_16_xrays={}
 for ii in range(2,8):
     dpths=list(date_all[ii].keys())
-    print(dpths)
-    date_vec[ii]=date_all[ii][dpths[-1]]
-    prs_mat[ii]=zeros((len(date_vec[ii]),len(dpths)))
-    sal_mat[ii]=prs_mat[ii].copy()
-    ptmp_mat[ii]=prs_mat[ii].copy()
-    for kk in range(len(dpths)):
-        tmp_len=len(prs_all[ii][dpths[kk]])
-        prs_mat[ii][:tmp_len,kk]=prs_all[ii][dpths[kk]]
-        sal_mat[ii][:tmp_len,kk]=sal_all[ii][dpths[kk]]
-        ptmp_mat[ii][:tmp_len,kk]=tmp_all[ii][dpths[kk]]
+    CF_16_xrays[ii]={}
+    for dd in dpths:
+        CF_16_xrays[ii][dd]=xr.Dataset({'PRES': (['TIME'], prs_all[ii][dd] ),
+                                        'PSAL': (['TIME'], sal_all[ii][dd]),
+                                        'PTMP': (['TIME'],  tmp_all[ii][dd]),},
+                                        coords={'TIME': date_all[ii][dd],})
+
 
 def add_SA_CT_PT(xray):
     if 'PRES' in list(xray.data_vars):
@@ -247,25 +242,25 @@ def add_SA_CT_PT(xray):
     xray['CTMP']=(('TIME','DEPTH'),CT_out)
     xray['PDEN']=(('TIME','DEPTH'),PD_out)
 
-#make an xarray for each mooring
-CF_16_15min={}
+
+
+
+
+#note: not going to do CF1... because Astrid doesn't need it.
+CF_16_hourly={}
 for ii in range(2,8):
-    CF_16_15min[ii]=xr.Dataset({'PRES': (['TIME','DEPTH'], prs_mat[ii] ),
-                'PSAL': (['TIME','DEPTH'], sal_mat[ii]),
-                'PTMP': (['TIME','DEPTH'],  ptmp_mat[ii]),},
-                coords={'TIME': date_vec[ii],
-                        'DEPTH': list(prs_all[ii].keys()),
-                        'LATITUDE': CFlat[ii-1],
-                        'LONGITUDE': CFlon[ii-1]})
-    add_SA_CT_PT(CF_16_15min[ii])
-    CF_16_15min[ii].to_netcdf(datadir+'Daily_netcdf/CF'+str(ii)+'_mcat_2016recovery_15min.nc','w',format='netCDF4')
+    dpths=list(date_all[ii].keys())
+    CF_16_hourly[ii]=xr.concat([CF_16_xrays[ii][dd] for dd in sort(dpths)],dim='DEPTH')
+    CF_16_hourly[ii]=CF_16_hourly[ii].assign_coords({'DEPTH':sort(dpths),
+                                                     'LATITUDE': CFlat[ii-1],
+                                                     'LONGITUDE': CFlon[ii-1]})
+    CF_16_hourly[ii]=CF_16_hourly[ii].resample(TIME='1H').mean()
+    add_SA_CT_PT(CF_16_hourly[ii])
+    CF_16_hourly[ii].to_netcdf(datadir+'Hourly_netcdf/CF'+str(ii)+'_mcat_2016recovery_hourly.nc','w',format='netCDF4')
 
 
-
-#note: pden_precorr is actually from calibrated data...just didn't want to rewrite above
-
-pickle.dump([date,month,prs,sal,ptmp,pden],
-            open(datadir+'/pickles/TSdailydic/TS_15min_dic_wJHdipcal.pickle','wb'))
+# pickle.dump([date,month,prs,sal,ptmp,pden],
+#             open(datadir+'/pickles/TSdailydic/TS_15min_dic_wJHdipcal.pickle','wb'))
 
 XXXXXXXXXXX
 #
