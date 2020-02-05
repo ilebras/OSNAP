@@ -11,6 +11,8 @@ fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_1912.nc')
 bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_1912.nc')
 ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
 so=xr.open_dataset(datadir+'NorESM/NorESM_source_storage_xray_1912.nc')
+hf=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_NordicSeas_heatloss_201001-201812.nc')
+
 
 vts=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_volumetransports_201001-201812.nc')
 startyear=2010
@@ -84,11 +86,9 @@ def comp_calc():
     for jj in range(3):
         axx[jj].set_xlabel('')
 
+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE').mean(dim='TIME')
+
 (osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).mean()
-
-(vts.net_vt_OSNAP+vts.net_vt_NS).mean()
-(vts.net_vt_FS+vts.net_vt_BSO).mean()
-
 
 (vts.net_vt_OSNAP+vts.net_vt_NS-vts.net_vt_FS-vts.net_vt_BSO).mean()
 so['FW+SI'].mean()
@@ -114,3 +114,29 @@ def plot_saltfluxes():
     savefig(figdir+'FW_saltbal.png',bbox_inches='tight')
 
 plot_saltfluxes()
+
+################################################################################################################################
+################################################################################################################################
+###########################################      HEAT BALANCE     #######################################################
+################################################################################################################################
+################################################################################################################################
+cp=3850
+rhow=1000
+tera=10**12
+
+hf['NORDIC_hflx'].plot()
+
+Tconv=((osnap['TRANS']*osnap['PTMP']).sum(dim='DEPTH').sum(dim='LONGITUDE')+(ns['TRANS']*ns['PTMP']).sum(dim='DEPTH').sum(dim='LONGITUDE')-(fs['TRANS']*fs['PTMP']).sum(dim='DEPTH').sum(dim='LONGITUDE')-(bso['TRANS']*bso['PTMP']).sum(dim='DEPTH').sum(dim='LONGITUDE'))
+def plot_tmpfluxes():
+    f,axx=subplots(2,1,figsize=(11,6),sharex=True)
+    for ii,sec in enumerate([osnap,ns,fs,bso]):
+        ((sec['TRANS']*sec['PTMP']).sum(dim='DEPTH').sum(dim='LONGITUDE')).plot(label=labstr[ii],ax=axx[0])
+    (-Tconv).plot(label='- Temperature transport convergence',ax=axx[1])
+    axx[1].plot(osnap['TIME'],hf['NORDIC_hflx']*tera/cp/rhow/1e6, label='Heat flux [$^\circ$C x Sv]')
+    for jj in range(2):
+        axx[jj].legend(loc=(1.01,0.2))
+        axx[jj].set_xlabel('')
+    f.text(0.05, 0.5, 'Temperature transport [$^\circ$C x Sv]', va='center', rotation='vertical',fontsize=14)
+    savefig(figdir+'FW_tmpbal.png',bbox_inches='tight')
+
+plot_tmpfluxes()

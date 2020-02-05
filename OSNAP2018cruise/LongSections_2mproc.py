@@ -19,8 +19,6 @@ figdirplus=figdir+'AR30/1912_LongSecFocus/'
 # Plot the long sections only: 1,2,3,5:
 seclist=['section 1','section 2','section 3','section 5']
 
-
-
 def quickmap():
     for ss in seclist:
         plot(ctd.lon[seclab[ss]],ctd.lat[seclab[ss]],'o',label=ss)
@@ -74,6 +72,8 @@ def contourit(axx,var,sect):
     axx.text(40,2500,sect,fontsize=16,color='white')
     return conty
 
+
+
 def plotvar(var,tit):
     f,axx=subplots(2,2,sharex=True,sharey=True,figsize=(9,6))
     contourit(axx[0,0],var,'section 3')
@@ -90,45 +90,54 @@ def plotvar(var,tit):
     axx[0,1].set_title('East of Greenland',fontsize=16)
     savefig(figdirplus+'Section_'+var+'_LongSecs_Ar30.png',bbox_inches='tight')
 
-
 uni['o2']['vmin']=6
 uni['o2']['vmax']=8
 
 for ss in seclist:
     print(ss,seclab[ss])
+distvec
 
 plotvar('o2','Oxygen')
 
-plotvar('sal','Salinity')
 
+plotvar('sal','Salinity')
 
 plotvar('tmp','Temperature')
 
-def contour_u(axx,var,sect):
-    conty=axx.pcolor(sort(dat.dist[seclab[sect]]),dat.prs_u,dat[var][:,seclab[sect]].sortby(dat.dist),vmin=0,vmax=0.5)
-    # denden=axx.contour(sort(dat.dist[seclab[sect]]),ctd.prs,ctd['den'][:,seclab[sect]].sortby(ctd.dist),levels=arange(27.5,28,0.1),colors='k',linewidths=2)
-    axx.fill_between(bathy[sect]['dist'].flatten(),bathy[sect]['bath'].flatten(),3e3,color='grey')
-    axx.text(2,475,sect,fontsize=16,color='white')
-    return conty
+##################################################################################################
+##################################################################################################
+####################################### WANT TO HAVE A CLOSER LOOK #################################
+####################################### AT THE LS AREA T-S-O SPACE #################################
+######################################## IN EACH SECTION/SPATIAL  #################################
+##################################################################################################
+##################################################################################################
+
+ctd
+
+distmat,prsmat=meshgrid(ctd.dist.values,ctd.prs.values)
+
+ctd['distmat']=(('prs','sta'),distmat)
+
+help(hexbin)
+
+def hex_TS(sec):
+    f,[ax1,ax2]=subplots(1,2,sharex=True,sharey=True,figsize=(14,5))
+    p1=ax1.hexbin(ctd.sal.where(ctd.sal>34.8).where(ctd.tmp<6).where(ctd.dist<120)[:,seclab[sec]].values.flatten(),
+           ctd.tmp.where(ctd.sal>34.8).where(ctd.tmp<6).where(ctd.dist<120)[:,seclab[sec]].values.flatten(),
+           C=ctd.distmat.where(ctd.sal>34.8).where(ctd.tmp<6).where(ctd.dist<120)[:,seclab[sec]].values.flatten(),
+           cmap=cm.rainbow,mincnt=1)
+    colorbar(p1,ax=ax1,label='distance [km]')
+    p2=ax2.hexbin(ctd.sal.where(ctd.sal>34.8).where(ctd.tmp<6)[:,seclab[sec]].values.flatten(),
+          ctd.tmp.where(ctd.sal>34.8).where(ctd.tmp<6)[:,seclab[sec]].values.flatten(),
+          C=ctd.o2.where(ctd.sal>34.8).where(ctd.tmp<6)[:,seclab[sec]].values.flatten(),
+          cmap=cm.RdPu,mincnt=1)
+    colorbar(p2,ax=ax2,label='Oxygen [mL/L]')
+    suptitle(sec)
+    xlabel('salinity')
+    ylabel('temperature [$^\circ$C]')
+    savefig(figdirplus+'TSO_dist_sec'+sec[-1]+'.png',bbox_inches='tight')
 
 
-def plotvar_u(var,tit):
-    f,axx=subplots(2,2,sharex=True,sharey=True,figsize=(9,6))
-    contour_u(axx[0,0],var,'section 3')
-    contour_u(axx[1,0],var,'section 5')
-    contour_u(axx[0,1],var,'section 2')
-    conty=contour_u(axx[1,1],var,'section 1')
-    caxy=f.add_axes([0.93,0.2,0.02,0.6])
-    colorbar(conty,cax=caxy,label=tit)
-    axx[1,1].set_ylim(500,0)
-    axx[1,1].set_xlim(0,120)
-    f.text(0.5, -0.01, 'distance [km]', ha='center',fontsize=16)
-    f.text(-0.01, 0.5, 'pressure [db]', va='center', rotation='vertical',fontsize=16)
-    axx[0,0].set_title('West of Greenland',fontsize=16)
-    axx[0,1].set_title('East of Greenland',fontsize=16)
-    savefig(figdirplus+'Section_SpeedTest_LongSecs_Ar30.png',bbox_inches='tight')
-
-
-dat['speed']=sqrt(dat['u']**2+dat['v']**2)
-
-plotvar_u('speed','speed')
+seclist
+for sec in seclist:
+    hex_TS(sec)

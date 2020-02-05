@@ -223,3 +223,20 @@ def plot_Fig4():
     savefig(figdir+'MixedLayer/paperfigs/Fig4.png',bbox_inches='tight',dpi=300)
 
 plot_Fig4()
+
+def botpanel():
+    fig,axx=subplots(1,1,figsize=(9,3))
+    plot_trans(axx,uIIW['trans_PV'],uppercol,'upper ISIW')
+    plot_trans(axx,dIIW['trans_PV'],deepcol,'deep ISIW')
+    axx.legend()
+    axx.set_ylabel('Transport [Sv]')
+
+    axx.set_xlim([datetime.datetime(2014,9,5),datetime.datetime(2016,7,15)])
+    axx.xaxis.set_major_locator(threemonth)
+
+    axx.set_xticklabels(['October','January\n2015','April','July','October','January\n2016','April','July',])
+    axx.set_yticks(arange(0,7,2.5))
+    savefig(figdir+'MixedLayer/paperfigs/Botpanel_Fig4.pdf',bbox_inches='tight')
+    savefig(figdir+'MixedLayer/paperfigs/Botpanel_Fig4.png',bbox_inches='tight',dpi=300)
+
+botpanel()

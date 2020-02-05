@@ -44,6 +44,9 @@ dat['across track velocity']=dat.UCUR*cos(theta)+dat.VCUR*sin(theta)
 dat['along track velocity']=-dat.UCUR*sin(theta)+dat.VCUR*cos(theta)
 
 
+dat['across track velocity']
+
+dat['across track velocity'][:,0,24].values
 
 ##########################################################################################################
 ################################   Add mcat       ########################################################
@@ -60,6 +63,11 @@ for moornum in range(6,9):
     d=xr.concat([d,d_tmp],dim='distance')
 d=d.transpose('DEPTH','distance','TIME')
 
+d['PSAL'][:,2,15:70].plot()
+d
+
+d.TIME[15:70]
+
 Dmat=-gsw.z_from_p(d['PRES'].sel(TIME=slice(d.TIME[0],dat.TIME[-1])).values,60)
 DVmat=-gsw.z_from_p(dat['PRES'].sel(TIME=slice(d.TIME[0],dat.TIME[-1])).values,60)
 
@@ -72,10 +80,8 @@ datadic['T']=d['PTMP'].sel(TIME=slice(d.TIME[0],dat.TIME[-1])).values
 datadic['S']=d['PSAL'].sel(TIME=slice(d.TIME[0],dat.TIME[-1])).values
 datadic['R']=d['PDEN'].sel(TIME=slice(d.TIME[0],dat.TIME[-1])).values
 
-d.TIME[0],dat.TIME[-1]
-
 for kk in datadic:
     print(kk)
     print(shape(datadic[kk]))
 
-io.savemat(open(datadir+'OSNAP_CFgridded_2014-2018/hourly/CF_M_hourly_2014-2018.mat','wb'),datadic)
+io.savemat(open(datadir+'OSNAP_CFgridded_2014-2018/hourly/CF_M_hourly_2014-2018_200130.mat','wb'),datadic)

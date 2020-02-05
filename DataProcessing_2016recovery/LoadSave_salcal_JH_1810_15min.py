@@ -20,30 +20,30 @@ for moornum in range(1,8):
     prs[moornum]={}
 
     #choose ctdlist for each mooring
-    if moornum==7:
-        ctdlist=glob.glob(datadir+'MCTD_Data_CF/MAT/CF'+str(moornum)+'*mat_ilebras.mat')
-    else:
-        ctdlist=glob.glob(datadir+'MCTD_Data_CF/NetCDF/*CF'+str(moornum)+'*.nc')
-    if moornum==7:
-        ctdlist=hstack((ctdlist,glob.glob(datadir+'RBR/CF'+str(moornum)+'*xr420*_ilebras.mat')))
+    # if moornum==7:
+    #     ctdlist=glob.glob(datadir+'MCTD_Data_CF/MAT/CF'+str(moornum)+'*mat_ilebras.mat')
+    # else:
+    ctdlist=glob.glob(datadir+'MCTD_Data_CF/NetCDF/*CF'+str(moornum)+'*.nc')
+    # if moornum==7:
+    #     ctdlist=hstack((ctdlist,glob.glob(datadir+'RBR/CF'+str(moornum)+'*xr420*_ilebras.mat')))
 
     #load in each sal,tmp set
     for dd in ctdlist:
-        if moornum==7:
-            dat = io.loadmat(dd)
-            tmp_hrly=array([float(tt) for tt in dat['temp'][:].flatten()])
-            sal_hrly=array([float(ss) for ss in dat['psal'][:].flatten()])
-            prs_hrly=array(dat['pres'][:].flatten())
-            time_hrly=array(dat['dtnum'][:].flatten())
-            date_hrly=array([datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in time_hrly])
-
-        else:
-            dat = Dataset(dd, 'r')
-            time_hrly=array(dat.variables['TIME'][:])
-            tmp_hrly=array([float(tt) for tt in dat.variables['TEMP'][:].flatten()])
-            sal_hrly=array([float(ss) for ss in dat.variables['PSAL'][:].flatten()])
-            prs_hrly=array(list(dat.variables['PRES'][:].flatten()))
-            date_hrly=array([datetime.datetime(1950,1,1)+datetime.timedelta(days=tt) for tt in time_hrly])
+        # if moornum==7:
+        #     dat = io.loadmat(dd)
+        #     tmp_hrly=array([float(tt) for tt in dat['temp'][:].flatten()])
+        #     sal_hrly=array([float(ss) for ss in dat['psal'][:].flatten()])
+        #     prs_hrly=array(dat['pres'][:].flatten())
+        #     time_hrly=array(dat['dtnum'][:].flatten())
+        #     date_hrly=array([datetime.datetime(1,1,1)+datetime.timedelta(days=tt-366) for tt in time_hrly])
+        #
+        # else:
+        dat = Dataset(dd, 'r')
+        time_hrly=array(dat.variables['TIME'][:])
+        tmp_hrly=array([float(tt) for tt in dat.variables['TEMP'][:].flatten()])
+        sal_hrly=array([float(ss) for ss in dat.variables['PSAL'][:].flatten()])
+        prs_hrly=array(list(dat.variables['PRES'][:].flatten()))
+        date_hrly=array([datetime.datetime(1950,1,1)+datetime.timedelta(days=tt) for tt in time_hrly])
 
 
         prskey=int(round(nanmean(prs_hrly)/50.0)*50.0)
@@ -54,8 +54,10 @@ for moornum in range(1,8):
         date[moornum][prskey]=date_hrly
         time[moornum][prskey]=time_hrly
 
+date[6][550]
+date[7][250]
 
-
+date[7][250]
 
 ########################################################################
 ##### Replace salinity with Jamie's and Kim's calibrated values ########
@@ -103,6 +105,8 @@ sal[7][750]=io.loadmat(datadir+'MC_cal_JH_1810/CF7/cf7_750_2014_correctedsal.mat
 sal[7][1000]=io.loadmat(datadir+'MC_cal_JH_1810/CF7/cf7_1000_2014_correctedsal.mat')['salc'].flatten()
 sal[7][1500]=io.loadmat(datadir+'MC_cal_JH_1810/CF7/cf7_1500_2014_correctedsal.mat')['salc'].flatten()
 sal[7][1900]=io.loadmat(datadir+'MC_cal_JH_1810/CF7/cf7_1900_2014_correctedsal.mat')['salc'].flatten()
+
+sal[5][750]
 
 ###################################################################
 ################## Some useful functions #########################
@@ -258,6 +262,7 @@ for ii in range(2,8):
     add_SA_CT_PT(CF_16_hourly[ii])
     CF_16_hourly[ii].to_netcdf(datadir+'Hourly_netcdf/CF'+str(ii)+'_mcat_2016recovery_hourly.nc','w',format='netCDF4')
 
+5+9
 
 # pickle.dump([date,month,prs,sal,ptmp,pden],
 #             open(datadir+'/pickles/TSdailydic/TS_15min_dic_wJHdipcal.pickle','wb'))

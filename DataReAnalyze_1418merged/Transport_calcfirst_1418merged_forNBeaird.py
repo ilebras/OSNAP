@@ -26,62 +26,32 @@ mid_dist[daily.distance==0]=mid_dist_plus[daily.distance==0]/2
 middistmat=transpose((tile(mid_dist,[len(daily.depth)-1,len(daily.date),1])),(2,0,1))
 depthdiffmat=transpose((tile(diff(daily.depth),[len(daily.distance),len(daily.date),1])),(0,2,1))
 
-# srefa=34.8
-srefa=34.9187 # for lazy osnap recalc FULL
-srefb=34.9
-# srefc=35
-srefc=34.9682 # for lazy osnap recalc EAST
-
 ##adding 10km width to CF1
-
 daily['xport']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat/1e3
 daily['xport over 27.8']=daily['across track velocity'].where(daily['potential density']<27.8)[:,:-1,:]*depthdiffmat*middistmat/1e3
 daily['xport plus']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat_plus/1e3
-
 daily['xport plus'].where(daily.distance<80).sum(dim='distance').sum(dim='depth').plot()
 
 
 onesxr=daily.salinity/daily.salinity
 
-sep=9
+lon0=-43.005667
+lat0=60.093167
+plot(lon0,lat0,'bo')
+plot(CFlon,CFlat,'ro')
 
+help(gsw.distance)
 
-PWS={}
-PWS['U']=daily['xport plus'].where(daily['potential density']<27.54).sum('depth').sum('distance')
+#get distance from lon0,lat0 (Nick's distance=0), to CF1, which is my distance=0
+dist0=gsw.distance([lon0,CFlon[0]],[lat0,CFlat[0]])[0]/1e3
 
-PWS['U'].plot()
-PWS['U'].resample(date='1M').mean().plot()
-PWS['U'].resample(date='1M').mean().min()
-PWS['U'].resample(date='1M').mean().max()
+dist0
 
-PWS['S']=(daily['xport plus']*daily['salinity']).where(daily['potential density']<27.54).sum('depth').sum('distance')/(daily['xport plus'].where(daily['potential density']<27.54).sum('depth').sum('distance'))
-
-PWS['S'].plot()
-PWS['S'].resample(date='1M').mean().plot()
-PWS['S'].resample(date='1M').mean().min()
-PWS['S'].resample(date='1M').mean().max()
-
-def get_S_fromFWT(FWT,TRANS,sref):
-    S=sref*(1-FWT/TRANS)
-    return S
-
-S_suth=get_S_fromFWT(90e-3,2,34.8)
-S_suth
-
-S_lbmin=get_S_fromFWT(40e-3,2,34.9)
-S_lbmin
-
-S_lbmax=get_S_fromFWT(108e-3,6.3,34.9)
-S_lbmax
-
-S_suth/S_lbmin*33.77
+#wow! almost exactly 10km, which is what I added... just means that instead of 80km cutoff, I use 70km...
 
 cc={}
-# cc['trans']=daily.xport[:sep,:,:].sum('depth').sum('distance')
-cc['trans']=daily['xport plus'][:sep,:,:].sum('depth').sum('distance')
-# cc['fresha']=(daily['xport'][:sep,:-1,:]*1e3*(daily.salinity[:sep,:-1,:]-srefa)/srefa).sum('depth').sum('distance')
-# cc['freshb']=(daily['xport'][:sep,:-1,:]*1e3*(daily.salinity[:sep,:-1,:]-srefb)/srefb).sum('depth').sum('distance')
-# cc['freshc']=(daily['xport'][:sep,:-1,:]*1e3*(daily.salinity[:sep,:-1,:]-srefc)/srefc).sum('depth').sum('distance')
+cc['trans']=daily['xport plus'].where(daily.distance<70).sum('depth').sum('distance')
+cc['trans'].mean()
 
 
 cc['fresha']=-(daily['across track velocity'][:sep,:-1,:]*depthdiffmat[:sep,:]*middistmat_plus[:sep,:]*(daily.salinity[:sep,:-1,:]-srefa)/srefa).sum('depth').sum('distance')

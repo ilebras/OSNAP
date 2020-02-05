@@ -1,5 +1,6 @@
 from firstfuncs_1618 import *
 figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorESM/'
+import cmocean
 
 ################################################################################################################################
 ###########################################    Load NorESM and obs    #######################################################
@@ -45,39 +46,47 @@ def getpsi(east):
 
 osnap=getpsi(osnap)
 osnap_obs=getpsi(osnap_obs)
+bso=getpsi(bso)
+bso_obs=getpsi(bso_obs)
+fs=getpsi(fs)
+fs_obs=getpsi(fs_obs)
 
-def plot_comp_psi():
+def plot_comp_psi(which,whichobs,name):
     figure()
     # plot(osnap_obs.PSI,osnap_obs.DENLEV,'C0',alpha=0.2,label='')
     # plot(osnap.PSI,osnap.DENLEV,'C1',alpha=0.2,label='')
-    plot(osnap_obs.PSI.mean(dim='TIME'),osnap_obs.DENLEV,linewidth=3,label='OSNAP')
-    plot(osnap.PSI.mean(dim='TIME'),osnap.DENLEV,linewidth=3,label='NorESM')
-    plot(osnap.PSI.sel(TIME=slice('2014-8-1','2016-9-1')).mean(dim='TIME'),osnap.DENLEV,linewidth=3,label='NorESM during OSNAP')
+    plot(whichobs.PSI.mean(dim='TIME'),whichobs.DENLEV,linewidth=3,label=name+' (2014-2016)',color='limegreen')
+    plot(which.PSI.mean(dim='TIME'),which.DENLEV,linewidth=3,label='NorESM (2010-2018)',color='purple')
+    if name=='OSNAP':
+        plot(which.PSI.sel(TIME=slice('2014-8-1','2016-9-1')).mean(dim='TIME'),which.DENLEV,linewidth=3,label='NorESM during OSNAP',color='purple',linestyle='--')
     xlabel('Streamfunction [Sv]')
     ylabel('pot. density anomaly [kg m$^{-3}$]')
     legend(fontsize=16)
     ylim(28.3,26)
-    savefig(figdir+'PsiComp.png',bbox_inches='tight')
+    savefig(figdir+name+'_PsiComp.png',bbox_inches='tight')
+    savefig(figdir+name+'_PsiComp.pdf',bbox_inches='tight')
 
-plot_comp_psi()
-
-def MOC_comp():
-    osnap.MOC.plot()
-    osnap.MOCMEAN.plot()
-    osnap_obs.MOC.plot()
-    osnap_obs.MOCMEAN.plot()
-    xlim(datetime.datetime(2014,1,1),datetime.datetime(2017,1,1))
-    figure()
-    osnap.SIGMAX.plot()
-    axhline(osnap.SIGMEAN)
-    osnap_obs.SIGMAX.plot()
-    axhline(osnap_obs.SIGMEAN,color='C1')
-    xlim(datetime.datetime(2014,1,1),datetime.datetime(2017,1,1))
-    figure()
-    osnap.TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
-    osnap_obs.TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
-
-MOC_comp()
+plot_comp_psi(osnap,osnap_obs,'OSNAP')
+plot_comp_psi(fs,fs_obs,'Fram Strait')
+plot_comp_psi(bso,bso_obs,'Barents Sea Opening')
+#
+# def MOC_comp():
+#     osnap.MOC.plot()
+#     osnap.MOCMEAN.plot()
+#     osnap_obs.MOC.plot()
+#     osnap_obs.MOCMEAN.plot()
+#     xlim(datetime.datetime(2014,1,1),datetime.datetime(2017,1,1))
+#     figure()
+#     osnap.SIGMAX.plot()
+#     axhline(osnap.SIGMEAN)
+#     osnap_obs.SIGMAX.plot()
+#     axhline(osnap_obs.SIGMEAN,color='C1')
+#     xlim(datetime.datetime(2014,1,1),datetime.datetime(2017,1,1))
+#     figure()
+#     osnap.TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
+#     osnap_obs.TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
+#
+# MOC_comp()
 
 
 
@@ -90,7 +99,11 @@ MOC_comp()
 sigmax=osnap.SIGMEAN.values
 sigmax_obs=osnap_obs.SIGMEAN.values
 
-fslim=5
+
+oslim=-39
+oslim_obs=-41
+
+fslim=3
 fslim_obs=5
 
 vmax=0.3
@@ -150,6 +163,157 @@ comp_obs_model(bso,bso_obs,500,'Barents Sea Opening','Latitude [$^\circ$N]','bso
 
 comp_obs_model(osnap,osnap_obs,3200,'OSNAP East','Longitude [$^\circ$W]','osnap')
 
+def cont_partial(dat,xxvar,axx,ymin,ymax,sigi):
+    var='VELO'
+    filled=axx.contourf(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),arange(-0.2,0.2,0.025),cmap=univec[var][2],extend='both')
+    axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),colors='k',levels=[0])#univec[var][1][::2])
+    var='PSAL'
+    conts=axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),hstack((arange(33,34.5,0.5),arange(34.5,35.8,0.1))),cmap=cmocean.cm.haline,extend='both',linewidths=3)
+
+    axx.contour(xxvar,dat.DEPTH,dat['PDEN'].mean(dim='TIME'),levels=[sigi],colors='k',linewidths=4) # add isopycnal of maximum overturning
+    axx.set_facecolor('k')
+    axx.set_ylim(ymax,ymin)
+    return filled,conts
+
+
+def comp_obs_model_new(nor,obs,ymax,tit,xlab,stit,yspl):
+    fig = plt.figure(figsize=(14, 5), constrained_layout=False)
+    grd = fig.add_gridspec(2,2, wspace=0.1, hspace=0.0,height_ratios=[1,5])
+    fsz=14
+    axx={}
+    axx[0,0]=fig.add_subplot(grd[0,0])
+    axx[0,1]=fig.add_subplot(grd[0,1])
+    axx[1,0]=fig.add_subplot(grd[1,0],sharex=axx[0,0])
+    axx[1,1]=fig.add_subplot(grd[1,1],sharex=axx[0,1])
+    if 'Barents' in tit:
+        nor_x=nor.LATITUDE
+        obs_x=obs.LATITUDE
+    else:
+        nor_x=nor.LONGITUDE
+        obs_x=obs.LONGITUDE
+    velcont,salcont=cont_partial(obs,obs_x,axx[1,0],yspl,ymax,sigmax_obs)
+    cont_partial(obs,obs_x,axx[0,0],0,yspl,sigmax_obs)
+    cont_partial(nor,nor_x,axx[1,1],yspl,ymax,sigmax_obs)
+    cont_partial(nor,nor_x,axx[0,1],0,yspl,sigmax_obs)
+    if 'OSNAP' in tit:
+        axx[0,0].plot([oslim_obs,oslim_obs],[0,50],color='k',linewidth=3)
+        axx[0,1].plot([oslim,oslim],[0,30],color='k',linewidth=3)
+        axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz)
+        axx[0,0].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+        axx[0,1].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+        axx[0,0].text(-45,-10,'PWS',color='k',fontsize=fsz-2)
+        axx[0,1].text(-43,-10,'PWS',color='k',fontsize=fsz-2)
+        axx[1,0].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+        axx[1,1].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+    elif 'Fram' in tit:
+        for ii in range(2):
+            axx[ii,0].axvline(fslim_obs,color='k',linewidth=3)
+            axx[ii,1].axvline(fslim,color='k',linewidth=3)
+            axx[1,0].text(8,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,1].text(9,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,0].text(-3,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,1].text(-2,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+    else:
+            axx[1,0].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,1].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+    axx[0,1].set_yticklabels('')
+    axx[1,1].set_yticklabels('')
+    axx[0,0].set_title('Observations',fontsize=fsz)
+    axx[0,1].set_title('NorESM model',fontsize=fsz)
+    fig.text(0.05, 0.5, 'depth [m]', va='center', rotation='vertical',fontsize=fsz)
+    fig.text(0.5, 0, xlab, ha='center',fontsize=fsz)
+    suptitle(tit,fontsize=fsz+2)
+    cwi=0.025
+    cle=0.7
+    caxit_vel=fig.add_axes([0.95,0.15,cwi,cle])
+    caxit_sal=fig.add_axes([1.08,0.15,cwi,cle])
+    colorbar(velcont,label='velocity [m/s]',cax=caxit_vel)
+    colorbar(salcont,label='Salinity',cax=caxit_sal)
+    savefig(figdir+'CompSect_Obs_NorESM_synth_'+stit+'.png',bbox_inches='tight')
+    savefig(figdir+'CompSect_Obs_NorESM_synth_'+stit+'.pdf',bbox_inches='tight')
+
+
+
+comp_obs_model_new(osnap,osnap_obs,3200,'OSNAP East','Longitude [$^\circ$W]','osnap',100)
+
+comp_obs_model_new(fs,fs_obs,3000,'Fram Strait','Longitude [$^\circ$W]','fs',300)
+
+comp_obs_model_new(bso,bso_obs,500,'Barents Sea Opening','Latitude [$^\circ$N]','bso',50)
+
+titvec=['OSNAP East','Fram Strait','Barents Sea Opening']
+obsvec=[osnap_obs,fs_obs,bso_obs]
+norvec=[osnap,fs,bso]
+yspl=[100,350,50]
+ymax=[3200,3000,500]
+
+def comp_obs_model_all():
+    fig = plt.figure(figsize=(12, 15), constrained_layout=False)
+    grd_outer = fig.add_gridspec(3,1, hspace=0.4)
+    fsz=16
+    for i in range(3):
+        tit=titvec[i]
+        obs=obsvec[i]
+        nor=norvec[i]
+        grd = grd_outer[i].subgridspec(2,2, wspace=0.1, hspace=0.0,height_ratios=[1,5])
+        axx={}
+        axx[0,0]=fig.add_subplot(grd[0,0])
+        axx[0,1]=fig.add_subplot(grd[0,1])
+        axx[1,0]=fig.add_subplot(grd[1,0],sharex=axx[0,0])
+        axx[1,1]=fig.add_subplot(grd[1,1],sharex=axx[0,1])
+        if i==0:
+                axx[0,0].set_title('Observations\n',fontsize=fsz)
+                axx[0,1].set_title('NorESM model\n',fontsize=fsz)
+        if 'Barents' in tit:
+            nor_x=nor.LATITUDE
+            obs_x=obs.LATITUDE
+        else:
+            nor_x=nor.LONGITUDE
+            obs_x=obs.LONGITUDE
+        velcont,salcont=cont_partial(obs,obs_x,axx[1,0],yspl[i],ymax[i],sigmax_obs)
+        cont_partial(obs,obs_x,axx[0,0],0,yspl[i],sigmax_obs)
+        cont_partial(nor,nor_x,axx[1,1],yspl[i],ymax[i],sigmax_obs)
+        cont_partial(nor,nor_x,axx[0,1],0,yspl[i],sigmax_obs)
+        if 'OSNAP' in tit:
+            axx[0,0].plot([oslim_obs,oslim_obs],[0,50],color='k',linewidth=3)
+            axx[0,1].plot([oslim,oslim],[0,30],color='k',linewidth=3)
+            axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz)
+            axx[0,0].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[0,1].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[0,0].text(-45,-10,'PWS',color='k',fontsize=fsz-2)
+            axx[0,1].text(-43,-10,'PWS',color='k',fontsize=fsz-2)
+            axx[1,0].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,1].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+        elif 'Fram' in tit:
+            for iii in range(2):
+                axx[iii,0].axvline(fslim_obs,color='k',linewidth=3)
+                axx[iii,1].axvline(fslim,color='k',linewidth=3)
+            axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz)
+            axx[1,0].text(8,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,1].text(9,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,0].text(-3,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,1].text(-2,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+        else:
+            axx[1,0].text(74.5,450,'Barents Sea\nOpening',color='white',fontsize=fsz)
+            axx[1,0].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,1].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+        axx[0,1].set_yticklabels('')
+        axx[1,1].set_yticklabels('')
+        axx[1,0].set_ylabel('depth [m]',fontsize=14)
+    fig.text(0.5, 0.64, 'Longitude [$^\circ$W]', ha='center',fontsize=fsz)
+    fig.text(0.5, 0.352, 'Longitude [$^\circ$W]', ha='center',fontsize=fsz)
+    fig.text(0.5, 0.065, 'Latitude [$^\circ$N]', ha='center',fontsize=fsz)
+    xc=0.95
+    cwi=0.025
+    cle=0.325
+    caxit_vel=fig.add_axes([xc,0.5,cwi,cle])
+    caxit_sal=fig.add_axes([xc,0.15,cwi,cle])
+    colorbar(velcont,label='velocity [m/s]',cax=caxit_vel)
+    colorbar(salcont,label='Salinity',cax=caxit_sal)
+    savefig(figdir+'CompSect_Obs_NorESM_all.png',bbox_inches='tight')
+    savefig(figdir+'CompSect_Obs_NorESM_all.pdf',bbox_inches='tight')
+
+
+comp_obs_model_all()
 ############################################################################################
 ################  NORESM  WATER MASS PARTITIONING   #############################################
 
@@ -158,18 +322,20 @@ PWS={}
 DWS={}
 AWN={}
 PWN={}
-oslim=-38
+
+pws_depth=100
+
 xray=osnap
-for var in ['PSAL','PTMP','PDEN','TRANS']:
+for var in ['TRANS','PSAL','PTMP','PDEN']:
     if var=='TRANS':
         DWS[var]=xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
         PWS[var]=xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
         AWS[var]=xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+
     else:
         DWS[var]=(xray[var]*xray['TRANS']).where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
         PWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
         AWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-
 
 #split up FS into PW and AW using definition in Tsubouchi et al. 2018, which is boundary between "EGC" + "Middle", 2W
 # Here I'm using 4E, as it better maximizes transport...? Check on this...
@@ -200,6 +366,7 @@ def plot_NorESM_WMprops_tvar():
 
 
 plot_NorESM_WMprops_tvar()
+
 ############################################################################################
 ################  OBS WATER MASS PARTITIONING   #############################################
 
@@ -213,7 +380,6 @@ PWN_obs={}
 
 xray=osnap_obs
 sigmax_obs=osnap_obs.SIGMEAN.values
-oslim_obs=-41
 for var in ['PSAL','PTMP','PDEN','TRANS']:
     if var=='TRANS':
         DWS_obs[var]=xray['TRANS'].where(xray.PDEN>=sigmax_obs).sum(dim='DEPTH').sum(dim='LONGITUDE')
@@ -257,8 +423,11 @@ def plot_NorESM_WMprops_clim():
     axx[0].legend(ncol=2,loc=(1.05,0.1))
     savefig(figdir+'NorESM_WM_obscomp_clim.png',bbox_inches='tight')
 
+plot_NorESM_WMprops_clim()
 
 plot_NorESM_WMprops_clim()
+
+
 ############################################################################################
 ################  PLOT AND COMPARE WATER MASS PARTITIONING   #############################################
 
@@ -302,6 +471,7 @@ def plot_TS_bylayer():
 plot_TS_bylayer()
 
 
+
 # ################################################################################################################################
 # ################################################################################################################################
 # ###########################################      SAVE WM props    #######################################################
@@ -315,7 +485,7 @@ for ii,xrw in enumerate([PWS_obs,AWS_obs,DWS_obs,PWN_obs,AWN_obs]):
 WMall_obs=xr.concat([WM_obs[ww] for ww in WM_obs],pd.Index(['PWS','AWS','DWS','PWN','AWN'],name='WM'))
 
 WMall_obs=WMall_obs.to_dataset('var')
-WMall_obs.to_netcdf(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_1912.nc','w')
+# WMall_obs.to_netcdf(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_1912.nc','w')
 
 WM={}
 for ii,xrw in enumerate([PWS,AWS,DWS,AWN,PWN]):
@@ -324,7 +494,7 @@ for ii,xrw in enumerate([PWS,AWS,DWS,AWN,PWN]):
 WMall=xr.concat([WM[ww] for ww in WM],pd.Index(['PWS','AWS','DWS','AWN','PWN'],name='WM'))
 WMall=WMall.to_dataset('var')
 
-WMall.to_netcdf(datadir+'NorESM/NorESM_WMs_1912.nc','w')
+# WMall.to_netcdf(datadir+'NorESM/NorESM_WMs_1912.nc','w')
 
 WMall['TRANS'].sel(WM='PWS').mean(dim='TIME')+WMall['TRANS'].sel(WM='AWS').mean(dim='TIME')+WMall['TRANS'].sel(WM='DWS').mean(dim='TIME')
 
@@ -351,18 +521,41 @@ WM_obs=WMall_obs
 
 def plot_TS_bylayer():
     f,[ax1,ax2]=subplots(1,2,figsize=(11,5),sharex=True,sharey=True)
+    ii=0
+    for tt in WM_nor.TIME:
+        for wm in WM_nor.WM:
+            ax2.scatter(WM_nor['PSAL'].sel(WM=wm).sel(TIME=tt).values,WM_nor['PTMP'].sel(WM=wm).sel(TIME=tt).values,
+            s=WM_nor['TRANS'].sel(WM=wm).sel(TIME=tt).values**2*4,zorder=50,linewidth=3,label=str(wm.values),color=coldic[str(wm.values)],alpha=0.5)
+        if ii==0:
+            lgnd=ax2.legend(loc=(1.05,0.2))
+        ii+=1
     for wm in WM_nor.WM:
         ax2.scatter(WM_nor['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_nor['PTMP'].sel(WM=wm).mean(dim='TIME').values,
-                s=WM_nor['TRANS'].sel(WM=wm).mean(dim='TIME').values**2*4,zorder=50,linewidth=3,label='NorESM : '+str(wm.values),color=coldic[str(wm.values)],alpha=0.5)
+                s=WM_nor['TRANS'].sel(WM=wm).mean(dim='TIME').values**2*4,linewidth=3,label='NorESM : '+str(wm.values),color='k',zorder=100)
+        if ('AWS' in wm) | ('PWN' in wm):
+            ax2.plot(WM_nor['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_nor['PTMP'].sel(WM=wm).mean(dim='TIME').values,'+',markersize=12,color='w',zorder=101)
+        else:
+            ax2.plot(WM_nor['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_nor['PTMP'].sel(WM=wm).mean(dim='TIME').values,'_',markersize=12,color='w',zorder=101)
+        # else:
+        #     ax2.plot(WM_nor['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_nor['PTMP'].sel(WM=wm).mean(dim='TIME').values,'_',markersize=10,color='k')
     for wm in WM_obs.WM:
+        for tt in WM_obs.TIME:
+            ax1.scatter(WM_obs['PSAL'].sel(WM=wm).sel(TIME=tt).values,WM_obs['PTMP'].sel(WM=wm).sel(TIME=tt).values,
+            s=WM_obs['TRANS'].sel(WM=wm).sel(TIME=tt).values**2*4,zorder=50,linewidth=3,label='NorESM : '+str(wm.values),color=coldic[str(wm.values)],alpha=0.5)
         ax1.scatter(WM_obs['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_obs['PTMP'].sel(WM=wm).mean(dim='TIME').values,
-                s=WM_obs['TRANS'].sel(WM=wm).mean(dim='TIME').values**2*4,zorder=50,linewidth=3,label=str(wm.values),color=coldic[str(wm.values)])
-    lgnd=ax1.legend(loc=(2.3,0.2))
+                s=WM_obs['TRANS'].sel(WM=wm).mean(dim='TIME').values**2*4,linewidth=3,label=str(wm.values),color='k',zorder=100)
+        if ('AWS' in wm) | ('PWN' in wm):
+            ax1.plot(WM_obs['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_obs['PTMP'].sel(WM=wm).mean(dim='TIME').values,'+',markersize=12,color='w',zorder=101)
+        else:
+            ax1.plot(WM_obs['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_obs['PTMP'].sel(WM=wm).mean(dim='TIME').values,'_',markersize=12,color='w',zorder=101)
+        # else:
+        #     ax1.plot(WM_obs['PSAL'].sel(WM=wm).mean(dim='TIME').values,WM_obs['PTMP'].sel(WM=wm).mean(dim='TIME').values,'_',markersize=10,color='k',zorder=51)
+
     for ii in range(5):
         lgnd.legendHandles[ii]._sizes = [40]
     for axx in [ax1,ax2]:
         axx.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
-        axx.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=5)
+        axx.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
     f.text(0.05, 0.5, 'pot.temperature [$^\circ$C]', va='center', rotation='vertical',fontsize=14)
     f.text(0.5, 0, 'salinity', ha='center',fontsize=14)
     xlim(34,36)
@@ -371,8 +564,124 @@ def plot_TS_bylayer():
     ax1.set_title('Observations',fontsize=14)
     ax2.set_title('NorESM',fontsize=14)
     savefig(figdir+'TS_comp.png',bbox_inches='tight')
+    savefig(figdir+'TS_comp.pdf',bbox_inches='tight')
 
 plot_TS_bylayer()
+M96={}
+M96['WMS']=['AW_IS','AW_BS','AW_FS','AE_PW','AE_AAW','AW_IW','NE_RAW','ED_PW','ED_AAW','ED_RAW','AW_IR','AW_EI','DW']
+M96['PTMP']=[7,4,2,-1,0.5,0,1.5,-1,0.5,1,4,2.5,-1]
+M96['PSAL']=[35.3,35.05,35,34.3,34.85,34.89,34.95,34.3,34.85,34.92,34,34.9,34.9]
+M96['TRANS']=[6.8,-1.6,-3.4,1.5,1.5,0.17,1.1,-1.6,-2,-0.8,0.9,-0.7,-2]
+
+sign=array(M96['TRANS'])/array([abs(tt) for tt in M96['TRANS']])
+
+sign
+sum(M96['TRANS'])
+
+def plot_M96_TS():
+    f,axx=subplots(1,1,figsize=(6,5),sharex=True,sharey=True)
+    for ii in range(len(M96['WMS'])):
+        axx.scatter(M96['PSAL'][ii],M96['PTMP'][ii],s=M96['TRANS'][ii]**2*50,zorder=50,linewidth=3,label=M96['WMS'][ii])
+        if sign[ii]>0:
+            axx.plot(M96['PSAL'][ii],M96['PTMP'][ii],'k+',zorder=51)
+        else:
+            axx.plot(M96['PSAL'][ii],M96['PTMP'][ii],'k_',zorder=51)
+    axx.legend(loc=(1.05,0))
+    axx.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+    xlim(34,36)
+    ylim(-2,12)
+    f.text(0.05, 0.5, 'pot.temperature [$^\circ$C]', va='center', rotation='vertical',fontsize=14)
+    f.text(0.5, 0, 'salinity', ha='center',fontsize=14)
+
+    f.suptitle('Mauritzen 1996 (Pt.II)\nTransport-weighted water mass properties\n',fontsize=16)
+    savefig(figdir+'TS_Mauritzen.png',bbox_inches='tight')
+    savefig(figdir+'TS_Mauritzen.pdf',bbox_inches='tight')
+
+plot_M96_TS()
+
+############################################################################################
+################  PLOT SEASONAL EVOLUTION OF NORESM WMS   #############################################
+############################################################################################
+# This was not v. helpful, 12 panels all looked v similar, hard to compare
+# def plot_TS_NORESM_CLIM():
+#     axx={}
+#     f,[(axx[0],axx[1],axx[2]),(axx[3],axx[4],axx[5]),(axx[6],axx[7],axx[8]),(axx[9],axx[10],axx[11])]=subplots(4,3,figsize=(15,15),sharex=True,sharey=True)
+#     for wm in WM_nor.WM:
+#         WM_clim=WM_nor.groupby('TIME.month').mean('TIME').sel(WM=wm)
+#         for ii in range(12):
+#             axx[ii].scatter(WM_clim['PSAL'][ii].values,WM_clim['PTMP'][ii].values,
+#                 s=WM_clim['TRANS'][ii].values**2*4,zorder=50,linewidth=3,label='NorESM : '+str(wm.values),color=coldic[str(wm.values)],alpha=0.5)
+#             if ('AWS' in wm) | ('PWN' in wm):
+#                 axx[ii].plot(WM_clim['PSAL'][ii].values,WM_clim['PTMP'][ii].values,'+',markersize=12,color='k')
+#             axx[ii].contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+#             axx[ii].contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=5)
+#     lgnd=axx[5].legend(loc=(2.3,0.2))
+#     for ii in range(5):
+#         lgnd.legendHandles[ii]._sizes = [40]
+#     f.text(0.05, 0.5, 'pot.temperature [$^\circ$C]', va='center', rotation='vertical',fontsize=14)
+#     f.text(0.5, 0, 'salinity', ha='center',fontsize=14)
+#     xlim(34,36)
+#     ylim(-3,12)
+#     # f.suptitle('Transport-weighted water mass properties\n',fontsize=16)
+#     # savefig(figdir+'TS_comp.png',bbox_inches='tight')
+#     # savefig(figdir+'TS_comp.pdf',bbox_inches='tight')
+#
+#
+# plot_TS_NORESM_CLIM()
+
+def plot_TS_NORESM_ALL():
+    f,axx=subplots(1,1,figsize=(10,8))
+    for wm in WM_nor.WM:
+        for tt in WM_nor.TIME:
+            axx.scatter(WM_nor['PSAL'].sel(WM=wm).sel(TIME=tt).values,WM_nor['PTMP'].sel(WM=wm).sel(TIME=tt).values,
+            s=WM_nor['TRANS'].sel(WM=wm).sel(TIME=tt).values**2*4,zorder=50,linewidth=3,label='NorESM : '+str(wm.values),color=coldic[str(wm.values)],alpha=0.5)
+        # if ('AWS' in wm) | ('PWN' in wm):
+        #     axx.plot(WM_clim['PSAL'][3*ii:3*ii+3].mean(dim='month').values,WM_clim['PTMP'][3*ii:3*ii+3].mean(dim='month').values,'+',markersize=12,color='k',zorder=100)
+        if tt==0:
+            lgnd=axx.legend(loc=(1.05,0.2))
+            for jj in range(5):
+                lgnd.legendHandles[jj]._sizes = [40]
+    axx.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+    axx.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=5)
+
+    f.text(0.05, 0.5, 'pot.temperature [$^\circ$C]', va='center', rotation='vertical',fontsize=14)
+    f.text(0.5, 0, 'salinity', ha='center',fontsize=14)
+    xlim(34,36)
+    ylim(-3,12)
+    f.suptitle('Seasaonal evolution of transport-weighted water mass properties in NorESM',fontsize=16)
+    savefig(figdir+'TS_all_NorESM.png',bbox_inches='tight')
+    savefig(figdir+'TS_all_NorESM.pdf',bbox_inches='tight')
+
+
+plot_TS_NORESM_ALL()
+
+
+def plot_TS_NORESM_CLIM():
+    f,axx=subplots(1,1,figsize=(10,8))
+    for ii in range(4):
+        for wm in WM_nor.WM:
+            WM_clim=WM_nor.groupby('TIME.month').mean('TIME').sel(WM=wm)
+            axx.scatter(WM_clim['PSAL'][3*ii:3*ii+3].mean(dim='month').values,WM_clim['PTMP'][3*ii:3*ii+3].mean(dim='month').values,
+                s=WM_clim['TRANS'][3*ii:3*ii+3].mean(dim='month').values**2*4,zorder=50,linewidth=3,label='NorESM : '+str(wm.values),color=coldic[str(wm.values)],alpha=0.5)
+            if ('AWS' in wm) | ('PWN' in wm):
+                axx.plot(WM_clim['PSAL'][3*ii:3*ii+3].mean(dim='month').values,WM_clim['PTMP'][3*ii:3*ii+3].mean(dim='month').values,'+',markersize=12,color='k',zorder=100)
+        if ii==0:
+            lgnd=axx.legend(loc=(1.05,0.2))
+            for jj in range(5):
+                lgnd.legendHandles[jj]._sizes = [40]
+    axx.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+    axx.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=5)
+
+    f.text(0.05, 0.5, 'pot.temperature [$^\circ$C]', va='center', rotation='vertical',fontsize=14)
+    f.text(0.5, 0, 'salinity', ha='center',fontsize=14)
+    xlim(34,36)
+    ylim(-3,12)
+    f.suptitle('Seasaonal evolution of transport-weighted water mass properties in NorESM',fontsize=16)
+    savefig(figdir+'TS_seas_NorESM.png',bbox_inches='tight')
+    savefig(figdir+'TS_seas_NorESM.pdf',bbox_inches='tight')
+
+
+plot_TS_NORESM_CLIM()
 
 def plot_XPORT_S_bylayer():
     f,[ax1,ax2]=subplots(1,2,figsize=(11,5),sharex=True,sharey=True)
@@ -404,8 +713,8 @@ plot_XPORT_S_bylayer()
 
 
 
-THIS WAS FOR DEMOING TO FEILI -- WOULD RE-EVALUATE NOW THAT I HAVE MORE OBS/ MAYBE ITS NOT THE POINT
-CODE COULD BE USEFUL.
+# THIS WAS FOR DEMOING TO FEILI -- WOULD RE-EVALUATE NOW THAT I HAVE MORE OBS/ MAYBE ITS NOT THE POINT
+# CODE COULD BE USEFUL.
 
 Se={'AWS': 0.06, 'PWS': 0.8, 'DWS': 0.1, 'AWN': 0.2, 'PWN': 0.8, 'FW': 0, 'SI': 0}
 Ue={'AWS': 2.0,'PWS': 2.0,'DWS': 2.0,'AWN': 2.0,'PWN': 2.0,'FW': 0.01,'SI': 0.01}

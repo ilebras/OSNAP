@@ -10,7 +10,7 @@ def quickpresplot(xray):
 
 ################## CF moorings
 for yr in ['2016','2018']:
-    for moornum in range(5,8):
+    for moornum in range(7,8):
         aqdir=glob.glob(datadir+'OSNAP'+yr+'recovery/AQD_Data_CF/*CF'+str(moornum)+'*')
         for ii,qq in enumerate(aqdir):
             if ii==0:

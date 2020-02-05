@@ -2,9 +2,11 @@ from aux_funcs import *
 
 dat=xr.open_dataset('../data/aux_data/ERA_1804/tau_hflux_180411.nc')
 
-dat.history
 
 era=dat.rename({'inss':'tauy','iews':'taux','longitude':'lon','latitude':'lat','time':'date'})
+
+
+
 era['lon']=era['lon']-360
 
 import os
@@ -91,7 +93,6 @@ def wint2():
 wint2()
 
 ### Get along-flow wind stress near the array and plot time series
-
 era['tau along']=-(era['taux']*cos(theta)+era['tauy']*sin(theta))
 
 def pltseries():

@@ -1,6 +1,6 @@
 from pylab import *
 from scipy.optimize import minimize
-figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/SimpleBudgets/'
+figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/'
 
 
 ########################################################################################################

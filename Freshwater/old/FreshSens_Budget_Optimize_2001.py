@@ -180,10 +180,12 @@ def barplot(casename,phrase):
 #############################################################
 # Get solutions for a couple different gammas:
 #############################################################
+gammavec
+
 res={}
 for gamma in gammavec:
     def CostFunction(x,delx=delx): # note: gamma is a measure of the importance of satisfying equations vs. matching first guess
-        J=(x[0]+x[1]+x[2]+x[5]/2)**2 \
+        J=(x[0]+x[1]+x[2]+x[5]/2)**2
         +(x[3]+x[4]+x[6]+x[5]/2)**2 \
         +(x[0]*x[7]+x[1]*x[8]+x[2]*x[9]+x[3]*x[10]+x[4]*x[11]+6*x[6])**2 \
         +sum((x-xg)**2/delx**2/gamma**2) #force each solution to be within delx of the first guess

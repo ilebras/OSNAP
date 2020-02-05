@@ -9,17 +9,21 @@ m1dir18=glob.glob(datadir+'OSNAP2018recovery/M1_netcdf/*MCAT*')
 m1dir18
 m1_18=xr.open_dataset(m1dir18[0])
 
+# ALREADY HOURLY!!!
 def quickpresplot(xray):
     figure(figsize=(14,6))
     plot(xray.TIME,xray.PRES);
 
 quickpresplot(m1_18)
 
-m1_18_hourly=m1_18.resample(TIME='1H').mean(dim='TIME')
+m1_18_hourly=m1_18.resample(TIME='1H').nearest()
+
+m1_18.TIME
 
 add_SA_CT_PT(m1_18_hourly)
 
 m1_18_hourly.to_netcdf(datadir+'OSNAP2018recovery/M1_netcdf/M1_mcat_2018recovery_hourly.nc','w',format='netCDF4')
+
 
 #Note: M1, 2014-2016 is two deployments -- merge their netcdfs
 m1dir16=glob.glob(datadir+'OSNAP2016recovery/M1_netcdf/*MCAT*')
@@ -31,7 +35,9 @@ m1_16_merged=xr.concat([m1_16,m1_15],dim='DEPTH')
 
 quickpresplot(m1_16_merged)
 
-m1_16_hourly=m1_16_merged.resample(TIME='1H').mean(dim='TIME')
+m1_16_hourly=m1_16_merged.resample(TIME='1H').mean()
+m1_16_merged.PSAL[:100,10].plot()
+m1_16_hourly.PSAL[:100,10].plot()
 
 
 m1_16_hourly['LATITUDE']=59.9
@@ -39,6 +45,8 @@ m1_16_hourly['LONGITUDE']=-41.125
 
 add_SA_CT_PT(m1_16_hourly)
 
+
+m1_16_hourly.PSAL[:,0]
 m1_16_hourly.to_netcdf(datadir+'OSNAP2016recovery/M1_netcdf/M1_mcat_2016recovery_hourly.nc','w',format='netCDF4')
 
 figure(figsize=(14,6))
