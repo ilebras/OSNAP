@@ -1,0 +1,256 @@
+from firstfuncs_1618 import *
+figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/paperfigs/'
+################################################################################################################################
+################################################################################################################################
+###########################################      LOAD     #######################################################
+################################################################################################################################
+################################################################################################################################
+
+osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
+fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_1912.nc')
+bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_1912.nc')
+ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
+so=xr.open_dataset(datadir+'NorESM/NorESM_source_storage_xray_1912.nc')
+vts=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_volumetransports_201001-201812.nc')
+
+
+startyear=2010
+startmonth=1
+endyear=2018
+endmonth=12
+vts['time']=array([datetime.datetime(m//12, m%12+1, 15) for m in range(startyear*12+startmonth-1, endyear*12+endmonth)])
+
+vts
+vts.net_vt_BSO.plot()
+vts.net_vt_OSNAP.plot()
+
+hf=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_NordicSeas_heatloss_201001-201812.nc')
+hf['time']=array([datetime.datetime(m//12, m%12+1, 15) for m in range(startyear*12+startmonth-1, endyear*12+endmonth)])
+
+
+WM=xr.open_dataset(datadir+'NorESM/NorESM_WMs_1912.nc')
+
+WM_obs=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_1912.nc')
+
+vts['net_vt_OSNAP'].plot()
+(vts['net_vt_FS']+vts['net_vt_BSO']).plot()
+vts['tot']=-(-vts['net_vt_FS']+vts['net_vt_NS']-vts['net_vt_BSO']+vts['net_vt_OSNAP'])
+
+vts['tot'].mean()
+
+coldic={'AWS':'red','DWS':'grey','PWS':'royalblue','PWN':'purple','AWN':'orange'}
+################################################################################################################################
+################################################################################################################################
+###########################################      VOL BALANCE     #######################################################
+################################################################################################################################
+################################################################################################################################
+WM['TRANS'].mean(dim='TIME')
+
+def plot_volfluxes_seas():
+    f,axx=subplots(2,3,figsize=(14,6),sharex=True)
+    for gg,wm in enumerate(WM.WM.values):
+        if gg>2:
+            jj=1
+            gg=gg-3
+        else:
+            jj=0
+        for ii in range(9):
+            axx[jj,gg].plot(range(1,13),WM['TRANS'].sel(WM=wm)[12*ii:12*ii+12],'-',color='grey',alpha=0.5)
+        WM['TRANS'].sel(WM=wm).groupby('TIME.month').mean(dim='TIME').plot(color='k',linewidth=4,ax=axx[jj,gg],linestyle='--')
+        WM_obs['TRANS'].sel(WM=wm).groupby('TIME.month').mean(dim='TIME').plot(color=coldic[wm],linewidth=4,ax=axx[jj,gg])
+        axx[jj,gg].set_title(wm)
+
+    axx[0,0].set_ylim(8,22)
+    axx[0,2].set_ylim(-22,-8)
+    axx[1,0].set_ylim(-14,0)
+    axx[1,1].set_ylim(0,14)
+
+    for ii in range(9):
+        axx[1,2].plot(range(1,13),WM['TRANS'].sum(dim='WM')[12*ii:12*ii+12],'-',color='grey',alpha=0.5)
+        axx[1,2].plot(range(1,13),vts['tot'][12*ii:12*ii+12],'-',color='green',alpha=0.5)
+        # axx[1,2].axhline(WM['TRANS'].sum(dim='WM')[12*ii:12*ii+12].mean(dim='TIME'),color='k',alpha=0.75)
+    WM['TRANS'].sum(dim='WM').groupby('TIME.month').mean(dim='TIME').plot(color='k',linewidth=4,ax=axx[1,2],linestyle='--')
+    # axx[1,2].axhline(vts['tot'].groupby('time.month').mean(dim='time').mean(dim='month'),color='green',linewidth=4)
+    (vts['tot']).groupby('time.month').mean(dim='time').plot(color='green',linewidth=4,ax=axx[1,2],linestyle='--')
+
+    for ggg in axx:
+        for axi in ggg:
+            axi.set_ylabel('')
+            axi.set_xlabel('')
+            axi.set_xlim(1,12)
+    axx[1,2].set_title('Lateral volume transport divergence')
+    fsz=14
+    f.text(0.075, 0.5, 'Transport [Sv]', va='center',fontsize=fsz,rotation='vertical')
+    f.text(0.5, 0.05, 'Month', ha='center',fontsize=fsz)
+    savefig(figdir+'Budget_volume_seas.png',bbox_inches='tight')
+    savefig(figdir+'Budget_volume_seas.pdf',bbox_inches='tight')
+
+
+plot_volfluxes_seas()
+
+vts['tot'].mean()
+osnap_wm=WM['TRANS'].sel(WM='AWS')+WM['TRANS'].sel(WM='PWS')+WM['TRANS'].sel(WM='DWS')
+north_wm=WM['TRANS'].sel(WM='AWN')+WM['TRANS'].sel(WM='PWN')
+
+(-vts['net_vt_FS']-vts['net_vt_BSO']).plot()
+north_wm.plot()
+
+vts['net_vt_OSNAP'].groupby('time.month').mean(dim='time').plot()
+# (vts['net_vt_OSNAP']+vts['net_vt_NS']).plot()
+osnap_wm.groupby('TIME.month').mean(dim='TIME').plot()
+
+vts['net_vt_OSNAP'].plot()
+# (vts['net_vt_OSNAP']+vts['net_vt_NS']).plot()
+osnap_wm.plot()
+WM['TRANS']['AWS']
+so['FW+SI'].mean()
+
+
+################################################################################################################################
+################################################################################################################################
+###########################################     FRESHWATER SOURCES     #######################################################
+################################################################################################################################
+################################################################################################################################
+
+so['prec']=so['liqprec']+so['solprec']
+so['allice']=so['iceberg']+so['mltfrz']
+
+freshvec=['prec','evap','allice','runoff']
+freshtit=['Precipitation','Evaporation','Ice melt','Runoff']
+
+def plot_fresh_source_seas():
+    f,axx=subplots(2,2,figsize=(12,7),sharex=True,sharey=True)
+    tt=0
+    for gg,wm in enumerate(freshvec):
+        if gg>1:
+            jj=1
+            gg=gg-2
+        else:
+            jj=0
+        for ii in range(9):
+            axx[jj,gg].plot(range(1,13),(so[wm])[12*ii:12*ii+12],'-',color='grey',alpha=0.5)
+        so[wm].groupby('TIME.month').mean(dim='TIME').plot(color='k',linewidth=4,ax=axx[jj,gg],linestyle='--')
+        axx[jj,gg].set_title(freshtit[tt])
+        for ggg in axx:
+            for axi in ggg:
+                axi.set_ylabel('')
+                axi.set_xlabel('')
+                axi.set_xlim(1,12)
+                axi.axhline(0,color='k')
+        tt+=1
+        fsz=14
+    f.text(0.05, 0.5, 'Transport [Sv]', va='center',fontsize=fsz,rotation='vertical')
+    f.text(0.5, 0.025, 'Month', ha='center',fontsize=fsz)
+    savefig(figdir+'Budget_fresh_source_seas.png',bbox_inches='tight')
+    savefig(figdir+'Budget_fresh_source_seas.pdf',bbox_inches='tight')
+
+plot_fresh_source_seas()
+
+
+
+
+################################################################################################################################
+################################################################################################################################
+###########################################      HEAT BALANCE     #######################################################
+################################################################################################################################
+################################################################################################################################
+cp=3850
+rhow=1000
+tera=10**12
+
+
+def plot_tmpfluxes():
+    f,axx=subplots(1,2,figsize=(14,4),sharex=True)
+    for wm in WM.WM:
+        (WM['TRANS']*WM['PTMP']).sel(WM=wm).groupby('TIME.month').mean(dim='TIME').plot(label=wm.values,ax=axx[0],color=coldic[str(wm.values)],linewidth=4)
+        # (WM_obs['TRANS']*WM_obs['PTMP']).sel(WM=wm).groupby('TIME.month').mean(dim='TIME').plot(label=wm.values,ax=axx[0],color=coldic[str(wm.values)],linewidth=3)
+        for ii in range(9):
+            axx[0].plot(range(1,13),(WM['TRANS']*WM['PTMP']).sel(WM=wm)[12*ii:12*ii+12],'-',color=coldic[str(wm.values)],alpha=0.25)
+    wm='PWS'
+    (WM['TRANS']*WM['PTMP']).sel(WM=wm).groupby('TIME.month').mean(dim='TIME').plot(label='',ax=axx[0],color=coldic[wm],linewidth=4)
+    (-cp*rhow*1e6*WM['TRANS']*WM['PTMP']/tera).sum(dim='WM').groupby('TIME.month').mean(dim='TIME').plot(label='-Lateral heat transport divergence',ax=axx[1],color='k',linewidth=4)
+    axx[1].plot(range(1,13),hf['NORDIC_hflx'].groupby('time.month').mean(dim='time'), label='Air-Sea heat flux',color='limegreen',linewidth=4)
+    for ii in range(9):
+        axx[1].plot(range(1,13),(-cp*rhow*1e6*WM['TRANS']*WM['PTMP']/tera).sum(dim='WM')[12*ii:12*ii+12],'-',color='k',alpha=0.25)
+        axx[1].plot(range(1,13),hf['NORDIC_hflx'][12*ii:12*ii+12],'-',color='limegreen',alpha=0.25)
+    for axi in axx:
+        axi.set_xlabel('')
+    axx[0].set_ylabel('Temp. transport [$^\circ$C x Sv]')
+    axx[1].set_ylabel('Heat flux [TW]')
+
+    axx[0].legend(loc=(0,1.05),ncol=5)
+    axx[1].legend()
+    axx[0].set_title('')
+    xlim(1,12)
+    f.text(0.5, 0, 'Month', ha='center',fontsize=14)
+
+    savefig(figdir+'Budget_heat_seas.png',bbox_inches='tight')
+    savefig(figdir+'Budget_heat_seas.pdf',bbox_inches='tight')
+
+plot_tmpfluxes()
+
+
+################################################################################################################################
+################################################################################################################################
+###########################################      SALT BALANCE     #######################################################
+################################################################################################################################
+################################################################################################################################
+# def plot_saltfluxes_seas():
+#     f,axx=subplots(2,3,figsize=(16,7),sharex=True)
+#     for gg,wm in enumerate(WM.WM.values):
+#         if gg>2:
+#             jj=1
+#             gg=gg-3
+#         else:
+#             jj=0
+#         for ii in range(9):
+#             axx[jj,gg].plot(range(1,13),(WM['TRANS']*WM['PSAL']).sel(WM=wm)[12*ii:12*ii+12],'-',color='grey',alpha=0.5)
+#         (WM['TRANS']*WM['PSAL']).sel(WM=wm).groupby('TIME.month').mean(dim='TIME').plot(color='k',linewidth=4,ax=axx[jj,gg],linestyle='--')
+#         (WM_obs['TRANS']*WM_obs['PSAL']).sel(WM=wm).groupby('TIME.month').mean(dim='TIME').plot(color=coldic[wm],linewidth=4,ax=axx[jj,gg])
+#         axx[jj,gg].set_title(wm)
+#
+#     # axx[0,0].set_ylim(8,22)
+#     # axx[0,2].set_ylim(-22,-8)
+#     # axx[1,0].set_ylim(-14,0)
+#     # axx[1,1].set_ylim(0,14)
+#
+#     # for ii in range(9):
+#     #     axx[1,2].plot(range(1,13),WM['TRANS'].sum(dim='WM')[12*ii:12*ii+12],'-',color='grey',alpha=0.5)
+#     #     axx[1,2].plot(range(1,13),vts['tot'][12*ii:12*ii+12],'-',color='green',alpha=0.5)
+#     #     # axx[1,2].axhline(WM['TRANS'].sum(dim='WM')[12*ii:12*ii+12].mean(dim='TIME'),color='k',alpha=0.75)
+#     # WM['TRANS'].sum(dim='WM').groupby('TIME.month').mean(dim='TIME').plot(color='k',linewidth=4,ax=axx[1,2],linestyle='--')
+#     # # axx[1,2].axhline(vts['tot'].groupby('time.month').mean(dim='time').mean(dim='month'),color='green',linewidth=4)
+#     # (vts['tot']).groupby('time.month').mean(dim='time').plot(color='green',linewidth=4,ax=axx[1,2])
+#
+#     for ggg in axx:
+#         for axi in ggg:
+#             axi.set_ylabel('')
+#             axi.set_xlabel('')
+#             axi.set_xlim(1,12)
+#     axx[1,2].set_title('Lateral volume transport divergence')
+#     fsz=14
+#     f.text(0.075, 0.5, 'Transport [Sv]', va='center',fontsize=fsz,rotation='vertical')
+#     f.text(0.5, 0.05, 'Month', ha='center',fontsize=fsz)
+#     # savefig(figdir+'Budget_salinity_seas.png',bbox_inches='tight')
+#     # savefig(figdir+'Budget_salinity_seas.pdf',bbox_inches='tight')
+#
+#
+# plot_saltfluxes_seas()
+
+#
+# def plot_saltfluxes():
+#     f,axx=subplots(2,1,figsize=(11,6),sharex=True)
+#     for wm in WM.WM:
+#         (WM['TRANS']*WM['PSAL']).sel(WM=wm).plot(label=wm.values,ax=axx[0],color=coldic[str(wm.values)])
+#     (WM['TRANS']*WM['PSAL']).sum(dim='WM').plot(label='Lateral salinity transport convergence',ax=axx[1],color='k')
+#     for axi in axx:
+#         axi.set_ylabel('Salt transport [S x Sv]')
+#         axi.set_xlabel('')
+#     axx[0].legend(loc=(1.01,0.2))
+#     axx[1].legend()
+#     axx[0].set_title('Salinity budget in NorESM')
+#     axx[0].set_xlim(datetime.datetime(2010,1,1),datetime.datetime(2019,1,1))
+#     # savefig(figdir+'Budget_NorESM_salinity.png',bbox_inches='tight')
+#     # savefig(figdir+'Budget_NorESM_salinity.pdf',bbox_inches='tight')
+#
+# plot_saltfluxes()

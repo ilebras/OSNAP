@@ -1,5 +1,6 @@
 from firstfuncs_1618 import *
 figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorESM/'
+figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/paperfigs/'
 import cmocean
 
 ################################################################################################################################
@@ -8,6 +9,8 @@ osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
 ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
 fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_1912.nc')
 bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_1912.nc')
+
+(bso['VELO']*bso['AREA']).sum(dim='DEPTH').sum(dim='LONGITUDE').mean(dim='TIME')/1e6
 
 # # #### load osnap data and cut out the eastern portion
 lonbnd=-44
@@ -116,129 +119,129 @@ label_key=['velocity [m s$^{-1}$]','salinity','pot. temperature [$^\circ$C]']
 
 # VELOCITY, SALINITY, TEMPERATURE AND DENSITY MEANS OVER PERIOD OF OVERLAP
 def plot_each(dat,xxvar,axx,var,ymax,sigi):
-    filled=axx.contourf(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),univec[var][1],cmap=univec[var][2],extend='both')
-    axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),levels=univec[var][1][::2],colors='k')
-    axx.contour(xxvar,dat.DEPTH,dat['PDEN'].mean(dim='TIME'),levels=[sigi],colors='k',linewidths=4) # add isopycnal of maximum overturning
+    filled=axx.contourf(xxvar,dat.DEPTH,dat[var].groupby('TIME.month').mean('TIME').mean(dim='month'),univec[var][1],cmap=univec[var][2],extend='both')
+    axx.contour(xxvar,dat.DEPTH,dat[var].groupby('TIME.month').mean('TIME').mean(dim='month'),levels=univec[var][1][::2],colors='k')
+    axx.contour(xxvar,dat.DEPTH,dat['PDEN'].groupby('TIME.month').mean('TIME').mean(dim='month'),levels=[sigi],colors='k',linewidths=4) # add isopycnal of maximum overturning
     axx.set_facecolor('k')
     axx.set_ylim(ymax,0)
     return filled
 
 
-def comp_obs_model(nor,obs,ymax,tit,xlab,stit):
-    f,axx=subplots(3,2,figsize=(12,10),sharex=True,sharey=True)
-    cout={}
-    for ii in range(3):
-        if 'Barents' in tit:
-            nor_x=nor.LATITUDE
-            obs_x=obs.LATITUDE
-        else:
-            nor_x=nor.LONGITUDE
-            obs_x=obs.LONGITUDE
-        plot_each(obs,obs_x,axx[ii,0],prop_key[ii],ymax,sigmax_obs)
-        cout[ii]=plot_each(nor,nor_x,axx[ii,1],prop_key[ii],ymax,sigmax)
-    if 'Fram' in tit:
-        for ii in range(3):
-            axx[ii,0].axvline(fslim_obs,color='k',linewidth=3)
-            axx[ii,1].axvline(fslim,color='k',linewidth=3)
-    fs=14
-    axx[0,0].set_title('Observations',fontsize=fs)
-    axx[0,1].set_title('NorESM model',fontsize=fs)
-    f.text(0.05, 0.5, 'depth [m]', va='center', rotation='vertical',fontsize=fs)
-    f.text(0.5, 0.05, xlab, ha='center',fontsize=fs)
-    suptitle(tit,fontsize=fs+2)
-    caxit={}
-    xc=0.95
-    cwi=0.01
-    cle=0.2
-    caxit[0]=f.add_axes([xc,0.67,cwi,cle])
-    caxit[1]=f.add_axes([xc,0.4,cwi,cle])
-    caxit[2]=f.add_axes([xc,0.13,cwi,cle])
-    for ii in range(3):
-        colorbar(cout[ii],label=label_key[ii],cax=caxit[ii])
-    savefig(figdir+'CompSect_Obs_NorESM_'+stit+'.png',bbox_inches='tight')
-
-comp_obs_model(fs,fs_obs,3000,'Fram Strait','Longitude [$^\circ$W]','fs')
-
-comp_obs_model(bso,bso_obs,500,'Barents Sea Opening','Latitude [$^\circ$N]','bso')
-
-comp_obs_model(osnap,osnap_obs,3200,'OSNAP East','Longitude [$^\circ$W]','osnap')
-
-def cont_partial(dat,xxvar,axx,ymin,ymax,sigi):
-    var='VELO'
-    filled=axx.contourf(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),arange(-0.2,0.2,0.025),cmap=univec[var][2],extend='both')
-    axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),colors='k',levels=[0])#univec[var][1][::2])
-    var='PSAL'
-    conts=axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),hstack((arange(33,34.5,0.5),arange(34.5,35.8,0.1))),cmap=cmocean.cm.haline,extend='both',linewidths=3)
-
-    axx.contour(xxvar,dat.DEPTH,dat['PDEN'].mean(dim='TIME'),levels=[sigi],colors='k',linewidths=4) # add isopycnal of maximum overturning
-    axx.set_facecolor('k')
-    axx.set_ylim(ymax,ymin)
-    return filled,conts
-
-
-def comp_obs_model_new(nor,obs,ymax,tit,xlab,stit,yspl):
-    fig = plt.figure(figsize=(14, 5), constrained_layout=False)
-    grd = fig.add_gridspec(2,2, wspace=0.1, hspace=0.0,height_ratios=[1,5])
-    fsz=14
-    axx={}
-    axx[0,0]=fig.add_subplot(grd[0,0])
-    axx[0,1]=fig.add_subplot(grd[0,1])
-    axx[1,0]=fig.add_subplot(grd[1,0],sharex=axx[0,0])
-    axx[1,1]=fig.add_subplot(grd[1,1],sharex=axx[0,1])
-    if 'Barents' in tit:
-        nor_x=nor.LATITUDE
-        obs_x=obs.LATITUDE
-    else:
-        nor_x=nor.LONGITUDE
-        obs_x=obs.LONGITUDE
-    velcont,salcont=cont_partial(obs,obs_x,axx[1,0],yspl,ymax,sigmax_obs)
-    cont_partial(obs,obs_x,axx[0,0],0,yspl,sigmax_obs)
-    cont_partial(nor,nor_x,axx[1,1],yspl,ymax,sigmax_obs)
-    cont_partial(nor,nor_x,axx[0,1],0,yspl,sigmax_obs)
-    if 'OSNAP' in tit:
-        axx[0,0].plot([oslim_obs,oslim_obs],[0,50],color='k',linewidth=3)
-        axx[0,1].plot([oslim,oslim],[0,30],color='k',linewidth=3)
-        axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz)
-        axx[0,0].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-        axx[0,1].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-        axx[0,0].text(-45,-10,'PWS',color='k',fontsize=fsz-2)
-        axx[0,1].text(-43,-10,'PWS',color='k',fontsize=fsz-2)
-        axx[1,0].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-        axx[1,1].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-    elif 'Fram' in tit:
-        for ii in range(2):
-            axx[ii,0].axvline(fslim_obs,color='k',linewidth=3)
-            axx[ii,1].axvline(fslim,color='k',linewidth=3)
-            axx[1,0].text(8,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,1].text(9,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,0].text(-3,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,1].text(-2,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-    else:
-            axx[1,0].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,1].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-    axx[0,1].set_yticklabels('')
-    axx[1,1].set_yticklabels('')
-    axx[0,0].set_title('Observations',fontsize=fsz)
-    axx[0,1].set_title('NorESM model',fontsize=fsz)
-    fig.text(0.05, 0.5, 'depth [m]', va='center', rotation='vertical',fontsize=fsz)
-    fig.text(0.5, 0, xlab, ha='center',fontsize=fsz)
-    suptitle(tit,fontsize=fsz+2)
-    cwi=0.025
-    cle=0.7
-    caxit_vel=fig.add_axes([0.95,0.15,cwi,cle])
-    caxit_sal=fig.add_axes([1.08,0.15,cwi,cle])
-    colorbar(velcont,label='velocity [m/s]',cax=caxit_vel)
-    colorbar(salcont,label='Salinity',cax=caxit_sal)
-    savefig(figdir+'CompSect_Obs_NorESM_synth_'+stit+'.png',bbox_inches='tight')
-    savefig(figdir+'CompSect_Obs_NorESM_synth_'+stit+'.pdf',bbox_inches='tight')
-
-
-
-comp_obs_model_new(osnap,osnap_obs,3200,'OSNAP East','Longitude [$^\circ$W]','osnap',100)
-
-comp_obs_model_new(fs,fs_obs,3000,'Fram Strait','Longitude [$^\circ$W]','fs',300)
-
-comp_obs_model_new(bso,bso_obs,500,'Barents Sea Opening','Latitude [$^\circ$N]','bso',50)
+# def comp_obs_model(nor,obs,ymax,tit,xlab,stit):
+#     f,axx=subplots(3,2,figsize=(12,10),sharex=True,sharey=True)
+#     cout={}
+#     for ii in range(3):
+#         if 'Barents' in tit:
+#             nor_x=nor.LATITUDE
+#             obs_x=obs.LATITUDE
+#         else:
+#             nor_x=nor.LONGITUDE
+#             obs_x=obs.LONGITUDE
+#         plot_each(obs,obs_x,axx[ii,0],prop_key[ii],ymax,sigmax_obs)
+#         cout[ii]=plot_each(nor,nor_x,axx[ii,1],prop_key[ii],ymax,sigmax)
+#     if 'Fram' in tit:
+#         for ii in range(3):
+#             axx[ii,0].axvline(fslim_obs,color='k',linewidth=3)
+#             axx[ii,1].axvline(fslim,color='k',linewidth=3)
+#     fs=14
+#     axx[0,0].set_title('Observations',fontsize=fs)
+#     axx[0,1].set_title('NorESM model',fontsize=fs)
+#     f.text(0.05, 0.5, 'depth [m]', va='center', rotation='vertical',fontsize=fs)
+#     f.text(0.5, 0.05, xlab, ha='center',fontsize=fs)
+#     suptitle(tit,fontsize=fs+2)
+#     caxit={}
+#     xc=0.95
+#     cwi=0.01
+#     cle=0.2
+#     caxit[0]=f.add_axes([xc,0.67,cwi,cle])
+#     caxit[1]=f.add_axes([xc,0.4,cwi,cle])
+#     caxit[2]=f.add_axes([xc,0.13,cwi,cle])
+#     for ii in range(3):
+#         colorbar(cout[ii],label=label_key[ii],cax=caxit[ii])
+#     savefig(figdir+'CompSect_Obs_NorESM_'+stit+'.png',bbox_inches='tight')
+#
+# comp_obs_model(fs,fs_obs,3000,'Fram Strait','Longitude [$^\circ$W]','fs')
+#
+# comp_obs_model(bso,bso_obs,500,'Barents Sea Opening','Latitude [$^\circ$N]','bso')
+#
+# comp_obs_model(osnap,osnap_obs,3200,'OSNAP East','Longitude [$^\circ$W]','osnap')
+#
+# def cont_partial(dat,xxvar,axx,ymin,ymax,sigi):
+#     var='VELO'
+#     filled=axx.contourf(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),arange(-0.2,0.2,0.025),cmap=univec[var][2],extend='both')
+#     axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),colors='k',levels=[0])#univec[var][1][::2])
+#     var='PSAL'
+#     conts=axx.contour(xxvar,dat.DEPTH,dat[var].mean(dim='TIME'),hstack((arange(33,34.5,0.5),arange(34.5,35.8,0.1))),cmap=cmocean.cm.haline,extend='both',linewidths=3)
+#
+#     axx.contour(xxvar,dat.DEPTH,dat['PDEN'].mean(dim='TIME'),levels=[sigi],colors='k',linewidths=4) # add isopycnal of maximum overturning
+#     axx.set_facecolor('k')
+#     axx.set_ylim(ymax,ymin)
+#     return filled,conts
+#
+#
+# def comp_obs_model_new(nor,obs,ymax,tit,xlab,stit,yspl):
+#     fig = plt.figure(figsize=(14, 5), constrained_layout=False)
+#     grd = fig.add_gridspec(2,2, wspace=0.1, hspace=0.0,height_ratios=[1,5])
+#     fsz=14
+#     axx={}
+#     axx[0,0]=fig.add_subplot(grd[0,0])
+#     axx[0,1]=fig.add_subplot(grd[0,1])
+#     axx[1,0]=fig.add_subplot(grd[1,0],sharex=axx[0,0])
+#     axx[1,1]=fig.add_subplot(grd[1,1],sharex=axx[0,1])
+#     if 'Barents' in tit:
+#         nor_x=nor.LATITUDE
+#         obs_x=obs.LATITUDE
+#     else:
+#         nor_x=nor.LONGITUDE
+#         obs_x=obs.LONGITUDE
+#     velcont,salcont=cont_partial(obs,obs_x,axx[1,0],yspl,ymax,sigmax_obs)
+#     cont_partial(obs,obs_x,axx[0,0],0,yspl,sigmax_obs)
+#     cont_partial(nor,nor_x,axx[1,1],yspl,ymax,sigmax_obs)
+#     cont_partial(nor,nor_x,axx[0,1],0,yspl,sigmax_obs)
+#     if 'OSNAP' in tit:
+#         axx[0,0].plot([oslim_obs,oslim_obs],[0,50],color='k',linewidth=3)
+#         axx[0,1].plot([oslim,oslim],[0,30],color='k',linewidth=3)
+#         axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz)
+#         axx[0,0].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#         axx[0,1].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#         axx[0,0].text(-45,-10,'PWS',color='k',fontsize=fsz-2)
+#         axx[0,1].text(-43,-10,'PWS',color='k',fontsize=fsz-2)
+#         axx[1,0].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#         axx[1,1].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#     elif 'Fram' in tit:
+#         for ii in range(2):
+#             axx[ii,0].axvline(fslim_obs,color='k',linewidth=3)
+#             axx[ii,1].axvline(fslim,color='k',linewidth=3)
+#             axx[1,0].text(8,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,1].text(9,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,0].text(-3,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,1].text(-2,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#     else:
+#             axx[1,0].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,1].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#     axx[0,1].set_yticklabels('')
+#     axx[1,1].set_yticklabels('')
+#     axx[0,0].set_title('Observations',fontsize=fsz)
+#     axx[0,1].set_title('NorESM model',fontsize=fsz)
+#     fig.text(0.05, 0.5, 'depth [m]', va='center', rotation='vertical',fontsize=fsz)
+#     fig.text(0.5, 0, xlab, ha='center',fontsize=fsz)
+#     suptitle(tit,fontsize=fsz+2)
+#     cwi=0.025
+#     cle=0.7
+#     caxit_vel=fig.add_axes([0.95,0.15,cwi,cle])
+#     caxit_sal=fig.add_axes([1.08,0.15,cwi,cle])
+#     colorbar(velcont,label='velocity [m/s]',cax=caxit_vel)
+#     colorbar(salcont,label='Salinity',cax=caxit_sal)
+#     savefig(figdir+'CompSect_Obs_NorESM_synth_'+stit+'.png',bbox_inches='tight')
+#     savefig(figdir+'CompSect_Obs_NorESM_synth_'+stit+'.pdf',bbox_inches='tight')
+#
+#
+#
+# comp_obs_model_new(osnap,osnap_obs,3200,'OSNAP East','Longitude [$^\circ$W]','osnap',100)
+#
+# comp_obs_model_new(fs,fs_obs,3000,'Fram Strait','Longitude [$^\circ$W]','fs',300)
+#
+# comp_obs_model_new(bso,bso_obs,500,'Barents Sea Opening','Latitude [$^\circ$N]','bso',50)
 
 titvec=['OSNAP East','Fram Strait','Barents Sea Opening']
 obsvec=[osnap_obs,fs_obs,bso_obs]
@@ -309,8 +312,8 @@ def comp_obs_model_all():
     caxit_sal=fig.add_axes([xc,0.15,cwi,cle])
     colorbar(velcont,label='velocity [m/s]',cax=caxit_vel)
     colorbar(salcont,label='Salinity',cax=caxit_sal)
-    savefig(figdir+'CompSect_Obs_NorESM_all.png',bbox_inches='tight')
-    savefig(figdir+'CompSect_Obs_NorESM_all.pdf',bbox_inches='tight')
+    savefig(figdir_paper+'CompSect_Obs_NorESM_all.png',bbox_inches='tight')
+    savefig(figdir_paper+'CompSect_Obs_NorESM_all.pdf',bbox_inches='tight')
 
 
 comp_obs_model_all()

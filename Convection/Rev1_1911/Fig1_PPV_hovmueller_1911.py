@@ -8,6 +8,8 @@ from map_funcs import *
 
 dat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_5m_wML.nc')
 
+dat
+
 # osnap=pickle.load(open(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.pickle','rb'))
 # osnap_locs=xr.Dataset(coords={'lon':osnap.LONGITUDE.values,'lat':osnap.LATITUDE.values})
 # osnap_locs.to_netcdf(datadir+'OSNAP2016recovery/gridded_CF-OOI/osnap_locs.nc','w',format='netCDF4')
@@ -56,6 +58,8 @@ for dd,na in enumerate(dat.mid_depth.values):
 # Load the netcdf now (saved in Load_Irminger_Femke.py)
 ooi=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/OOI_HYPM_xray_fromFemke.nc')
 
+
+
 #### First, fill in NaNs vertically, then horizontally
 ooi['PV_fill']=NaN*ooi['PV']
 for tt,na in enumerate(ooi.date.values):
@@ -73,14 +77,15 @@ for dd,na in enumerate(ooi.prs_mid.values):
 
 
 
+ooi['PV_sm1']=NaN*ooi['PV']
 ooi['PV_sm']=NaN*ooi['PV']
 for tt,na in enumerate(ooi.date.values):
     nanind=~isnan(ooi['PV_fill'][:,tt])
     if sum(nanind)>10:
         B, A = sig.butter(2,0.01, output='ba')
-        ooi['PV_sm'][nanind,tt]=sig.filtfilt(B,A,ooi['PV_fill'][nanind,tt].values)
+        ooi['PV_sm1'][nanind,tt]=sig.filtfilt(B,A,ooi['PV_fill'][nanind,tt].values)
     else:
-        ooi['PV_sm'][:,tt]=NaN
+        ooi['PV_sm1'][:,tt]=NaN
 
 
 for dd,na in enumerate(ooi.prs_mid.values):
@@ -198,12 +203,12 @@ def pltveldensec(axx,draw_moors='yes'):
                         axx.plot(-dd,zz,'k.')
         return vel
 
-def plotPV(moornum,axx,tit,moor='na'):
+def plotPV(moornum,axx,tit,moor='na',vminooi=-11.25):
     if moor=='ooi':
         log10ooi=log10(ooi.PV_sm.values)
         log10ooi[log10ooi<-11.25]=-11.5
         log10ooi[isnan(log10ooi)]=-11.5
-        hh=axx.contourf(ooi.date.values[2:-2],ooi.prs_mid.values,log10ooi[:,2:-2],51,vmin=-11.25,vmax=-10,cmap=PVcbar)
+        hh=axx.contourf(ooi.date.values[2:-2],ooi.prs_mid.values,log10ooi[:,2:-2],51,vmin=vminooi,vmax=-10,cmap=PVcbar)
         contour(ooi.date.values[2:-6],ooi.prs_mid.values,log10(ooi.PV_sm.values)[:,2:-6],levels=[-11],colors='red',linewidths=3)
     else:
         hh=axx.contourf(dat.date.values,dat.mid_depth.values,log10(dat.PV_sm[moornum,:,:].values),51,vmin=-11.25,vmax=-10,cmap=PVcbar)
@@ -370,88 +375,225 @@ PV_presplot()
 # PPV_only()
 #
 #
-# def CF5_only():
-#     f=figure(figsize=(10,3))
-#     gs1=gridspec.GridSpec(1,1, hspace=0.2)
-#
-#     ax1=plt.subplot(gs1[0])
-#     # ax2=plt.subplot(gs1[1])
-#     # ax3=plt.subplot(gs1[2])
-#     # hh,denlab=plotPV(3,ax3,'OOI: Irminger gyre interior',moor='ooi')
-#     # labspot=datetime.datetime(2014,11,1).toordinal()
-#     # # ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,225),(labspot,800),(labspot,1250)])
-#     # hh,denlab=plotPV(2,ax2,'M1: Edge of the boundary current')
-#     # # labspot=datetime.datetime(2015,7,1).toordinal()
-#     # ax2.clabel(denlab,fmt='%1.2f',manual=[(labspot,300),(labspot,600),(labspot,1100)])
-#     hh,denlab=plotPV(0,ax1,'CF5: Boundary current core')
-#     labspot=datetime.datetime(2015,7,1).toordinal()
-#     ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,600),(labspot,1100)])
-#     make_hh=plt.cm.ScalarMappable(cmap=PVcbar)
-#     make_hh.set_array(log10(dat.PV_sm[0,:,:].values))
-#     make_hh.set_clim(-10,-11.25)
-#     cbar_axhh = f.add_axes([0.93, 0.25, 0.02, 0.5])
-#     cbarhh=colorbar(make_hh, cax=cbar_axhh,label='\n log$_{10}$( PPV ) [m$^{-1}$ s$^{-1}$]',ticks=arange(-9.75,-11.5,-0.25))
-#     cbarhh.ax.plot([0, 1], [-11]*2, 'r',linewidth=3)
-#
-#     dpmin=150
-#     ax1.set_ylim(1300,dpmin)
-#     # ax2.set_ylim(1500,dpmin)
-#     ax1.set_yticks([1000,500])
-#     # ax2.set_yticks([1500,1000,500])
-#     # ax3.set_ylim(1500,dpmin)
-#     # ax3.set_yticks([1500,1000,500])
-#     #
-#
-#     ax1.set_ylabel('depth [m]')
-#     # for axx in [ax1,ax2,ax3]:
-#     axx=ax1
-#     axx.set_xlim([datetime.datetime(2014,9,1),datetime.datetime(2016,7,5)])
-#     axx.xaxis.set_major_locator(years)
-#     axx.xaxis.set_minor_locator(threemonth)
-#     #
-#     # for axx in [ax1,ax2]:
-#     #     axx.set_xticklabels('')
-#     # fs=12
-#     #
-#     ax1.xaxis.set_minor_formatter(monthFMT)
-#     ax1.xaxis.set_major_formatter(yearFMT)
-#     labcol=dencol
-#     # ecoli='w'
-#     ax1.text(datetime.datetime(2015,7,1),800,'upper ISIW',fontsize=14,color=labcol,weight='bold')
-#     ax1.text(datetime.datetime(2015,4,1),1200,'deep ISIW',fontsize=14,color=labcol,weight='bold')
-#     # sday=15
-#     # ax2.text(datetime.datetime(2014,9,sday),600,'upper ISIW',fontsize=14,color=labcol,weight='bold')
-#     # ax2.text(datetime.datetime(2014,9,sday),1000,'deep ISIW',fontsize=14,color=labcol,weight='bold')
-#     # ax3.text(datetime.datetime(2014,9,sday),700,'upper ISIW',fontsize=14,color=labcol,weight='bold')
-#     # ax3.text(datetime.datetime(2014,9,sday),975,'deep ISIW',fontsize=14,color=labcol,weight='bold')
-#     # ax3.text(datetime.datetime(2016,4,1),1100,'Mixed\nLayer\nDepth',fontsize=16,color=MLcol,weight='bold')
-#
-#     savefig(figdir+'MixedLayer/paperfigs/CF5only_Fig1.png',bbox_inches='tight',dpi=300)
-#     savefig(figdir+'MixedLayer/paperfigs/CF5only_Fig1.pdf',bbox_inches='tight')
-#
-# CF5_only()
-#
-#
-# def velsec_only():
-#     f,ax=subplots(1,1,figsize=(4,3))
-#     vel=pltveldensec(ax)
-#     caxvel=f.add_axes([0.93, 0.25, 0.025, 0.5])
-#     colorbar(vel,ax=ax,ticks=arange(-0.4,0.5,0.2),label='velocity [m/s]',cax=caxvel,extend='both')
-#
-#     tf=14
-#     ax.text(42.6,1200,'CF5',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
-#     ax.text(42.3,2000,'CF6',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
-#     ax.text(41.5,2300,'M1',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
-#     ax.text(40.3,2950,'OOI',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
-#     ax.text(41.05,450,'upper ISIW',fontsize=tf-2,zorder=101)
-#     ax.text(41.05,1000,'deep ISIW',fontsize=tf-2,zorder=101)
-#     ax.set_xlabel('Longitude [$^\circ$W]')
-#
-#     savefig(figdir+'MixedLayer/paperfigs/velseconly_Fig1.png',bbox_inches='tight',dpi=300)
-#     savefig(figdir+'MixedLayer/paperfigs/velseconly_Fig1.pdf',bbox_inches='tight')
-#
-# velsec_only()
-#
+def CF5_only():
+    f=figure(figsize=(10,3))
+    gs1=gridspec.GridSpec(1,1, hspace=0.2)
+
+    ax1=plt.subplot(gs1[0])
+    # ax2=plt.subplot(gs1[1])
+    # ax3=plt.subplot(gs1[2])
+    # hh,denlab=plotPV(3,ax3,'OOI: Irminger gyre interior',moor='ooi')
+    # labspot=datetime.datetime(2014,11,1).toordinal()
+    # # ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,225),(labspot,800),(labspot,1250)])
+    # hh,denlab=plotPV(2,ax2,'M1: Edge of the boundary current')
+    # # labspot=datetime.datetime(2015,7,1).toordinal()
+    # ax2.clabel(denlab,fmt='%1.2f',manual=[(labspot,300),(labspot,600),(labspot,1100)])
+    hh,denlab=plotPV(0,ax1,'CF5: Boundary current core')
+    labspot=datetime.datetime(2015,7,1).toordinal()
+    ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,600),(labspot,1100)])
+    make_hh=plt.cm.ScalarMappable(cmap=PVcbar)
+    make_hh.set_array(log10(dat.PV_sm[0,:,:].values))
+    make_hh.set_clim(-10,-11.25)
+    cbar_axhh = f.add_axes([0.93, 0.25, 0.02, 0.5])
+    cbarhh=colorbar(make_hh, cax=cbar_axhh,label='\n log$_{10}$( PPV ) [m$^{-1}$ s$^{-1}$]',ticks=arange(-9.75,-11.5,-0.25))
+    cbarhh.ax.plot([0, 1], [-11]*2, 'r',linewidth=3)
+
+    dpmin=150
+    ax1.set_ylim(1300,dpmin)
+    # ax2.set_ylim(1500,dpmin)
+    ax1.set_yticks([1000,500])
+    # ax2.set_yticks([1500,1000,500])
+    # ax3.set_ylim(1500,dpmin)
+    # ax3.set_yticks([1500,1000,500])
+    #
+
+    ax1.set_ylabel('depth [m]')
+    # for axx in [ax1,ax2,ax3]:
+    axx=ax1
+    axx.set_xlim([datetime.datetime(2014,9,1),datetime.datetime(2016,7,5)])
+    axx.xaxis.set_major_locator(years)
+    axx.xaxis.set_minor_locator(threemonth)
+    #
+    # for axx in [ax1,ax2]:
+    #     axx.set_xticklabels('')
+    # fs=12
+    #
+    ax1.xaxis.set_minor_formatter(monthFMT)
+    ax1.xaxis.set_major_formatter(yearFMT)
+    ax1.set_xticklabels(['October','January\n2015','April','July','October','January\n2016','April','July',])
+    labcol=dencol
+    # ecoli='w'
+    ax1.text(datetime.datetime(2015,7,1),800,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    ax1.text(datetime.datetime(2015,4,1),1200,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    # sday=15
+    # ax2.text(datetime.datetime(2014,9,sday),600,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax2.text(datetime.datetime(2014,9,sday),1000,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax3.text(datetime.datetime(2014,9,sday),700,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax3.text(datetime.datetime(2014,9,sday),975,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax3.text(datetime.datetime(2016,4,1),1100,'Mixed\nLayer\nDepth',fontsize=16,color=MLcol,weight='bold')
+
+    savefig(figdir+'MixedLayer/paperfigs/CF5only_Fig1.png',bbox_inches='tight',dpi=300)
+    savefig(figdir+'MixedLayer/paperfigs/CF5only_Fig1.pdf',bbox_inches='tight')
+
+CF5_only()
+
+PVcbar=cm.YlGnBu
+
+def plotPV(moornum,axx,tit,moor='na',vminooi=-11.25):
+    if moor=='ooi':
+        log10ooi=log10(ooi.PV_sm1.values)
+        # log10ooi[log10ooi<-11.25]=-11.5
+        # log10ooi[isnan(log10ooi)]=-11.5
+        log10ooi[log10ooi<-12]=-12
+        log10ooi[isnan(log10ooi)]=-12
+        hh=axx.contourf(ooi.date.values[2:-2],ooi.prs_mid.values,log10ooi[:,2:-2],51,vmin=vminooi,vmax=-10,cmap=PVcbar)
+        contour(ooi.date.values[2:-6],ooi.prs_mid.values,log10(ooi.PV_sm.values)[:,2:-6],levels=[-11.25],colors='red',linewidths=3)
+    else:
+        hh=axx.contourf(dat.date.values,dat.mid_depth.values,log10(dat.PV_sm[moornum,:,:].values),51,vmin=-11.25,vmax=-10,cmap=PVcbar)
+        axx.contour(dat.date.values,dat.mid_depth.values,log10(dat.PV_sm[moornum,:,:].values),levels=[-11],colors='red',linewidths=3)
+    # axx.plot(ML_weekly.date,ML_weekly[moornum,:].T,color=MLcol,linewidth=3)
+    # axx.plot(dat.date,dat.ML_sm[moornum,:].T,color='grey',linewidth=3)
+    ML_real=dat.ML_sm[moornum,:].T.copy()
+    ML_real[ML_real<=190]=NaN
+    if moornum==4:
+        denlab=axx.contour(dat.date.values,dat.depth.values,dat['pden_sm'][moornum,:,:].values,levels=[d1,d2],colors=dencol,zorder=100,linewidths=3)
+    elif moor=='ooi':
+        # denlab=axx.contour(dat.date.values[6:-22],dat.depth.values,dat['pden_sm'][moornum,:,6:-22].values,levels=[d1,d2,d3],colors=dencol,zorder=100,linewidths=3)
+        axx.plot(dat.date,ML_real,color='r',linewidth=3)
+    else:
+        denlab=axx.contour(dat.date.values,dat.depth.values,dat['pden_sm'][moornum,:,:].values,levels=[d1,d2,d3],colors=dencol,zorder=100,linewidths=3)
+        axx.plot(dat.date,ML_real,color=MLcol,linewidth=3)
+    axx.set_title(tit,fontsize=14)
+    return hh#,denlab
+
+def OOI_only():
+    f=figure(figsize=(10,2))
+    gs1=gridspec.GridSpec(1,1, hspace=0.2)
+
+    ax1=plt.subplot(gs1[0])
+    # ax2=plt.subplot(gs1[1])
+    # ax3=plt.subplot(gs1[2])
+    vmo=-12
+    hh=plotPV(3,ax1,'',moor='ooi',vminooi=vmo)
+    labspot=datetime.datetime(2014,11,1).toordinal()
+    # # ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,225),(labspot,800),(labspot,1250)])
+    # hh,denlab=plotPV(2,ax2,'M1: Edge of the boundary current')
+    # # labspot=datetime.datetime(2015,7,1).toordinal()
+    # ax2.clabel(denlab,fmt='%1.2f',manual=[(labspot,300),(labspot,600),(labspot,1100)])
+    # hh,denlab=plotPV(0,ax1,'CF5: Boundary current core')
+    # labspot=datetime.datetime(2015,7,1).toordinal()
+    # ax1.clabel(denlab,fmt='%1.2f',manual=[(labspot,600),(labspot,1100)])
+    make_hh=plt.cm.ScalarMappable(cmap=PVcbar)
+    make_hh.set_array(log10(dat.PV_sm[0,:,:].values))
+    make_hh.set_clim(-10,vmo)
+    cbar_axhh = f.add_axes([0.93, 0.25, 0.02, 0.5])
+    cbarhh=colorbar(make_hh, cax=cbar_axhh,label='\n log$_{10}$( PPV ) [m$^{-1}$ s$^{-1}$]',ticks=arange(-9.5,vmo-1,-0.5))
+    cbarhh.ax.plot([0, 1], [-11]*2, 'r',linewidth=3)
+
+    dpmin=150
+    ax1.set_ylim(1300,dpmin)
+    # ax2.set_ylim(1500,dpmin)
+    ax1.set_yticks([1000,500])
+    # ax2.set_yticks([1500,1000,500])
+    # ax3.set_ylim(1500,dpmin)
+    # ax3.set_yticks([1500,1000,500])
+    #
+
+    ax1.set_ylabel('depth [m]')
+    # for axx in [ax1,ax2,ax3]:
+    axx=ax1
+    axx.set_xlim([datetime.datetime(2014,9,1),datetime.datetime(2016,7,5)])
+    # axx.xaxis.set_major_locator(years)
+    axx.xaxis.set_major_locator(threemonth)
+    #
+    # for axx in [ax1,ax2]:
+    #     axx.set_xticklabels('')
+    # fs=12
+    #
+    # ax1.xaxis.set_major_formatter(monthFMT)
+    # ax1.xaxis.set_major_formatter(yearFMT)
+    ax1.set_xticklabels(['October','January\n2015','April','July','October','January\n2016','April','July',])
+    labcol=dencol
+    # ecoli='w'
+    # ax1.text(datetime.datetime(2015,7,1),800,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax1.text(datetime.datetime(2015,4,1),1200,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    sday=15
+    # ax2.text(datetime.datetime(2014,9,sday),600,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax2.text(datetime.datetime(2014,9,sday),1000,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax1.text(datetime.datetime(2014,9,sday),700,'upper ISIW',fontsize=14,color=labcol,weight='bold')
+    # ax1.text(datetime.datetime(2014,9,sday),975,'deep ISIW',fontsize=14,color=labcol,weight='bold')
+    ax1.text(datetime.datetime(2016,4,1),1000,'Mixed\nLayer\nDepth',fontsize=16,color='r',weight='bold')
+
+    savefig(figdir+'MixedLayer/paperfigs/OOIonly_Fig1.png',bbox_inches='tight',dpi=300)
+    savefig(figdir+'MixedLayer/paperfigs/OOIonly_Fig1.pdf',bbox_inches='tight')
+
+OOI_only()
+
+def velsec_only():
+    f,ax=subplots(1,1,figsize=(4,3))
+    vel=pltveldensec(ax)
+    caxvel=f.add_axes([0.93, 0.25, 0.025, 0.5])
+    colorbar(vel,ax=ax,ticks=arange(-0.4,0.5,0.2),label='velocity [m/s]',cax=caxvel,extend='both')
+
+    tf=14
+    ax.text(42.6,1200,'CF5',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
+    ax.text(42.3,2000,'CF6',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
+    ax.text(41.5,2300,'M1',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
+    ax.text(40.3,2950,'OOI',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
+    ax.text(41.05,450,'upper ISIW',fontsize=tf-2,zorder=101)
+    ax.text(41.05,1000,'deep ISIW',fontsize=tf-2,zorder=101)
+    ax.set_xlabel('Longitude [$^\circ$W]')
+
+    savefig(figdir+'MixedLayer/paperfigs/velseconly_Fig1.png',bbox_inches='tight',dpi=300)
+    savefig(figdir+'MixedLayer/paperfigs/velseconly_Fig1.pdf',bbox_inches='tight')
+
+velsec_only()
+
+
+def pltvelsec(axx,draw_moors='yes'):
+        vel=axx.contourf(-osnap.LONGITUDE,osnap.DEPTH,osnap.VELO.sel(TIME=slice('2014-8-1','2015-8-1')).mean(dim='TIME'),20,cmap=cm.RdBu_r,vmin=-0.4,vmax=0.4)
+        # axx.contour(-osnap.LONGITUDE,osnap.DEPTH,osnap.PDEN.mean(dim='TIME'),levels=dbnds,colors='k',linewidths=3)
+        # axx.contour(-dat.lon,dat.depth,dat.pden.sel(date=slice('2014-8-1','2015-8-1')).mean(dim='date').T,levels=dbnds,colors='k',linewidths=3)
+        axx.fill_between(-osnap_bathy['lon'].flatten(),-osnap_bathy['bathy'].flatten(),[4000]*len(osnap_bathy['lon'].flatten()),color='k',zorder=100)
+        axx.set_ylim(3000,0)
+        axx.set_yticks([0,1000,2000,3000])
+        axx.set_xlim(43.5,39.5)
+        axx.set_ylabel('depth [m]')
+        if draw_moors=='yes':
+            for kk in CFlon:
+                axx.axvline(-kk,color='k',linewidth=1)
+            for dd in dat.lon:
+                axx.axvline(-dd,color='w',linewidth=4)
+                axx.axvline(-dd,color='r',linewidth=2)
+                for zz in [50,250,500,750,1000,1500]:
+                    axx.plot(-dd,zz,'k.')
+                if dd>-41.5:
+                    for zz in [1250,1750,2000,2250,2500]:
+                        axx.plot(-dd,zz,'k.')
+        return vel
+
+def velsec_only_noden():
+    f,ax=subplots(1,1,figsize=(4,3))
+    vel=pltvelsec(ax)
+    caxvel=f.add_axes([0.93, 0.25, 0.025, 0.5])
+    colorbar(vel,ax=ax,ticks=arange(-0.4,0.5,0.2),label='velocity [m/s]',cax=caxvel,extend='both')
+
+    tf=14
+    ax.text(42.6,1200,'CF5',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
+    ax.text(42.3,2000,'CF6',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
+    ax.text(41.5,2300,'M1',color='w',fontsize=tf,zorder=101)#,backgroundcolor='w')
+    ax.text(40.3,2950,'OOI',color='w',fontsize=tf,zorder=101)
+    ax.text(44.5,-100,'Greenland',fontsize=tf,fontweight='bold')
+    # ax.text(40,-100,'Central',fontsize=tf,fontweight='bold')
+    # ax.text(39,150,'Irminger\nSea',fontsize=tf,fontweight='bold')
+    # ax.text(41.05,450,'upper ISIW',fontsize=tf-2,zorder=101)
+    # ax.text(41.05,1000,'deep ISIW',fontsize=tf-2,zorder=101)
+    ax.set_xlabel('Longitude [$^\circ$W]')
+
+    savefig('/home/isabela/Documents/conferences_seminars/2002_OSM/presentation/figures/velseconly_Fig1_noden.pdf',bbox_inches='tight',dpi=300)
+
+velsec_only_noden()
+
 #
 # def Denmaponly():
 #     f=figure(figsize=(4,3))

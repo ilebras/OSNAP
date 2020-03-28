@@ -56,12 +56,13 @@ units['FW+SI']=units['iceberg']+units['liqprec']+units['solprec']+units['runoff'
 units=units.drop('saltstorage').drop('volume')
 
 def plot_NorESM_FW():
-    figure(figsize=(8,3))
+
     for xx in ['iceberg','liqprec','mltfrz','runoff','solprec','evap','FW+SI']:
+        figure(figsize=(8,3))
         (units[xx]).plot(label=xx)
     ylabel('Transport [Sv]')
     legend(loc=(1.05,0.2))
-    savefig(figdir+'FW_sources.png',bbox_inches='tight')
+    # savefig(figdir+'FW_sources.png',bbox_inches='tight')
 
 plot_NorESM_FW()
 Time_between=int.TIME[:-1]+diff(int.TIME)/2

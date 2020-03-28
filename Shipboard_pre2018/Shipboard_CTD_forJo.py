@@ -64,8 +64,6 @@ jrnum=3
 dat=io.loadmat(alldat[jrnum])['ctd'][0][0]
 dat
 
-
-
 lat[dicvec[jrnum]]=dat[0].flatten()
 lon[dicvec[jrnum]]=dat[1].flatten()
 prstmp=sort(unique(dat[9]))
@@ -73,8 +71,6 @@ prstmp=prstmp[~isnan(prstmp)]
 prs[dicvec[jrnum]]=prstmp
 sal[dicvec[jrnum]]=dat[13][:len(prstmp),:]
 tmp[dicvec[jrnum]]=dat[10][:len(prstmp),:]
-
-
 
 lonind14=(lon['2014']<-30.5) & (lon['2014']>-44)
 lat['2014']=lat['2014'][lonind14]

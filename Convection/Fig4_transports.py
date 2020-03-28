@@ -1,6 +1,64 @@
 from aux_funcs import *
+daily=xr.open_dataset(datadir+'OSNAP_CFgridded_2014-2018/CFall_finergrid.nc')
+daily['across track velocity']=-1*daily['across track velocity']
+daily=daily.where(daily['across track velocity']!=0)
+#
+daily=daily.sel(date=slice('2014-8-15','2016-7-1')) #just to avoid some zeros at the beginning which mess up filtering.
+# #   PLUS HERE IM RESTRICTING DATES TO FIRST DEPLOYMENT(ISH)
+daily
 
-[uIIW,dIIW,IIW,egic,lt,mt]=pickle.load(open(datadir+'OSNAP2016recovery/pickles/convection_xport/IIWtrans_direct.pickle','rb'))
+mid_dist_plus=hstack((1.25,(diff(daily.distance)[:-1]+diff(daily.distance)[1:])/2,2.25))
+middistmat_plus=transpose((tile(mid_dist_plus,[len(daily.depth)-1,len(daily.date),1])),(2,0,1))
+mid_dist=mid_dist_plus.copy()
+mid_dist[daily.distance<0]=0
+mid_dist[daily.distance==0]=mid_dist_plus[daily.distance==0]/2
+middistmat=transpose((tile(mid_dist,[len(daily.depth)-1,len(daily.date),1])),(2,0,1))
+depthdiffmat=transpose((tile(diff(daily.depth),[len(daily.distance),len(daily.date),1])),(0,2,1))
+
+onesxr=daily.salinity/daily.salinity
+
+srefb=34.9
+sep=9
+
+daily['xport']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat/1e3
+daily['xport over 27.8']=daily['across track velocity'].where(daily['potential density']<27.8)[:,:-1,:]*depthdiffmat*middistmat/1e3
+daily['xport plus']=daily['across track velocity'][:,:-1,:]*depthdiffmat*middistmat_plus/1e3
+
+
+egic={}
+egic['trans']=daily['xport over 27.8'][sep:,:,:].sum('depth').sum('distance')
+egic['area']=(onesxr.where(daily['potential density']<27.8)[sep:,:-1,:]*depthdiffmat[sep:,:,:]*middistmat[sep:,:,:]/1e3).sum('depth').sum('distance')
+egic['sal']=(daily['xport over 27.8'][sep:,:-1,:]*daily['salinity'][sep:,:-1,:]).sum('distance').sum('depth')/egic['trans']
+egic['tmp']=(daily['xport over 27.8'][sep:,:-1,:]*daily['temperature'][sep:,:-1,:]).sum('distance').sum('depth')/egic['trans']
+egic['den']=(daily['xport over 27.8'][sep:,:-1,:]*daily['potential density'][sep:,:-1,:]).sum('distance').sum('depth')/egic['trans']
+egic['meanvel']=egic['trans']/egic['area']
+
+for ii in range(0,200,20):
+    figure()
+    (daily['potential density'][sep:,:-1,:].where((daily['potential density']<d2)&(daily['potential density']>=d1)).isel(date=ii).T).plot()
+    (daily['potential density'][sep:,:-1,:].where((daily['potential density']<d3)&(daily['potential density']>=d2)).isel(date=ii).T).plot()
+
+uIIW={}
+uIIW['trans']=daily.xport.where((daily['potential density']<d2)&(daily['potential density']>=d1)).sum('distance').sum('depth')
+uIIW['area']=(onesxr.where((daily['potential density']<d2)&(daily['potential density']>=d1))[sep:,:-1,:]*depthdiffmat[sep:,:,:]*middistmat[sep:,:,:]/1e3).sum('depth').sum('distance')
+uIIW['trans cf5+']=daily.xport.where(daily.distance>=45).where((daily['potential density']<d2)&(daily['potential density']>=d1)).sum('distance').sum('depth')
+uIIW['meanvel']=uIIW['trans']/uIIW['area']
+
+dIIW={}
+dIIW['trans']=daily.xport.where((daily['potential density']<d3)&(daily['potential density']>=d2)).sum('distance').sum('depth')
+dIIW['area']=(onesxr.where((daily['potential density']<d3)&(daily['potential density']>=d2))[sep:,:-1,:]*depthdiffmat[sep:,:,:]*middistmat[sep:,:,:]/1e3).sum('depth').sum('distance')
+dIIW['meanvel']=dIIW['trans']/dIIW['area']
+dIIW['trans cf5+']=daily.xport.where(daily.distance>=45).where((daily['potential density']<d3)&(daily['potential density']>=d2)).sum('distance').sum('depth')
+
+IIW={}
+IIW['trans']=daily.xport.where((daily['potential density']<d3)&(daily['potential density']>=d1)).sum('distance').sum('depth')
+
+lt={}
+lt['trans']=daily.xport.where(daily['potential density']<d1).sum('distance').sum('depth')
+
+mt={}
+mt['trans']=daily.xport.where((daily['potential density']>=d3)&(daily['potential density']<27.8)).sum('distance').sum('depth')
+
 
 N  = 2    # Filter order
 Wn = 1./30
@@ -199,8 +257,10 @@ plot_Fig4_withdecomp()
 
 
 
-versname='1810JHcal'
-grd=pickle.load(open(datadir+'OSNAP2016recovery/pickles/xarray/CF_xarray_notid_'+versname+'.pickle','rb'))
+# versname='1810JHcal'
+# grd=pickle.load(open(datadir+'OSNAP2016recovery/pickles/xarray/CF_xarray_notid_'+versname+'.pickle','rb'))
+grd=xr.open_dataset(datadir+'OSNAP_CFgridded_2014-2018/CFall_gridded_bymoor_rotnewfieldnames.nc').sel(date=slice('2014-8-15','2016-7-1'))
+grd
 dat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_5m.nc')
 
 
@@ -218,10 +278,18 @@ geotrans={}
 geotrans['56']=(geovel[0,:,:].sum(dim='depth')*diff(dat.distance)[0]*5/1e3)
 geotrans['61']=(geovel[1,:,:].sum(dim='depth')*diff(dat.distance)[1]*5/1e3)
 
+grd
 
+dat.distance
 dirtrans={}
-dirtrans['56']=(grd['across track velocity'][4,:,:]+grd['across track velocity'][5,:,:]).sum(dim='depth')*-1*diff(dat.distance)[0]/1e3
-dirtrans['61']=(grd['across track velocity'][5,:,:]+grd['across track velocity'][-1,:,:]).sum(dim='depth')*-1*diff(dat.distance)[1]/1e3
+dirtrans['56']=(grd['across track velocity'][4,:,:]+grd['across track velocity'][5,:,:]).sum(dim='depth')*-5*diff(dat.distance)[0]/1e3
+dirtrans['61']=(grd['across track velocity'][5,:,:]+grd['across track velocity'][-1,:,:]).sum(dim='depth')*-5*diff(dat.distance)[1]/1e3
+
+grd.depth
+
+(grd['across track velocity'][4,:,:]+grd['across track velocity'][5,:,:]).plot()
+
+(dirtrans['56']+dirtrans['61']).plot()
 
 barotrans={}
 for kk in geotrans:
@@ -229,25 +297,23 @@ for kk in geotrans:
 
 def complot():
     figure(figsize=(12,3))
-    geotrans['56'].resample(date='1M').mean(dim='date').plot(label='geo 56')
-    geotrans['61'].resample(date='1M').mean(dim='date').plot(label='geo 61')
-    (geotrans['56']+geotrans['61']).resample(date='1M').mean(dim='date').plot(label='geo tot')
+    resamp='1D'
+    geotrans['56'].resample(date=resamp).mean(dim='date').plot(label='geo 56')
+    geotrans['61'].resample(date=resamp).mean(dim='date').plot(label='geo 61')
+    (geotrans['56']+geotrans['61']).resample(date=resamp).mean(dim='date').plot(label='geo tot')
     legend()
 
     figure(figsize=(12,3))
-    barotrans['56'].resample(date='1M').mean(dim='date').plot(label='baro 56')
-    barotrans['61'].resample(date='1M').mean(dim='date').plot(label='baro 61')
-    (barotrans['56']+barotrans['61']).resample(date='1M').mean(dim='date').plot(label='baro tot')
+    barotrans['56'].resample(date=resamp).mean(dim='date').plot(label='baro 56')
+    barotrans['61'].resample(date=resamp).mean(dim='date').plot(label='baro 61')
+    (barotrans['56']+barotrans['61']).resample(date=resamp).mean(dim='date').plot(label='baro tot')
     legend()
-    # barotrans['56'].resample(date='1M').mean(dim='date').plot(label='baro 56')
-    # barotrans['61'].resample(date='1M').mean(dim='date').plot(label='baro 61')
-    # egic['trans'].resample(date='1M').mean(dim='date').plot(label='tot')
 
 
     figure(figsize=(12,3))
-    (dirtrans['56']+dirtrans['61']).resample(date='1M').mean(dim='date').plot(label='from dir')
-    (geotrans['56']+geotrans['61']+13).resample(date='1M').mean(dim='date').plot(label='geo tot + 13')
-    egic['trans'].resample(date='1M').mean(dim='date').plot(label='tot')
+    (dirtrans['56']+dirtrans['61']).resample(date=resamp).mean(dim='date').plot(label='from dir')
+    (geotrans['56']+geotrans['61']+13).resample(date=resamp).mean(dim='date').plot(label='geo tot + 13')
+    egic['trans'].resample(date=resamp).mean(dim='date').plot(label='tot')
     legend()
 
 complot()

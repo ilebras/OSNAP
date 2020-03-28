@@ -135,5 +135,6 @@ plotsec_only()
 
 for kk in inst:
     print(kk)
-    for ll in inst[kk]:
+    for ii,ll in enumerate(inst[kk]):
         if 'O' in ll:
+            print(depths[kk][ii])

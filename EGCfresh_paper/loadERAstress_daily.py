@@ -3,11 +3,10 @@ from aux_funcs import *
 dat=xr.open_dataset('../data/aux_data/ERA_1804/tau_hflux_180411.nc')
 
 
-era=dat.rename({'inss':'tauy','iews':'taux','longitude':'lon','latitude':'lat','time':'date'})
-
-
-
+era=dat.rename({'inss':'tauy','iews':'taux','longitude':'lon','latitude':'lat','time':'date','sshf':'sensible','slhf':'latent'})
 era['lon']=era['lon']-360
+
+era
 
 import os
 import conda
@@ -106,6 +105,8 @@ def pltseries():
     title('Tip jet feature dominates, none second winter')
 
 pltseries()
+
+figdir='/home/isabela/Documents/projects/OSNAP/figures_1418_merged/SI/'
 
 
 ### Get wind stress curl

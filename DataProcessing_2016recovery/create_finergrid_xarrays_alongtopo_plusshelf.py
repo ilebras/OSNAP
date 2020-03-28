@@ -1,6 +1,6 @@
 from aux_funcs import *
 
-dat=pickle.load(open('../pickles/xarray/CF_xarray_notid_1810JHIL.pickle','rb'))
+dat=pickle.load(open('/pickles/xarray/CF_xarray_notid_1810JHIL.pickle','rb'))
 
 dat
 

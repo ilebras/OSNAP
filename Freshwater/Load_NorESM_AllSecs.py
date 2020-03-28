@@ -10,6 +10,7 @@ figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorE
 #### load noresm and force formatting to be the same
 def load_noresm(whichone):
     noresm=xr.open_dataset(glob.glob(datadir+'NorESM/*'+whichone+'*new.nc')[0])
+    print(noresm.time)
     noresm=noresm.rename({'time': 'TIME','depth':'DEPTH','cell':'LONGITUDE'})
     noresm=noresm.rename({'salt':'PSAL','temp':'PTMP'})
     noresm=noresm.assign_coords(LONGITUDE=(noresm.lon.values))
@@ -24,6 +25,8 @@ def load_noresm(whichone):
     return noresm
 
 osnap=load_noresm('OSNAP')
+
+osnap
 fs=load_noresm('FS')
 bso_redundant=load_noresm('BSO')
 ns=load_noresm('NS')

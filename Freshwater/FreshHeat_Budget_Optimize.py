@@ -159,9 +159,6 @@ def barplot(casename):
     savefig(figdir+'FWBudget_Optimize_'+casename+'.png',bbox_inches='tight')
 
 
-
-
-
 #############################################################
 # Get solutions for a couple different gammas:
 #############################################################

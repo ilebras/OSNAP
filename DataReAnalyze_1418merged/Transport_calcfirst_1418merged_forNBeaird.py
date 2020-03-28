@@ -45,13 +45,19 @@ help(gsw.distance)
 #get distance from lon0,lat0 (Nick's distance=0), to CF1, which is my distance=0
 dist0=gsw.distance([lon0,CFlon[0]],[lat0,CFlat[0]])[0]/1e3
 
-dist0
-
 #wow! almost exactly 10km, which is what I added... just means that instead of 80km cutoff, I use 70km...
 
+daily.xport.sel(date=slice('2016-8-5','2016-8-17')).sum(dim='depth').plot()
+
+datadir
+
+dat.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CFall_gridded_bymoor.nc','w',format='netCDF4')
+
+daily['xport plus'].to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/cc_nbeaird/daily_transport_all.nc','w',format='netCDF4')
+cc['trans'].to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/cc_nbeaird/cc_transport_80km_250m.nc','w',format='netCDF4')
 cc={}
-cc['trans']=daily['xport plus'].where(daily.distance<70).sum('depth').sum('distance')
-cc['trans'].mean()
+cc['trans']=daily['xport plus'].where(daily.depth<250).where(daily.distance<70).sum('depth').sum('distance')
+cc['trans'].plot()
 
 
 cc['fresha']=-(daily['across track velocity'][:sep,:-1,:]*depthdiffmat[:sep,:]*middistmat_plus[:sep,:]*(daily.salinity[:sep,:-1,:]-srefa)/srefa).sum('depth').sum('distance')

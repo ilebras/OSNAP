@@ -54,16 +54,29 @@ for moornum in range(1,8):
         date[moornum][prskey]=date_hrly
         time[moornum][prskey]=time_hrly
 
-date[6][550]
-date[7][250]
-
-date[7][250]
 
 ########################################################################
 ##### Replace salinity with Jamie's and Kim's calibrated values ########
 #######################################################################
 
 KM=sort(glob.glob(datadir+'/MCTD_Data_CF/KMartini/*'))
+KM4_100=xr.open_dataset(KM[0])['s0'].values
+JH4_100=io.loadmat(datadir+'MC_cal_JH_1810/CF4/cf4_100_2014_correctedsal.mat')['salc'].flatten()
+
+KM6_150=xr.open_dataset(KM[1])['s0'].values[:-4]
+JH6_150=io.loadmat(datadir+'MC_cal_JH_1810/CF6/cf6_100_2014_correctedsal.mat')['salc'].flatten()
+
+def plot_6_150():
+    figure(figsize=(12,3))
+    plot(date[6][150],sal[6][150],label='Raw data')
+    plot(date[6][150],JH6_150, label='Cal dip corrected')
+    plot(date[6][150],KM6_150, label='Inversion corrected')
+    legend()
+    ylabel('salinity')
+    title('CF6, 100m instrument')
+    savefig('/home/isabela/Documents/conferences_seminars/2002_OSM/OSNAP_PI_meeting_pres/CF6_100_example.pdf',bbox_inches='tight')
+
+plot_6_150()
 
 sal[1][150]=io.loadmat(datadir+'MC_cal_JH_1810/CF1/cf1_171_2014_correctedsal.mat')['salc'].flatten()
 
