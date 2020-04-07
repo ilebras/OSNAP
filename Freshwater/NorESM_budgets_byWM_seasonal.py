@@ -102,8 +102,7 @@ osnap_wm.groupby('TIME.month').mean(dim='TIME').plot()
 vts['net_vt_OSNAP'].plot()
 # (vts['net_vt_OSNAP']+vts['net_vt_NS']).plot()
 osnap_wm.plot()
-WM['TRANS']['AWS']
-so['FW+SI'].mean()
+
 
 
 ################################################################################################################################

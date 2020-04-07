@@ -1,7 +1,7 @@
 from firstfuncs_1618 import *
 figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorESM/'
 figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/paperfigs/'
-import cmocean
+# import cmocean
 
 ################################################################################################################################
 ###########################################    Load NorESM and obs    #######################################################
@@ -151,7 +151,7 @@ def cont_partial(dat,xxvar,axx,ymin,ymax,sigi):
 
 
 def sections_obs_only():
-    fig = plt.figure(figsize=(14, 10), constrained_layout=False)
+    fig = plt.figure(figsize=(12, 8), constrained_layout=False)
     grd_outer = fig.add_gridspec(2,2, hspace=0.4)
     ax1=grd_outer[0,:]
     ax2=grd_outer[1,0]
@@ -173,9 +173,9 @@ def sections_obs_only():
         cont_partial(obs,obs_x,axx[0,0],0,yspl[i],sigmax_obs)
         if 'OSNAP' in tit:
             axx[0,0].plot([oslim_obs,oslim_obs],[0,35],color='k',linewidth=3)
-            axx[0,0].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[0,0].text(-43,-10,'PWS',color='k',fontsize=fsz-2)
-            axx[1,0].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[0,0].text(-15,80,'AWS',color='k',fontsize=fsz-2,weight='bold')
+            axx[0,0].text(-43,-10,'PWS',color='k',fontsize=fsz-2,weight='bold')
+            axx[1,0].text(-40,1500,'DWS',color='k',fontsize=fsz-2,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
             axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz+5)
@@ -183,13 +183,67 @@ def sections_obs_only():
             axx[0,0].axvline(fslim_obs,color='k',linewidth=3)
             axx[1,0].axvline(fslim_obs,color='k',linewidth=3)
             axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz+5)
-            axx[1,0].text(8,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,0].text(-3,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,0].text(7.5,1500,'AWN',color='w',fontsize=fsz-2,weight='bold')
+            axx[1,0].text(-3,1500,'PWN',color='k',fontsize=fsz-2,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
         else:
-            axx[1,0].text(74.5,450,'Barents Sea\nOpening',color='white',fontsize=fsz+5)
-            axx[1,0].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+            axx[1,0].text(74,450,'Barents Sea\nOpening',color='white',fontsize=fsz+5)
+            axx[1,0].text(72,150,'AWN',color='k',fontsize=fsz-2,weight='bold')
+            axx[1,0].set_xlabel('Latitude [$^\circ$N]',fontsize=fsz)
+    xc=0.95
+    cwi=0.02
+    cle=0.4
+    caxit_vel=fig.add_axes([xc,0.3,cwi,cle])
+    # caxit_sal=fig.add_axes([xc,0.125,cwi,cle])
+    colorbar(velcont,label='velocity [m/s]',cax=caxit_vel,ticks=arange(-0.3,0.4,0.1))
+    # colorbar(salcont,label='Salinity',cax=caxit_sal)
+    savefig(figdir_paper+'Sections_obs_only.png',bbox_inches='tight')
+    savefig(figdir_paper+'Sections_obs_only.pdf',bbox_inches='tight')
+
+
+sections_obs_only()
+
+def sections_obs_only():
+    fig = plt.figure(figsize=(12, 8), constrained_layout=False)
+    grd_outer = fig.add_gridspec(2,2, hspace=0.4)
+    ax1=grd_outer[0,:]
+    ax2=grd_outer[1,0]
+    ax3=grd_outer[1,1]
+    fsz=16
+    for i,axi in enumerate([ax1,ax2,ax3]):
+        tit=titvec[i]
+        obs=obsvec[i]
+        nor=norvec[i]
+        grd = axi.subgridspec(2,1, wspace=0.1, hspace=0.0,height_ratios=[1,5])
+        axx={}
+        axx[0,0]=fig.add_subplot(grd[0])
+        axx[1,0]=fig.add_subplot(grd[1])
+        if 'Barents' in tit:
+            obs_x=obs.LATITUDE
+        else:
+            obs_x=obs.LONGITUDE
+        velcont=cont_partial(obs,obs_x,axx[1,0],yspl[i],ymax[i],sigmax_obs)
+        cont_partial(obs,obs_x,axx[0,0],0,yspl[i],sigmax_obs)
+        if 'OSNAP' in tit:
+            axx[0,0].plot([oslim_obs,oslim_obs],[0,35],color='k',linewidth=3)
+            axx[0,0].text(-15,80,'AWS',color='k',fontsize=fsz-2,weight='bold')
+            axx[0,0].text(-43,-10,'PWS',color='k',fontsize=fsz-2,weight='bold')
+            axx[1,0].text(-40,1500,'DWS',color='k',fontsize=fsz-2,weight='bold')
+            axx[1,0].set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
+            axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
+            axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz+5)
+        elif 'Fram' in tit:
+            axx[0,0].axvline(fslim_obs,color='k',linewidth=3)
+            axx[1,0].axvline(fslim_obs,color='k',linewidth=3)
+            axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz+5)
+            axx[1,0].text(7.5,1500,'AWN',color='w',fontsize=fsz-2,weight='bold')
+            axx[1,0].text(-3,1500,'PWN',color='k',fontsize=fsz-2,weight='bold')
+            axx[1,0].set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
+            axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
+        else:
+            axx[1,0].text(74,450,'Barents Sea\nOpening',color='white',fontsize=fsz+5)
+            axx[1,0].text(72,150,'AWN',color='k',fontsize=fsz-2,weight='bold')
             axx[1,0].set_xlabel('Latitude [$^\circ$N]',fontsize=fsz)
     xc=0.95
     cwi=0.02
@@ -203,101 +257,98 @@ def sections_obs_only():
 
 
 sections_obs_only()
-figdir_OSM='/home/isabela/Documents/conferences_seminars/2002_OSM/presentation/figures/'
-
-def sections_osnap_only():
-    fig,axx = subplots(1,1,figsize=(11,4))
-    obs=obsvec[0]
-    velcont=cont_partial(obs,obs.LONGITUDE,axx,0,3000,sigmax_obs)
-    fsz=14
-    axx.set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
-    axx.set_ylabel('depth [m]',fontsize=fsz)
-    ybot=2975
-
-    xc=0.925
-    cwi=0.015
-    cle=0.5
-    caxit_vel=fig.add_axes([xc,0.2,cwi,cle])
-    colorbar(velcont,label='velocity [m/s]',cax=caxit_vel,ticks=arange(-0.3,0.4,0.1))
-    # axx.set_ylim(3000,-100)
-    axx.text(-48,-100,'Greenland',fontsize=fsz+2,fontweight='bold')
-    axx.text(-7,-100,'Scotland',fontsize=fsz+2,fontweight='bold')
-    savefig(figdir_OSM+'OSNAPEAST_velsec.png',bbox_inches='tight',dpi=300)
-    axx.plot([-43,-43,-31,-31,-43],[ybot,0,0,ybot,ybot],color='limegreen',linewidth=5)
-    axx.text(-40,1000,'Irminger Sea',fontsize=fsz+2,fontweight='bold',color='k')
-    savefig(figdir_OSM+'OSNAPEAST_velsec_wbox.png',bbox_inches='tight',dpi=300)
-
-
-sections_osnap_only()
-
-def comp_obs_model_all():
-    fig = plt.figure(figsize=(12, 15), constrained_layout=False)
-    grd_outer = fig.add_gridspec(3,1, hspace=0.4)
-    fsz=16
-    for i in range(3):
-        tit=titvec[i]
-        obs=obsvec[i]
-        nor=norvec[i]
-        grd = grd_outer[i].subgridspec(2,2, wspace=0.1, hspace=0.0,height_ratios=[1,5])
-        axx={}
-        axx[0,0]=fig.add_subplot(grd[0,0])
-        axx[0,1]=fig.add_subplot(grd[0,1])
-        axx[1,0]=fig.add_subplot(grd[1,0],sharex=axx[0,0])
-        axx[1,1]=fig.add_subplot(grd[1,1],sharex=axx[0,1])
-        if i==0:
-                axx[0,0].set_title('Observations\n',fontsize=fsz)
-                axx[0,1].set_title('NorESM model\n',fontsize=fsz)
-        if 'Barents' in tit:
-            nor_x=nor.LATITUDE
-            obs_x=obs.LATITUDE
-        else:
-            nor_x=nor.LONGITUDE
-            obs_x=obs.LONGITUDE
-        velcont,salcont=cont_partial(obs,obs_x,axx[1,0],yspl[i],ymax[i],sigmax_obs)
-        cont_partial(obs,obs_x,axx[0,0],0,yspl[i],sigmax_obs)
-        cont_partial(nor,nor_x,axx[1,1],yspl[i],ymax[i],sigmax_obs)
-        cont_partial(nor,nor_x,axx[0,1],0,yspl[i],sigmax_obs)
-        if 'OSNAP' in tit:
-            axx[0,0].plot([oslim_obs,oslim_obs],[0,50],color='k',linewidth=3)
-            axx[0,1].plot([oslim,oslim],[0,30],color='k',linewidth=3)
-            axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz)
-            axx[0,0].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[0,1].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[0,0].text(-45,-10,'PWS',color='k',fontsize=fsz-2)
-            axx[0,1].text(-43,-10,'PWS',color='k',fontsize=fsz-2)
-            axx[1,0].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,1].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
-        elif 'Fram' in tit:
-            for iii in range(2):
-                axx[iii,0].axvline(fslim_obs,color='k',linewidth=3)
-                axx[iii,1].axvline(fslim,color='k',linewidth=3)
-            axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz)
-            axx[1,0].text(8,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,1].text(9,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,0].text(-3,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,1].text(-2,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-        else:
-            axx[1,0].text(74.5,450,'Barents Sea\nOpening',color='white',fontsize=fsz)
-            axx[1,0].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-            axx[1,1].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
-        axx[0,1].set_yticklabels('')
-        axx[1,1].set_yticklabels('')
-        axx[1,0].set_ylabel('depth [m]',fontsize=14)
-    fig.text(0.5, 0.64, 'Longitude [$^\circ$W]', ha='center',fontsize=fsz)
-    fig.text(0.5, 0.352, 'Longitude [$^\circ$W]', ha='center',fontsize=fsz)
-    fig.text(0.5, 0.065, 'Latitude [$^\circ$N]', ha='center',fontsize=fsz)
-    xc=0.95
-    cwi=0.025
-    cle=0.325
-    caxit_vel=fig.add_axes([xc,0.5,cwi,cle])
-    caxit_sal=fig.add_axes([xc,0.15,cwi,cle])
-    colorbar(velcont,label='velocity [m/s]',cax=caxit_vel)
-    colorbar(salcont,label='Salinity',cax=caxit_sal)
-    savefig(figdir_paper+'CompSect_Obs_NorESM_all.png',bbox_inches='tight')
-    savefig(figdir_paper+'CompSect_Obs_NorESM_all.pdf',bbox_inches='tight')
-
-
-comp_obs_model_all()
+# def sections_osnap_only():
+#     fig,axx = subplots(1,1,figsize=(11,4))
+#     obs=obsvec[0]
+#     velcont=cont_partial(obs,obs.LONGITUDE,axx,0,3000,sigmax_obs)
+#     fsz=14
+#     axx.set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
+#     axx.set_ylabel('depth [m]',fontsize=fsz)
+#     ybot=2975
+#
+#     xc=0.925
+#     cwi=0.015
+#     cle=0.5
+#     caxit_vel=fig.add_axes([xc,0.2,cwi,cle])
+#     colorbar(velcont,label='velocity [m/s]',cax=caxit_vel,ticks=arange(-0.3,0.4,0.1))
+#     # axx.set_ylim(3000,-100)
+#     axx.text(-48,-100,'Greenland',fontsize=fsz+2,fontweight='bold')
+#     axx.text(-7,-100,'Scotland',fontsize=fsz+2,fontweight='bold')
+#     savefig(figdir_OSM+'OSNAPEAST_velsec.png',bbox_inches='tight',dpi=300)
+#     axx.plot([-43,-43,-31,-31,-43],[ybot,0,0,ybot,ybot],color='limegreen',linewidth=5)
+#     axx.text(-40,1000,'Irminger Sea',fontsize=fsz+2,fontweight='bold',color='k')
+#     savefig(figdir_OSM+'OSNAPEAST_velsec_wbox.png',bbox_inches='tight',dpi=300)
+#
+# sections_osnap_only()
+#
+# def comp_obs_model_all():
+#     fig = plt.figure(figsize=(12, 15), constrained_layout=False)
+#     grd_outer = fig.add_gridspec(3,1, hspace=0.4)
+#     fsz=16
+#     for i in range(3):
+#         tit=titvec[i]
+#         obs=obsvec[i]
+#         nor=norvec[i]
+#         grd = grd_outer[i].subgridspec(2,2, wspace=0.1, hspace=0.0,height_ratios=[1,5])
+#         axx={}
+#         axx[0,0]=fig.add_subplot(grd[0,0])
+#         axx[0,1]=fig.add_subplot(grd[0,1])
+#         axx[1,0]=fig.add_subplot(grd[1,0],sharex=axx[0,0])
+#         axx[1,1]=fig.add_subplot(grd[1,1],sharex=axx[0,1])
+#         if i==0:
+#                 axx[0,0].set_title('Observations\n',fontsize=fsz)
+#                 axx[0,1].set_title('NorESM model\n',fontsize=fsz)
+#         if 'Barents' in tit:
+#             nor_x=nor.LATITUDE
+#             obs_x=obs.LATITUDE
+#         else:
+#             nor_x=nor.LONGITUDE
+#             obs_x=obs.LONGITUDE
+#         velcont,salcont=cont_partial(obs,obs_x,axx[1,0],yspl[i],ymax[i],sigmax_obs)
+#         cont_partial(obs,obs_x,axx[0,0],0,yspl[i],sigmax_obs)
+#         cont_partial(nor,nor_x,axx[1,1],yspl[i],ymax[i],sigmax_obs)
+#         cont_partial(nor,nor_x,axx[0,1],0,yspl[i],sigmax_obs)
+#         if 'OSNAP' in tit:
+#             axx[0,0].plot([oslim_obs,oslim_obs],[0,50],color='k',linewidth=3)
+#             axx[0,1].plot([oslim,oslim],[0,30],color='k',linewidth=3)
+#             axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz)
+#             axx[0,0].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[0,1].text(-15,80,'AWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[0,0].text(-45,-10,'PWS',color='k',fontsize=fsz-2)
+#             axx[0,1].text(-43,-10,'PWS',color='k',fontsize=fsz-2)
+#             axx[1,0].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,1].text(-40,1500,'DWS',color='k',backgroundcolor='w',fontsize=fsz-2)
+#         elif 'Fram' in tit:
+#             for iii in range(2):
+#                 axx[iii,0].axvline(fslim_obs,color='k',linewidth=3)
+#                 axx[iii,1].axvline(fslim,color='k',linewidth=3)
+#             axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz)
+#             axx[1,0].text(8,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,1].text(9,1500,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,0].text(-3,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,1].text(-2,1500,'PWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#         else:
+#             axx[1,0].text(74.5,450,'Barents Sea\nOpening',color='white',fontsize=fsz)
+#             axx[1,0].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#             axx[1,1].text(72,150,'AWN',color='k',backgroundcolor='w',fontsize=fsz-2)
+#         axx[0,1].set_yticklabels('')
+#         axx[1,1].set_yticklabels('')
+#         axx[1,0].set_ylabel('depth [m]',fontsize=14)
+#     fig.text(0.5, 0.64, 'Longitude [$^\circ$W]', ha='center',fontsize=fsz)
+#     fig.text(0.5, 0.352, 'Longitude [$^\circ$W]', ha='center',fontsize=fsz)
+#     fig.text(0.5, 0.065, 'Latitude [$^\circ$N]', ha='center',fontsize=fsz)
+#     xc=0.95
+#     cwi=0.025
+#     cle=0.325
+#     caxit_vel=fig.add_axes([xc,0.5,cwi,cle])
+#     caxit_sal=fig.add_axes([xc,0.15,cwi,cle])
+#     colorbar(velcont,label='velocity [m/s]',cax=caxit_vel)
+#     colorbar(salcont,label='Salinity',cax=caxit_sal)
+#     savefig(figdir_paper+'CompSect_Obs_NorESM_all.png',bbox_inches='tight')
+#     savefig(figdir_paper+'CompSect_Obs_NorESM_all.pdf',bbox_inches='tight')
+#
+#
+# comp_obs_model_all()
 
 
 
