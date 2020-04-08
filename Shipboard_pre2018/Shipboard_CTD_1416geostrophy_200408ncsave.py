@@ -192,7 +192,6 @@ def getdist(lonex,latex):
 
     return distout
 
-help(dist)
 dist={}
 for key in sal:
     dist[key]=getdist(lon[key],lat[key])
@@ -208,6 +207,9 @@ for key in dist:
         tmp[key]=tmp[key][:,dsortind]
         pden[key]=pden[key][:,dsortind]
         dist[key]=sort(dist[key])
+
+dist.keys()
+
 
 
 fcor=gsw.f(60)

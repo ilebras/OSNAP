@@ -19,7 +19,7 @@ import xarray as xr
 import seawater as sw
 import palettable as pal
 import matplotlib.gridspec as gridspec
-import cmocean
+# import cmocean
 
 
 from scipy import signal

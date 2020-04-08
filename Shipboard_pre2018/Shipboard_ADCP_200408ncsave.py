@@ -1,12 +1,13 @@
 from aux_funcs import *
 
-adcp_dist=array(pd.DataFrame.from_csv(datadir+'Shipboard/adcp_distances.dat').index)
+# adcp_dist=array(pd.DataFrame.from_csv(datadir+'Shipboard/adcp_distances.dat').index)
 
 with open(datadir+'Shipboard/adcp_distances.dat', 'r') as f:
     reader = csv.reader(f)
     adcp_dist = list(reader)
 
 adcp_dist=[float(dd[0]) for dd in adcp_dist]
+
 
 adcp_14=io.loadmat(datadir+'Shipboard/kn221_2014/kn221_2014_vm_adcp_ilebras.mat')
 adcp_16=io.loadmat(datadir+'Shipboard/ar07_2016/ar07_2016_vm_adcp_ilebras.mat')
@@ -37,15 +38,16 @@ def contadcp(distvec,adic,tit):
     ylim([800,0])
     xlabel('distance (km)')
     ylabel('depth (m)')
-    savefig('../figures/shipboard/ADCPsection_full_'+tit+'.pdf')
-    xlim([-20,90])
-    savefig('../figures/shipboard/ADCPsection_zoom_'+tit+'.pdf')
+    # savefig('../figures/shipboard/ADCPsection_full_'+tit+'.pdf')
+    # xlim([-20,90])
+    # savefig('../figures/shipboard/ADCPsection_zoom_'+tit+'.pdf')
 
 
 
 
 
 contadcp(adcp_dist,adcp_14,'2014')
+
 
 
 contadcp(adcp_dist[:-3],adcp_16,'2016')
