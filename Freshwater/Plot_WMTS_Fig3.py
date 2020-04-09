@@ -7,6 +7,7 @@ WM_obs=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_W
 WM_obs['PSAL'].sel(WM='PWS')
 WM_nor['PSAL'].sel(WM='PWS').plot()
 WM_obs['PSAL'].sel(WM='PWS')
+WM_obs['TRANS'].sel(WM='PWN').mean()
 
 #copied over from GetandPlotSec...
 sigmax=27.6
@@ -77,7 +78,7 @@ def plot_TS_splitboth(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
 
 plot_TS_splitboth(WM_obs,'obs',[34,35.5],[-2,12],[34,35.5],[-2,12])
 
-plot_TS_splitboth(WM_nor,'nor',[34.9,35.8],[2,12],[34.4,35.4],[-2.5,8])
+plot_TS_splitboth(WM_nor,'nor',[34.4,35.8],[-2,12],[34.4,35.8],[-2,12])
 
 
 

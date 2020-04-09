@@ -106,8 +106,8 @@ sigmax_obs
 oslim=-39
 oslim_obs=-40
 
-fslim=3
-fslim_obs=5
+fslim=0
+fslim_obs=-2
 
 vmax=0.3
 univec['VELO']=['across track velocity',arange(-vmax,vmax+0.05,0.05),cm.RdBu_r,arange(-vmax,vmax+0.1,0.1),'[m/s]']
@@ -179,8 +179,8 @@ def sections_obs_only():
             axx[0,0].axvline(fslim_obs,color='k',linewidth=3)
             axx[1,0].axvline(fslim_obs,color='k',linewidth=3)
             axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz+5)
-            axx[1,0].text(7,1500,'AWN',color='w',fontsize=fsz,weight='bold')
-            axx[1,0].text(-3,1500,'PWN',color='k',fontsize=fsz,weight='bold')
+            axx[1,0].text(4,250,'AWN',color='K',fontsize=fsz,weight='bold')
+            axx[1,0].text(-8,-200,'PWN',color='k',fontsize=fsz,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
         else:
@@ -229,11 +229,11 @@ def sections_model_only():
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
             axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz+5)
         elif 'Fram' in tit:
-            axx[0,0].axvline(fslim_obs,color='k',linewidth=3)
-            axx[1,0].axvline(fslim_obs,color='k',linewidth=3)
+            axx[0,0].axvline(fslim,color='k',linewidth=3)
+            axx[1,0].axvline(fslim,color='k',linewidth=3)
             axx[1,0].text(-16,2600,tit,color='white',fontsize=fsz+5)
-            axx[1,0].text(9,1500,'AWN',color='w',fontsize=fsz,weight='bold')
-            axx[1,0].text(-3,1500,'PWN',color='k',fontsize=fsz,weight='bold')
+            axx[1,0].text(2,250,'AWN',color='k',fontsize=fsz,weight='bold')
+            axx[1,0].text(-8,-150,'PWN',color='k',fontsize=fsz,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$W]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
         else:
@@ -282,6 +282,8 @@ for var in ['TRANS','PSAL','PTMP','PDEN']:
 #split up FS into PW and AW using definition in Tsubouchi et al. 2018, which is boundary between "EGC" + "Middle", 2W
 # Here I'm using 4E, as it better maximizes transport...? Check on this...
 #call all BSO water AW.
+fslim
+
 for var in ['PSAL','PTMP','PDEN','TRANS']:
     if var=='TRANS':
         PWN[var]=-fs['TRANS'].where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')
@@ -294,7 +296,6 @@ for var in ['PSAL','PTMP','PDEN','TRANS']:
 
 ############################################################################################
 ################  OBS WATER MASS PARTITIONING   #############################################
-
 
 AWS_obs={}
 PWS_obs={}
@@ -330,6 +331,13 @@ for var in ['TRANS','PSAL','PTMP','PDEN',]:
         AWN_obs[var]=AWN_obs_fs[var]*fs_obs['TRANS'].where(fs_obs.LONGITUDE>=fslim_obs).sum(dim='DEPTH').sum(dim='LONGITUDE')/(-AWN_obs['TRANS'])+AWN_obs_bso[var]*bso_obs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')/(-AWN_obs['TRANS'])
 
 
+def plot_WMN():
+    scatter(PWN_obs['PSAL'].groupby('TIME.month').mean('TIME').values,PWN_obs['PTMP'].groupby('TIME.month').mean('TIME').values,
+            s=PWN_obs['TRANS'].groupby('TIME.month').mean('TIME').values**2*4,color='purple')
+    scatter(AWN_obs['PSAL'].groupby('TIME.month').mean('TIME').values,AWN_obs['PTMP'].groupby('TIME.month').mean('TIME').values,
+            s=AWN_obs['TRANS'].groupby('TIME.month').mean('TIME').values**2*4,color='orange')
+    xlim(34,35.5)
+    ylim(-2,12)
 
 # ################################################################################################################################
 # ################################################################################################################################
@@ -355,5 +363,3 @@ WMall=xr.concat([WM[ww] for ww in WM],pd.Index(['AWS','PWS','DWS','AWN','PWN'],n
 WMall=WMall.to_dataset('var')
 
 WMall.to_netcdf(datadir+'NorESM/NorESM_WMs_1912.nc','w')
-sigmax
-sigmax_obs

@@ -49,6 +49,7 @@ legend(loc=(1.05,0.1))
 ctdlist_2016=sort(glob.glob(datadir+'Shipboard/ar07_2016/cnv_files/*.cnv'))[1:]
 lat,lon,sal,tmp,date=loadCTD_cnv(ctdlist_2016,'2016')
 
+
 secs16={}
 secs16['1']=where(lat['2016']>61.0)[0]
 secs16['2']=where((lat['2016']>60.75) & (lat['2016']<61.0))[0]
@@ -131,7 +132,7 @@ io.savemat('../data/Shipboard/2016LAT_forLeah.mat',lat)
 lon
 
 plot(lon['2014_3'],lat['2014_3'],'o')
-plot(lon['2016_6'],lat['2016_6'],'o')
+plot(lon['L2016_6'],lat['L2016_6'],'o')
 
 def delit(myDict):
     if '2016' in myDict: del myDict['2016']
@@ -196,6 +197,8 @@ dist={}
 for key in sal:
     dist[key]=getdist(lon[key],lat[key])
 
+prsvec
+
 
 ## need to order all the dictionaries by distance so that the horizontal gradients make some sort of sense!
 for key in dist:
@@ -208,10 +211,15 @@ for key in dist:
         pden[key]=pden[key][:,dsortind]
         dist[key]=sort(dist[key])
 
-dist.keys()
+#save CF section as netcdf for calc as part of Freshwater project
+k14='2014_3'
+CFsec_14=xr.Dataset({'sal':(['depth','dist'],sal[k14]),'tmp':(['depth','dist'],tmp[k14]),'pden':(['depth','dist'],pden[k14]),'lon':(['dist'],lon[k14]),'lat':(['dist'],lat[k14])},coords={'dist':dist[k14],'depth':dpthvec})
+k16='L2016_6'
+CFsec_16=xr.Dataset({'sal':(['depth','dist'],sal[k16]),'tmp':(['depth','dist'],tmp[k16]),'pden':(['depth','dist'],pden[k16]),'lon':(['dist'],lon[k16]),'lat':(['dist'],lat[k16])},coords={'dist':dist[k16],'depth':dpthvec})
 
-
-
+datadir
+CFsec_14.to_netcdf(datadir+'Shipboard/netcdf/CFsec_CTD_14.nc','w')
+CFsec_16.to_netcdf(datadir+'Shipboard/netcdf/CFsec_CTD_16.nc','w')
 fcor=gsw.f(60)
 
 geovel={}
