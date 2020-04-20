@@ -2,7 +2,7 @@ from firstfuncs_1618 import *
 
 figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/paperfigs/'
 
-WM_nor=xr.open_dataset(datadir+'NorESM/NorESM_WMs_1912.nc')
+WM_nor=xr.open_dataset(datadir+'NorESM/NorESM_WMs_18yrs_2004.nc')
 WM_obs=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_1912.nc')
 WM_obs['PSAL'].sel(WM='PWS')
 WM_nor['PSAL'].sel(WM='PWS').plot()
@@ -76,11 +76,114 @@ def plot_TS_splitboth(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
     savefig(figdir_paper+'TS_split_'+str(namtit)+'.png',bbox_inches='tight')
     savefig(figdir_paper+'TS_split_'+str(namtit)+'.pdf',bbox_inches='tight')
 
-plot_TS_splitboth(WM_obs,'obs',[34,35.5],[-2,12],[34,35.5],[-2,12])
+wm='PWN'
+WM_obs.PSAL.groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,
 
-plot_TS_splitboth(WM_nor,'nor',[34.4,35.8],[-2,12],[34.4,35.8],[-2,12])
 
 
+plot_TS_splitboth(WM_obs,'obs',[33.25,35.5],[-2,12],[33.25,35.5],[-2,12])
+
+
+plot_TS_splitboth(WM_nor,'nor',[33.5,35.8],[-2,12],[33.5,35.8],[-2,12])
+
+############################################################################################
+################  NORESM TS PLOT OF ANNUAL VARIATIONS  ############
+############################################################################################
+def plot_TS_yearly(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
+    f,[ax1,ax2]=subplots(1,2,figsize=(10,3.75))
+    for wm in ['AWS','PWS','DWS']:
+        ax1.scatter(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').sel(WM=wm).values,
+                s=WM_obs['TRANS'].groupby('TIME.year').mean('TIME').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100,alpha=0.8)
+        ax1.scatter(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,
+                s=WM_obs['TRANS'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values**2*4,linewidth=3,label='',color='k',zorder=100)
+        if ('AWS' in wm):
+            ax1.plot(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,'+',markersize=12,color='w',zorder=101)
+        else:
+            ax1.plot(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,'_',markersize=12,color='w',zorder=101)
+    for wm in ['AWN','PWN']:
+        ax2.scatter(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').sel(WM=wm).values,
+                s=WM_obs['TRANS'].groupby('TIME.year').mean('TIME').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100,alpha=0.8)
+        ax2.scatter(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,
+                s=WM_obs['TRANS'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values**2*4,linewidth=3,label='',color='k',zorder=100)
+        if ('PWN' in wm):
+            ax2.plot(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,'+',markersize=12,color='w',zorder=101)
+        else:
+            ax2.plot(WM_obs['PSAL'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.year').mean('TIME').mean('year').sel(WM=wm).values,'_',markersize=12,color='w',zorder=101)
+
+    ax1.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+    ax1.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
+    ax2.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+    ax2.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
+    ax1.set_ylabel('pot.temperature [$^\circ$C]',fontsize=14)
+    f.text(0.5, 0, 'salinity', ha='center',fontsize=14)
+    ax1.set_xlim(xlims)
+    ax2.set_xlim(xlim2)
+    ax1.set_ylim(ylims)
+    ax2.set_ylim(ylim2)
+    lgnd=f.legend(loc='center right')
+    for ii in range(5):
+        lgnd.legendHandles[ii]._sizes = [60]
+    # f.suptitle('Transport-weighted water mass properties\n\n',fontsize=16)
+    ax1.set_title('Southern boundary',fontsize=16)
+    ax2.set_title('Northern boundary',fontsize=16)
+    if 'obs' in namtit:
+        ax2.set_yticklabels('')
+    savefig(figdir_paper+'TS_split_yearly'+str(namtit)+'.png',bbox_inches='tight')
+    savefig(figdir_paper+'TS_split_yearly'+str(namtit)+'.pdf',bbox_inches='tight')
+
+plot_TS_yearly(WM_nor,'nor',[34.8,35.8],[4,12],[33.5,35.8],[-2,12])
+############################################################################################
+################ TS for PWS and DWS  ############
+############################################################################################
+
+def plot_TS_PWS(WM_obs,namtit,xlims,ylims):
+    f,ax1=subplots(1,1,figsize=(5,3.75))
+    for wm in ['AWS','PWS','PWN']:
+        ax1.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,
+                s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100)
+        if ('AWS' in wm) | ('PWN' in wm):
+            ax1.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'+',markersize=12,color='w',zorder=101)
+        else:
+            ax1.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'_',markersize=12,color='w',zorder=101)
+
+    ax1.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+    ax1.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
+    ax1.set_ylabel('pot.temperature [$^\circ$C]',fontsize=14)
+    ax1.set_xlabel('salinity',fontsize=14)
+    ax1.set_xlim(xlims)
+    ax1.set_ylim(ylims)
+    lgnd=ax1.legend(loc=(1.05,0.3))
+    for ii in range(3):
+        lgnd.legendHandles[ii]._sizes = [60]
+    savefig(figdir_paper+'TS_PWS.png',bbox_inches='tight')
+    savefig(figdir_paper+'TS_PWS.pdf',bbox_inches='tight')
+
+
+plot_TS_PWS(WM_obs,'obs',[33.25,35.5],[-2,12])
+
+def plot_TS_DWS(WM_obs,namtit,xlims,ylims):
+    f,ax1=subplots(1,1,figsize=(5,3.75))
+    for wm in ['AWS','DWS']:
+        ax1.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,
+                s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100)
+        if ('AWS' in wm) | ('PWN' in wm):
+            ax1.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'+',markersize=12,color='w',zorder=101)
+        else:
+            ax1.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'_',markersize=12,color='w',zorder=101)
+
+    ax1.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
+    ax1.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
+    ax1.set_ylabel('pot.temperature [$^\circ$C]',fontsize=14)
+    ax1.set_xlabel('salinity',fontsize=14)
+    ax1.set_xlim(xlims)
+    ax1.set_ylim(ylims)
+    lgnd=ax1.legend(loc=(1.05,0.3))
+    for ii in range(2):
+        lgnd.legendHandles[ii]._sizes = [60]
+    savefig(figdir_paper+'TS_DWS.png',bbox_inches='tight')
+    savefig(figdir_paper+'TS_DWS.pdf',bbox_inches='tight')
+
+plot_TS_DWS(WM_obs,'obs',[33.25,35.5],[-2,12])
 
 ############################################################################################
 ################  MAURITZEN TS PLOT + GRAVEYARD (see _pre2004 version for more GRAVEYARD)  ############

@@ -7,19 +7,20 @@ figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorE
 ###########################################      LOAD     #######################################################
 ################################################################################################################################
 ################################################################################################################################
-
-
-osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
-fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_1912.nc')
-bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_1912.nc')
-ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
+# osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
+# fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_1912.nc')
+# bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_1912.nc')
+# ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
 
 def load_source_sto():
-    int=xr.open_dataset(glob.glob(datadir+'NorESM/*NordicSeas*new.nc')[0])
+    int1=xr.open_dataset(glob.glob(datadir+'NorESM/*NordicSeas_2*0912.nc')[0])
+    int2=xr.open_dataset(glob.glob(datadir+'NorESM/*NordicSeas*new.nc')[0])
+    # return int1,int2
+    int=xr.concat([int1,int2],dim='time')
     int=int.rename({'time': 'TIME'})
     for xx in int:
         int=int.rename({xx : xx[7:]})
-    startyear=2010
+    startyear=2000
     startmonth=1
     endyear=2018
     endmonth=12
@@ -27,6 +28,8 @@ def load_source_sto():
     return int
 
 int=load_source_sto()
+
+int.mltfrz.plot()
 
 for xx in int:
     figure()
@@ -93,4 +96,4 @@ units['SU_storage_I'].plot()
 units['SU_storage'].plot()
 
 
-units.to_netcdf(datadir+'NorESM/NorESM_source_storage_xray_1912.nc','w')
+units.to_netcdf(datadir+'NorESM/NorESM_source_storage_xray_18yrs_2004.nc','w')

@@ -9,37 +9,31 @@ figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorE
 
 #### load noresm and force formatting to be the same
 def load_noresm(whichone):
-    noresm2=xr.open_dataset(glob.glob(datadir+'NorESM/*'+whichone+'*new.nc')[0])
-    noresm1=xr.open_dataset(glob.glob(datadir+'NorESM/*'+whichone+'*912.nc')[0])
-    if (whichone=='NS') | (whichone=='BSO'):
-        noresm1=noresm1.assign_coords(depth=(noresm2.depth.values))
-        noresm1['temp']=noresm1['temp'].where(noresm1['temp']<1e30)
-        noresm1['uvel']=noresm1['uvel'].where(noresm1['uvel']<1e30)
-        noresm1=noresm1.drop('cell nr')
-        noresm2=noresm2.drop('cell nr')
-    # return noresm1,noresm2
-    noresm=xr.concat([noresm1,noresm2],dim='time',data_vars='minimal')
+    noresm=xr.open_dataset(glob.glob(datadir+'NorESM/*'+whichone+'*new.nc')[0])
+    print(noresm.time)
     noresm=noresm.rename({'time': 'TIME','depth':'DEPTH','cell':'LONGITUDE'})
     noresm=noresm.rename({'salt':'PSAL','temp':'PTMP'})
-    noresm=noresm.assign_coords(LONGITUDE=(noresm1.lon.values))
-    noresm=noresm.assign_coords(LATITUDE=(noresm1.lat.values))
+    noresm=noresm.assign_coords(LONGITUDE=(noresm.lon.values))
+    noresm=noresm.assign_coords(LATITUDE=(noresm.lat.values))
     noresm=noresm.drop('lat').drop('lon')
-    startyear=2000
+    startyear=2010
     startmonth=1
     endyear=2018
     endmonth=12
     noresm['TIME']=array([datetime.datetime(m//12, m%12+1, 15) for m in range(startyear*12+startmonth-1, endyear*12+endmonth)])
+    # noresm=noresm.sel(TIME=slice(osnap.TIME[0],osnap.TIME[-1]))
     return noresm
-
 
 osnap=load_noresm('OSNAP')
 
+osnap
 fs=load_noresm('FS')
-
 bso_redundant=load_noresm('BSO')
-
 ns=load_noresm('NS')
 
+ns.LATITUDE.values
+
+ns.LONGITUDE.values
 
 def fix_bso(bso1): #
     lonind=[0,2,4,5,7,9,10,12,14,16,17,19,21,22,23]
@@ -158,10 +152,47 @@ def TS_hex_plot(dat,titi):
 TS_hex_plot(osnap,'NorESM_OSNAP')
 TS_hex_plot(fs,'NorESM_FS')
 
-
-
 TS_hex_plot(bso,'NorESM_BSO')
 TS_hex_plot(ns,'NorESM_NS')
+
+
+salvec=linspace(31,36,103)
+tmpvec=linspace(-3,16,103)
+salmat,tmpmat=meshgrid(salvec,tmpvec)
+
+SA_vec=gsw.SA_from_SP(salvec,zeros(len(salvec)),CFlon[3],CFlat[4])
+
+SA_vec_1000=gsw.SA_from_SP(salvec,1e3*ones(len(salvec)),CFlon[3],CFlat[4])
+
+CT_vec=gsw.CT_from_pt(SA_vec,tmpvec)
+pdenmat=zeros((shape(salmat)))
+pdenmat2=zeros((shape(salmat)))
+sigma1mat=zeros((shape(salmat)))
+for ii in range(len(salvec)):
+    for jj in range(len(tmpvec)):
+        pdenmat[jj,ii]=gsw.sigma0(SA_vec[ii],CT_vec[jj])
+        pdenmat2[jj,ii]=gsw.pot_rho_t_exact(SA_vec[ii],tmpvec[jj],750,0)-1e3
+        sigma1mat[jj,ii]=gsw.sigma1(SA_vec[ii],CT_vec[jj])
+
+
+# def TS_comp_plot():
+#     figure()
+#     dat=fs
+#     plot(dat.PSAL.values.flatten(),dat.PTMP.values.flatten(),'o',label='FS',alpha=0.2)
+#     dat=bso
+#     plot(dat.PSAL.values.flatten(),dat.PTMP.values.flatten(),'o',label='BSO',alpha=0.2)
+#     dat=osnap
+#     plot(dat.PSAL.values.flatten(),dat.PTMP.values.flatten(),'o',label='OSNAP',alpha=0.2)
+#     xlabel('salinity')
+#     ylabel('pot.temperature')
+#     xlim(31,36)
+#     ylim(-3,14)
+#     contour(salvec,tmpvec,pdenmat,colors='k',levels=arange(25,29,0.2),zorder=5)
+#     legend(fontsize=16)
+#     savefig(figdir+'TS_NorESM_comp_all.png',bbox_inches='tight')
+#
+#
+# TS_comp_plot()
 
 ################################################################################################################################
 ################################################################################################################################
@@ -269,7 +300,7 @@ osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
 bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
 fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
 (bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot()
-bso.uvel.where(bso.uvel<1e30).sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
+
 
 (osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot()
 (bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).plot()
@@ -279,7 +310,7 @@ bso.uvel.where(bso.uvel<1e30).sum(dim='DEPTH').sum(dim='LONGITUDE').plot()
 (osnap['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')+ns['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')-fs['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')).mean()
 
 
-osnap.to_netcdf(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004.nc','w')
-fs.to_netcdf(datadir+'NorESM/NorESM_fs_xray_18yrs_2004.nc','w')
-ns.to_netcdf(datadir+'NorESM/NorESM_ns_xray_18yrs_2004.nc','w')
-bso.to_netcdf(datadir+'NorESM/NorESM_bso_xray_18yrs_2004.nc','w')
+osnap.to_netcdf(datadir+'NorESM/NorESM_osnap_xray_1912.nc','w')
+fs.to_netcdf(datadir+'NorESM/NorESM_fs_xray_1912.nc','w')
+ns.to_netcdf(datadir+'NorESM/NorESM_ns_xray_1912.nc','w')
+bso.to_netcdf(datadir+'NorESM/NorESM_bso_xray_1912.nc','w')

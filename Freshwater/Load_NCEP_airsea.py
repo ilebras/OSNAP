@@ -17,15 +17,19 @@ for ii,xx in enumerate(eplist[1:]):
 ep=ep.rename({'EMNP_L1_FcstAvg6hr':'ep'})
 #surfacefluxes
 hflist=sort(glob.glob(datadir+'aux_data/Air-Sea_FW/NCEP_CFSv2/Average/SurfaceFluxes/*.nc'))
-hfall=xr.open_dataset(hflist[0])
+hf=xr.open_dataset(hflist[0])
 for ii,xx in enumerate(hflist[1:]):
     hftmp=xr.open_dataset(xx)
-    hfall=xr.concat([hfall,hftmp],dim='time')
+    hf=xr.concat([hf,hftmp],dim='time')
 
-hf=xr.merge([hfall.SHTFL_L1_FcstAvg6hr,hfall.LHTFL_L1_FcstAvg6hr])
-hf=hf.rename({'SHTFL_L1_FcstAvg6hr':'shf','LHTFL_L1_FcstAvg6hr':'lhf'})
+
+hf=hf.rename({'SHTFL_L1_FcstAvg6hr':'shf','LHTFL_L1_FcstAvg6hr':'lhf','DSWRF_L1_FcstAvg6hr':'dsw','USWRF_L1_FcstAvg6hr':'usw','DLWRF_L1_FcstAvg6hr':'dlw','ULWRF_L1_FcstAvg6hr':'ulw'})
+
 
 hf=hf.where(lmask.mask==0)
+
+hf.usw.mean(dim='time').plot()
+hf.dsw.mean(dim='time').plot()
 hf.lhf.mean(dim='time').plot()
 hf.shf.mean(dim='time').plot()
 ep.ep.mean(dim='time').plot()
@@ -53,7 +57,10 @@ hfmask = mybox.mask(hf.lon.values,hf.lat.values)
 
 cut_ep=ep.where(epmask==0)
 cut_hf=hf.where(hfmask==0)
-cut_ep['time']=cut_hf['time'].values
+
+cut_ep
+
+cut_ep['time']=cut_hf['time']
 
 cut_ep.ep.mean(dim='time').plot()
 cut_hf.lhf.mean(dim='time').plot()
@@ -83,16 +90,13 @@ cut_ep['ep_int']=(cut_ep.ep*cut_ep.area).sum(dim='lon').sum(dim='lat')/100/24/60
 #convert from cm/day to Sv (10^6 m3/s)
 
 
-cut_hf['hf_int']=((cut_hf.lhf+cut_hf.shf)*cut_hf.area).sum(dim='lon').sum(dim='lat')/1e12
+cut_hf['hf_int']=((cut_hf.lhf+cut_hf.shf+cut_hf.ulw+cut_hf.usw-cut_hf.dsw-cut_hf.dlw)*cut_hf.area).sum(dim='lon').sum(dim='lat')/1e12
 #convert to TW
 
-
-cut_ep.area.plot()
 
 cut_hf.area.plot()
 
 int_all=xr.merge([cut_hf.hf_int,cut_ep.ep_int])
-int_all
 int_all.ep_int.plot()
 
 

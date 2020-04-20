@@ -10,5 +10,4 @@ cut_dat=dat.sel(latitude=slice(80,55))
 cut_dat=cut_dat.sortby('longitude').sel(longitude=slice(-45,25))
 cut_dat=cut_dat.sel(expver=1)
 
-
 cut_dat.to_netcdf(datadir+'aux_data/Air-Sea_FW/ERA5_ilebras/ERA5_2000-2020_regioncut_ilebras.nc','w')

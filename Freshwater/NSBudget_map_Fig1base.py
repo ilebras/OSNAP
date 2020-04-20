@@ -24,6 +24,7 @@ central_lon, central_lat = -20, 70
 extent = [-45, 5, 50, 86]
 
 """Get the etopo1 data"""
+predir='/home/isabela/DATA/bathymetry/etopo1/'
 etopo1name=predir+'ETOPO1_Ice_g_gmt4.grd'
 etopo1 = Dataset(etopo1name,'r')
 

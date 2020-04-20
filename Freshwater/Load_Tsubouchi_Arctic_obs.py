@@ -64,14 +64,20 @@ def get_section(minlat,maxlat):
     sec_final['LAT_LONG']=('LON_LONG',sec.LATITUDE.values)
     return sec_final
 
+
+
 fs=get_section(78,82)
 bso=get_section(68,78)
 
+fs
+bso
 
 bso.LON_LONG.values
 
 fs=fs.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
 bso=bso.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
+
+fs
 
 ind=10
 plot(fs.LONGITUDE[:ind],fs.VELO.mean('DEPTH').mean('TIME')[:ind],'o')

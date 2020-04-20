@@ -6,7 +6,18 @@ lmask['longitude']=hstack((lmask['longitude'][:lind],lmask['longitude'][lind:]-3
 lmask['lsm_better']=(('latitude','longitude'),lmask.lsm.values[0,:,:])
 dat=xr.open_dataset(datadir+'aux_data/Air-Sea_FW/ERA5_ilebras/ERA5_2000-2020_regioncut_ilebras.nc')
 
+rad=xr.open_dataset(datadir+'aux_data/Air-Sea_FW/ERA5_ilebras/ERA5_radiation_from2000_total.nc')
+
+lind=where(rad.longitude>180)[0][0]
+rad['longitude']=hstack((rad['longitude'][:lind],rad['longitude'][lind:]-360))
+
+cut_dat=rad.sel(latitude=slice(80,55))
+cut_dat=cut_dat.sortby('longitude').sel(longitude=slice(-45,25))
+
+dat=xr.merge([dat,cut_dat])
 dat=dat.where(lmask.lsm_better==0)
+
+dat
 
 #load NORESM boundaries and extract data within box
 osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
@@ -61,8 +72,9 @@ for var in cut_dat:
     if '0005' in var:
         cut_dat=cut_dat.drop(var)
 
+cut_dat
 for var in cut_dat:
-        if 'hf' in var:
+        if ('hf' in var) | ('ssr' in var) | ('str' in var):
             cut_dat[var+'_int']=(cut_dat[var]*cut_dat['area']).sum(dim='longitude').sum(dim='latitude')/1e12/86400
         elif ('tp' in var) | ('e' in var ):
             cut_dat[var+'_int']=(cut_dat[var]*cut_dat['area']).sum(dim='longitude').sum(dim='latitude')/24/60/60/1e6

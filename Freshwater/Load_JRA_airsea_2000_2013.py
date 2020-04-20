@@ -20,16 +20,17 @@ prec=load_and_rename('tprat','TPRAT_GDS4_SFC_S130','prec')
 sens=load_and_rename('shtfl','SHTFL_GDS4_SFC_S130','sens')
 late=load_and_rename('lhtfl','LHTFL_GDS4_SFC_S130','late')
 
+downlong=load_and_rename('dlwrf','DLWRF_GDS4_SFC_S130','downlong')
+uplong=load_and_rename('ulwrf','ULWRF_GDS4_SFC_S130','uplong')
+
+upshort=load_and_rename('uswrf','USWRF_GDS4_SFC_S130','upshort')
+
+downshort=load_and_rename('dswrf','DSWRF_GDS4_SFC_S130','downshort')
+
 ep=evap.evap-prec.prec
-hf=sens.sens+late.late
-
-
-ep.mean(dim='time').plot()
-
-hf.mean(dim='time').plot()
+hf=sens.sens+late.late+upshort.upshort+uplong.uplong-downshort.downshort-downlong.downlong
 
 lmask=load_and_rename('land','LAND_GDS4_SFC','lm')
-
 
 
 #load NORESM boundaries and extract data within box

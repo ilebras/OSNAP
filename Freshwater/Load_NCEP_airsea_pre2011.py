@@ -24,9 +24,22 @@ for ii,xx in enumerate(hflist[1:]):
     hftmp=xr.open_dataset(xx)
     hfall=xr.concat([hfall,hftmp],dim='time')
 
+#addradiation...
+hflist=sort(glob.glob(datadir+'aux_data/Air-Sea_FW/NCEP_CFS/Average/Radiation/*.nc'))
+hfmas=xr.open_dataset(hflist[0])
+for ii,xx in enumerate(hflist[1:]):
+    hftmp=xr.open_dataset(xx)
+    hfmas=xr.concat([hfmas,hftmp],dim='time')
+hfmas
 
-hf=xr.merge([hfall.SHTFL_L1_FcstAvg6hr,hfall.LHTFL_L1_FcstAvg6hr])
-hf=hf.rename({'SHTFL_L1_FcstAvg6hr':'shf','LHTFL_L1_FcstAvg6hr':'lhf'})
+hfall.time
+
+hfmas['time']=hfall['time']
+
+hf=xr.merge([hfall,hfmas],compat='override')
+
+hf=hf.rename({'SHTFL_L1_FcstAvg6hr':'shf','LHTFL_L1_FcstAvg6hr':'lhf','DSWRF_L1_Avg':'dsw','USWRF_L1_Avg':'usw','DLWRF_L1_Avg':'dlw','ULWRF_L1_Avg':'ulw'})
+
 
 hf=hf.where(lmask.mask==0)
 hf.lhf.mean(dim='time').plot()
@@ -56,6 +69,9 @@ hfmask = mybox.mask(hf.lon.values,hf.lat.values)
 
 cut_ep=ep.where(epmask==0)
 cut_hf=hf.where(hfmask==0)
+
+cut_ep
+
 
 cut_ep['time']=cut_hf['time'].values
 
@@ -88,12 +104,14 @@ cut_ep['ep_int']=(cut_ep.ep*cut_ep.area).sum(dim='lon').sum(dim='lat')/100/24/60
 #convert from cm/day to Sv (10^6 m3/s)
 
 
+cut_hf.ulw.mean(dim='time').plot()
+cut_hf.lhf.mean(dim='time').plot()
 
-cut_hf['hf_int']=((cut_hf.lhf+cut_hf.shf)*cut_hf.area).sum(dim='lon').sum(dim='lat')/1e12
+cut_hf['hf_int']=((cut_hf.lhf+cut_hf.shf+cut_hf.ulw+cut_hf.usw-cut_hf.dsw-cut_hf.dlw)*cut_hf.area).sum(dim='lon').sum(dim='lat')/1e12
 #convert to TW
 
 
-cut_ep.area.plot()
+cut_hf['hf_int'].plot()
 
 cut_hf.area.plot()
 cut_ep

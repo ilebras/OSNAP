@@ -1,13 +1,15 @@
 from firstfuncs_1618 import *
 
-lmask=xr.open_dataset(datadir+'aux_data/Air-Sea_W/ERA5/era5_landmask.nc')
+lmask=xr.open_dataset(datadir+'aux_data/Air-Sea_FW/ERA5/era5_landmask.nc')
 lind=where(lmask.longitude>180)[0][0]
 lmask['longitude']=hstack((lmask['longitude'][:lind],lmask['longitude'][lind:]-360))
 lmask['lsm_better']=(('latitude','longitude'),lmask.lsm.values[0,:,:])
-dat=xr.open_dataset(datadir+'aux_data/Air-Sea_Feili/ERA5/era5_surface_fluxes_monthly_averaged_for_NordicSeas.nc')
+dat=xr.open_dataset(datadir+'aux_data/Air-Sea_FW/ERA5/era5_surface_fluxes_monthly_averaged_for_NordicSeas.nc')
 
 dat.msr_0001.mean(dim='time').plot()
 dat=dat.where(lmask.lsm_better==0)
+
+dat
 
 #load NORESM boundaries and extract data within box
 osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
@@ -41,6 +43,8 @@ cut_dat=dat.where(mymask==0)
 
 cut_dat.tp_0001.mean(dim='time').plot()
 
+
+
 lonmat,latmat=meshgrid(dat.longitude,dat.latitude)
 shape(lonmat-0.25/2)
 shape(lonmat[:,-1]+0.25/2)
@@ -62,9 +66,11 @@ for var in cut_dat:
     if '0005' in var:
         cut_dat=cut_dat.drop(var)
 
+cut_dat
+
 for var in cut_dat:
     if '0001' in var:
-        if 'hf' in var:
+        if ('hf' in var) | ('wrf' in var):
             cut_dat[var[:-5]+'_int']=(cut_dat[var]*cut_dat['area']).sum(dim='longitude').sum(dim='latitude')/1e12
         elif ('tp_' in var) | ('e_' in var ):
             cut_dat[var[:-5]+'_int']=(cut_dat[var]*cut_dat['area']).sum(dim='longitude').sum(dim='latitude')/24/60/60/1e6
@@ -76,7 +82,7 @@ for var in cut_dat:
 #The hydrological parameters are in units of "m of water per day"
 #The energy (turbulent and radiative) and momentum fluxes should be divided by 86400 seconds (24 hours) to convert to the commonly used units of Wm-2 and Nm-2, respectively.
 # seems not to apply to heat flux, and confused about radiative fluxes, but they are not what I want so ignoring for now...
-(cut_dat.mslhf_int+cut_dat.msshf_int).plot()
+(cut_dat.mslhf_int+cut_dat.msshf_int+cut_dat.msnlwrf_int+cut_dat.msnswrf_int).plot()
 
 
 (cut_dat.tp_int).plot()
