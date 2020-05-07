@@ -6,6 +6,9 @@ lmask['longitude']=hstack((lmask['longitude'][:lind],lmask['longitude'][lind:]-3
 lmask['lsm_better']=(('latitude','longitude'),lmask.lsm.values[0,:,:])
 dat=xr.open_dataset(datadir+'aux_data/Air-Sea_FW/ERA5_ilebras/ERA5_2000-2020_regioncut_ilebras.nc')
 
+diff(dat.longitude)
+diff(dat.latitude)
+
 rad=xr.open_dataset(datadir+'aux_data/Air-Sea_FW/ERA5_ilebras/ERA5_radiation_from2000_total.nc')
 
 lind=where(rad.longitude>180)[0][0]

@@ -54,6 +54,7 @@ for kk in ['iceberg','liqprec','mltfrz','runoff','solprec','evap']:
         units[kk]=-int[kk]/rho_w/1e6
     else:
         units[kk]=int[kk]/rho_w/1e6
+units
 
 units['FW+SI']=units['iceberg']+units['liqprec']+units['solprec']+units['runoff']+units['mltfrz']+units['evap']
 units=units.drop('saltstorage').drop('volume')

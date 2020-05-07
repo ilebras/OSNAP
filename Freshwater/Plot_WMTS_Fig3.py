@@ -2,12 +2,9 @@ from firstfuncs_1618 import *
 
 figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/paperfigs/'
 
-WM_nor=xr.open_dataset(datadir+'NorESM/NorESM_WMs_18yrs_2004.nc')
-WM_obs=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_1912.nc')
-WM_obs['PSAL'].sel(WM='PWS')
-WM_nor['PSAL'].sel(WM='PWS').plot()
-WM_obs['PSAL'].sel(WM='PWS')
-WM_obs['TRANS'].sel(WM='PWN').mean()
+# WM_nor=xr.open_dataset(datadir+'NorESM/NorESM_WMs_18yrs_2004.nc')
+WM_obs=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_2004.nc')
+# WM_mb=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_mb_2004.nc')
 
 #copied over from GetandPlotSec...
 sigmax=27.6
@@ -59,7 +56,7 @@ def plot_TS_splitboth(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
     ax1.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
     ax2.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
     ax2.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
-    ax1.set_ylabel('pot.temperature [$^\circ$C]',fontsize=14)
+    ax1.set_ylabel('pot. temperature [$^\circ$C]',fontsize=14)
     f.text(0.5, 0, 'salinity', ha='center',fontsize=14)
     ax1.set_xlim(xlims)
     ax2.set_xlim(xlim2)
@@ -76,15 +73,13 @@ def plot_TS_splitboth(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
     savefig(figdir_paper+'TS_split_'+str(namtit)+'.png',bbox_inches='tight')
     savefig(figdir_paper+'TS_split_'+str(namtit)+'.pdf',bbox_inches='tight')
 
-wm='PWN'
-WM_obs.PSAL.groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,
-
-
 
 plot_TS_splitboth(WM_obs,'obs',[33.25,35.5],[-2,12],[33.25,35.5],[-2,12])
 
-
-plot_TS_splitboth(WM_nor,'nor',[33.5,35.8],[-2,12],[33.5,35.8],[-2,12])
+# plot_TS_splitboth(WM_mb,'mb',[33.25,35.5],[-2,12],[33.25,35.5],[-2,17.5])
+#
+#
+# plot_TS_splitboth(WM_nor,'nor',[33.5,35.8],[-2,12],[33.5,35.8],[-2,12])
 
 ############################################################################################
 ################  NORESM TS PLOT OF ANNUAL VARIATIONS  ############

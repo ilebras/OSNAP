@@ -1,4 +1,5 @@
 from firstfuncs_1618 import *
+import bottleneck
 
 figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/???/'
 
@@ -69,15 +70,11 @@ def get_section(minlat,maxlat):
 fs=get_section(78,82)
 bso=get_section(68,78)
 
-fs
-bso
-
-bso.LON_LONG.values
 
 fs=fs.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
 bso=bso.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
 
-fs
+
 
 ind=10
 plot(fs.LONGITUDE[:ind],fs.VELO.mean('DEPTH').mean('TIME')[:ind],'o')
@@ -102,6 +99,15 @@ def get_AREA_TRANS(sec):
 
 fs=get_AREA_TRANS(fs)
 bso=get_AREA_TRANS(bso)
+fs.AREA.mean(dim='TIME').plot()
+
+fs.TRANS.where(isnan(fs.PTMP)).mean(dim='TIME').plot()
+fs['PTMP']=fs.PTMP.ffill(dim='DEPTH')
+fs['PSAL']=fs.PSAL.ffill(dim='DEPTH')
+
+bso['PTMP']=bso.PTMP.ffill(dim='DEPTH')
+bso['PSAL']=bso.PSAL.ffill(dim='DEPTH')
+
 
 sec=bso
 
@@ -136,5 +142,5 @@ def add_PDEN(xray):
 fs=add_PDEN(fs)
 bso=add_PDEN(bso)
 
-fs.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_fs_xray_2001.nc')
-bso.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_bso_xray_2001.nc')
+fs.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_fs_xray_2004.nc')
+bso.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_bso_xray_2004.nc')

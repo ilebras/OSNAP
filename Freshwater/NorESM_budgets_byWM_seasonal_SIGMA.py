@@ -6,11 +6,18 @@ figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwate
 ###########################################      LOAD     #######################################################
 ################################################################################################################################
 ################################################################################################################################
-
-osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004.nc')
-fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_18yrs_2004.nc')
-bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_18yrs_2004.nc')
-ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_18yrs_2004.nc')
+osnap={}
+fs={}
+bso={}
+ns={}
+osnap['dpth']=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004.nc')
+osnap['sig']=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004_sigma.nc')
+fs['sig']=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_18yrs_2004_sigma.nc')
+fs['dpth']=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_18yrs_2004.nc')
+bso['sig']=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_18yrs_2004_sigma.nc')
+bso['dpth']=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_18yrs_2004.nc')
+ns['sig']=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_18yrs_2004_sigma.nc')
+ns['dpth']=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_18yrs_2004.nc')
 so=xr.open_dataset(datadir+'NorESM/NorESM_source_storage_xray_18yrs_2004.nc')
 
 vts1=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_volumetransports_200001-200912.nc')
@@ -22,8 +29,20 @@ endyear=2018
 endmonth=12
 vts['time']=array([datetime.datetime(m//12, m%12+1, 15) for m in range(startyear*12+startmonth-1, endyear*12+endmonth)])
 
-osnap.TRANS.sum(dim='LONGITUDE').sum(dim='DEPTH').mean()
-vts.net_vt_OSNAP.mean()
+def comp_trans(var,var2):
+    figure(figsize=(20,4))
+    var['dpth'].TRANS.sum(dim='LONGITUDE').sum(dim='DEPTH').plot(label='depth')
+    var['sig'].TRANS.sum(dim='LONGITUDE').sum(dim='DZ').plot(label='sigma')
+    vts[var2].plot(label='diagnostic')
+    ylabel('Transport [Sv]')
+    title(var2[7:])
+    legend()
+
+
+comp_trans(osnap,'net_vt_OSNAP')
+comp_trans(fs,'net_vt_FS')
+comp_trans(bso,'net_vt_BSO')
+comp_trans(ns,'net_vt_NS')
 
 hf1=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_NordicSeas_heatloss_200001-200912.nc')
 hf2=xr.open_dataset(datadir+'NorESM/NorESM2-LM_omip2_NordicSeas_heatloss_201001-201812.nc')
@@ -37,7 +56,8 @@ WM_obs=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_W
 
 vts['tot']=(-vts['net_vt_FS']-vts['net_vt_BSO']+vts['net_vt_OSNAP'])+vts['net_vt_NS']
 
-so
+vts.tot.mean()
+
 
 coldic={'AWS':'red','DWS':'grey','PWS':'royalblue','PWN':'purple','AWN':'orange'}
 ################################################################################################################################

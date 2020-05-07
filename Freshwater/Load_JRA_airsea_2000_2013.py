@@ -33,6 +33,8 @@ hf=sens.sens+late.late+upshort.upshort+uplong.uplong-downshort.downshort-downlon
 lmask=load_and_rename('land','LAND_GDS4_SFC','lm')
 
 
+diff(ep.lat)
+
 #load NORESM boundaries and extract data within box
 osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_1912.nc')
 ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_1912.nc')
