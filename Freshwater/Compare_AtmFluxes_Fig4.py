@@ -21,11 +21,16 @@ era5['hf_int']=-era5.sshf_int-era5.slhf_int-era5.ssr_int-era5.str_int
 noresm['mltfrz']=-1*abs(noresm['mltfrz'])
 noresm['runoff']=-1*abs(noresm['runoff'])
 
+noresm_corr=xr.open_dataset(datadir+'NorESM/NorESM_freshwater_fromspatial.nc')
+for var in noresm_corr:
+    noresm_corr[var]=-noresm_corr[var]
+noresm_corr=noresm_corr.rename({'pe_tot':'ep_int','si_tot':'mltfrz','ro_tot':'runoff'})
+
 
 def complot(var,ylab):
-    labvec=['ERA 5','NCEP CFS','NCEP CFSv2','JRA-55/NorESM','JRA-55']
+    labvec=['ERA 5','NCEP CFS','NCEP CFSv2','JRA-55/NorESM','NorESM corr','JRA-55']
     figure(figsize=(15,3))
-    for ii,xray in enumerate([era5,ncep1,ncep2,noresm,jra55]):
+    for ii,xray in enumerate([era5,ncep1,ncep2,noresm,noresm_corr,jra55]):
         (-xray[var]).plot(label=labvec[ii],linewidth=2)
     xlim(datetime.datetime(2000,1,1),datetime.datetime(2019,1,1))
     legend(loc=(1.01,0.3))
@@ -35,11 +40,9 @@ def complot(var,ylab):
 
 complot('ep_int','Precipitation-Evaporation [Sv]')
 
-complot('hf_int','Air-Sea Heat Flux [TW]')
+# complot('hf_int','Air-Sea Heat Flux [TW]')
 
 coldic={'ERA5':'limegreen','JRA-55':'#8c510a','NCEP CFS':'#f768a1','JRA-55/NorESM':'#8c510a'}
-
-help(round)
 
 def all_airsea_fig():
     f,axx=subplots(2,2,figsize=(10,6),sharex=True)
@@ -47,7 +50,7 @@ def all_airsea_fig():
     f.subplots_adjust(wspace=0.3,hspace=0.3)
     for var in ['ep_int','mltfrz','hf_int','runoff']:
         if var=='ep_int':
-            prodvec=[noresm,era5,ncep]
+            prodvec=[noresm_corr,era5,ncep]
             labvec=['JRA-55/NorESM','ERA5','NCEP CFS']
             jj=0
             kk=0
@@ -57,7 +60,7 @@ def all_airsea_fig():
             jj=1
             kk=1
         else:
-            prodvec=[noresm]
+            prodvec=[noresm_corr]
             labvec=['JRA-55/NorESM']
         if var=='mltfrz':
             jj=0
@@ -82,7 +85,7 @@ def all_airsea_fig():
                 if var=='hf_int':
                     axx[jj,kk].text(5.5,ylp[var],str(int(mean(seas_mean/10).values)*10)+' TW',color=coldic[labvec[ii]],fontsize=13,fontweight='bold')
                 else:
-                    axx[jj,kk].text(5.5,ylp[var],str(int(mean(seas_mean*1e3).values+0.5))+'mSv',color=coldic[labvec[ii]],fontsize=13,fontweight='bold')
+                    axx[jj,kk].text(5.5,ylp[var],str(int(mean(seas_mean*1e3).values+0.4))+'mSv',color=coldic[labvec[ii]],fontsize=13,fontweight='bold')
     axx[0,0].set_xlabel('')
     axx[0,0].set_ylim(-0.05,0.25)
     axx[0,1].set_ylim(-0.05,0.25)

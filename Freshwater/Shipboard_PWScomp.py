@@ -61,3 +61,6 @@ sal_16=All_16.uacross.where(All_16.pden<sigmax).where(All_16.dist<dlim16)
 
 PWS_S_14=(u_14*All_14.sal).sum(dim='depth').sum(dim='dist')/(u_14).sum(dim='depth').sum(dim='dist')
 PWS_S_16=(u_16*All_16.sal).sum(dim='depth').sum(dim='dist')/(u_16).sum(dim='depth').sum(dim='dist')
+
+PWS_S_14
+PWS_S_16

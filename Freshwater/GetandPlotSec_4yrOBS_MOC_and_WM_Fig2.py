@@ -5,16 +5,18 @@ figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwate
 
 ################################################################################################################################
 ###########################################    Load OBS    #######################################################
-osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004.nc')
-fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_18yrs_2004.nc')
-bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_18yrs_2004.nc')
-ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_18yrs_2004.nc')
+# osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004.nc')
+# fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_18yrs_2004.nc')
+# bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_18yrs_2004.nc')
+# ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_18yrs_2004.nc')
+#
+# # # #### load osnap data and cut out the eastern portion
+# lonbnd=-44
+# dat=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.nc')
+# osnap_obs=dat.sel(LONGITUDE=slice(lonbnd,0))
+# osnap_obs['LATITUDE']=dat['LATITUDE'].values[dat.LONGITUDE>lonbnd]
 
-# # #### load osnap data and cut out the eastern portion
-lonbnd=-44
-dat=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.nc')
-osnap_obs=dat.sel(LONGITUDE=slice(lonbnd,0))
-osnap_obs['LATITUDE']=dat['LATITUDE'].values[dat.LONGITUDE>lonbnd]
+io.loadmat(datadir+'OAproduct/OSNAP_All_2014-2018_0325T2.mat')
 
 fs_obs=xr.open_dataset(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_fs_xray_2004.nc')
 bso_obs=xr.open_dataset(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_bso_xray_2004.nc')
@@ -46,8 +48,6 @@ def getpsi(east):
 
     return east
 
-osnap.SIGMAX.plot()
-
 
 osnap=getpsi(osnap)
 osnap_obs=getpsi(osnap_obs)
@@ -74,17 +74,7 @@ def plot_comp_psi(which,whichobs,name):
 plot_comp_psi(osnap,osnap_obs,'OSNAP')
 plot_comp_psi(fs,fs_obs,'Fram Strait')
 plot_comp_psi(bso,bso_obs,'Barents Sea Opening')
-
-
-
-
-
-(-1*osnap.where(osnap.PDEN>sigmax).TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE')).plot()
-(osnap.where(osnap.PDEN<=sigmax).TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot())
-
-(-1*osnap.where(osnap.PDEN>sigmax).TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE')).plot()
-(osnap.where(osnap.PDEN<=sigmax).TRANS.sum(dim='DEPTH').sum(dim='LONGITUDE').plot())
-
+#
 # def MOC_comp():
 #     osnap.MOC.plot()
 #     osnap.MOCMEAN.plot()
@@ -210,8 +200,6 @@ def sections_obs_only():
 
 sections_obs_only()
 
-sigmax=28
-
 def sections_model_only():
     fig = plt.figure(figsize=(12,9), constrained_layout=False)
     grd_outer = fig.add_gridspec(2,2, hspace=0.4)
@@ -249,7 +237,6 @@ def sections_model_only():
             axx[1,0].text(-8,-150,'PWN',color='k',fontsize=fsz,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$E]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
-            axx[0,0].contour(obs_x,fs.DEPTH,fs['PTMP'].where(~isnan(fs['VELO'])).mean(dim='TIME'),levels=[0],colors='r',linewidths=4)
         else:
             axx[1,0].text(73.5,450,'Barents Sea\nOpening',color='white',fontsize=fsz+5)
             axx[1,0].text(72,150,'AWN',color='k',fontsize=fsz,weight='bold')
@@ -270,7 +257,7 @@ sections_model_only()
 
 ############################################################################################
 ################  NORESM  WATER MASS PARTITIONING   #############################################
-oslim
+
 AWS={}
 PWS={}
 DWS={}

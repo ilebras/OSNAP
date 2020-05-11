@@ -35,9 +35,8 @@ osnap.LONGITUDE.values[:5][::-1]
 wbnd_lon=hstack((fs.LONGITUDE.values[:10],-20,-30,osnap.LONGITUDE.values[:5][::-1],-45,fs.LONGITUDE.values[0]))
 wbnd_lat=hstack((fs.LATITUDE.values[:10],70,65,osnap.LATITUDE.values[:5][::-1],76,fs.LATITUDE.values[0]))
 
-ebnd_lon=hstack((fs.LONGITUDE.values[9:],bso.LONGITUDE.values,ns.LONGITUDE.values[::-1],osnap.LONGITUDE.values[4:][::-1],-30,-20,fs.LONGITUDE.values[9]))
-ebnd_lat=hstack((fs.LATITUDE.values[9:],bso.LATITUDE.values,ns.LATITUDE.values[::-1],osnap.LATITUDE.values[4:][::-1],65,70,fs.LATITUDE.values[9]))
-plot(wbnd_lon,wbnd_lat,'o')
+ebnd_lon=hstack((fs.LONGITUDE.values[9:],bso.LONGITUDE.values,20,ns.LONGITUDE.values[::-1],osnap.LONGITUDE.values[4:][::-1],-30,-20,fs.LONGITUDE.values[9]))
+ebnd_lat=hstack((fs.LATITUDE.values[9:],bso.LATITUDE.values,62,ns.LATITUDE.values[::-1],osnap.LATITUDE.values[4:][::-1],65,70,fs.LATITUDE.values[9]))
 plot(ebnd_lon,ebnd_lat)
 
 import regionmask
@@ -66,6 +65,8 @@ west_dat=dat.where(wmask==0)
 
 noresm=xr.open_dataset(datadir+'NorESM/NorESM_source_storage_xray_18yrs_2004.nc')
 noresm['pe']=(noresm['solprec']+noresm['liqprec']+noresm['evap'])
+
+
 dat['pe_tot']=(dat['pe'].where(dat.OSNAP_mask==1)*dat['parea']).sum(dim='lon_idx').sum(dim='lat_idx')/1e3/1e6/(60**2*24)
 
 for xray in [east_dat,west_dat,dat]:
@@ -84,9 +85,8 @@ lon,lat=np.meshgrid(lons[int(res[0]):int(res[1])],lats[int(res[2]):int(res[3])])
 bathy = etopo1.variables["z"][int(res[2]):int(res[3]),int(res[0]):int(res[1])]
 bathySmoothed = laplace_filter(bathy,M=None)
 
-
 def map_FW():
-    fig, axx = plt.subplots(1,3, figsize=(13,5), subplot_kw={'projection': ccrs.Orthographic(central_lon, central_lat)},constrained_layout=True)
+    fig, axx = plt.subplots(1,3, figsize=(9,5*9/13), subplot_kw={'projection': ccrs.Orthographic(central_lon, central_lat)},constrained_layout=True)
     data_crs = ccrs.PlateCarree()
     clvec=[3,3,20]
     labs=['Precipitation - Evaporation','Runoff','Sea ice melt and freeze',]
@@ -101,24 +101,25 @@ def map_FW():
 
     for ii,var in enumerate(['pe','ro','si']):
         hh=axx[ii].pcolor(dat.plon,dat.plat,dat[var].mean(dim='time'),transform=data_crs,cmap=cm.BrBG,vmin=-clvec[ii],vmax=clvec[ii])#levels=41,,extend='both'
-        ypos=-0.1
-        ywi=0.03
+        ypos=0
+        ywi=0.04
         if ii==0:
             colorbar(hh,ax=axx[ii],cax=fig.add_axes([0.075,ypos,0.5,ywi]),orientation='horizontal',
             ticks=arange(-clvec[ii],clvec[ii]+0.2,1),
             label='[mm day$^{-1}$ m$^{-2}$]',ticklocation='bottom')
         elif ii==2:
             colorbar(hh,ax=axx[ii],cax=fig.add_axes([0.72,ypos,0.25,ywi]),orientation='horizontal',
-            ticks=arange(-clvec[ii],clvec[ii],10),
+            ticks=arange(-clvec[ii],clvec[ii]+1,10),
             label='[mm day$^{-1}$ m$^{-2}$]',ticklocation='bottom')
         axx[ii].set_title(labs[ii],fontsize=14)
-        axx[ii].text(-40,72,str(int(mean(west_dat[var])/1e3/(60**2*24)+0.5))+'mSv',transform=data_crs,fontsize=20,color='white',zorder=300)
-        axx[ii].text(-5,72,str(int(mean(east_dat[var])/1e3/(60**2*24)+0.5))+'mSv',transform=data_crs,fontsize=20,color='black',zorder=300)
+        axx[ii].text(-46,72,str(int(mean(west_dat[var+'_tot'])*1e3+0.5))+' mSv',transform=data_crs,fontsize=14,color='white',zorder=300)
+        axx[ii].text(-7,72,str(int(mean(east_dat[var+'_tot'])*1e3+0.5))+' mSv',transform=data_crs,fontsize=14,color='black',zorder=300)
     savefig(figdir_paper+'EastWest_Fresh_Map.png',bbox_inches='tight')
     savefig(figdir_paper+'EastWest_Fresh_Map.pdf',bbox_inches='tight')
 
-
 map_FW()
+
+########################### save
 
 
 # def map_FW_2x2test():

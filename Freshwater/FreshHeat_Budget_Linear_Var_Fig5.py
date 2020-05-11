@@ -3,13 +3,6 @@ from firstfuncs_1618 import *
 figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/Linear/'
 figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/paperfigs'
 
-def from_km3yr_to_mSv(var):
-    ans=var/1000*31.7
-    return ans
-
-from_km3yr_to_mSv(1000)
-
-
 ########################################################################################################
 ########################################################################################################
 #### Set up the optimization framework, which allows for varying almost all elements within a prescribed range
@@ -111,7 +104,7 @@ Umb_sol,Umb_err,xmb=run_inverse_model('massbal',U_mb,S_mb,T_mb)
 coldic={'AWS':'red','DWS':'grey','PWS':'royalblue','PWN':'purple','AWN':'orange','SI':'cyan','FW':'cyan','Q':'limegreen'}
 
 def plot_base_case_simple(Ubase,Ue,plt):
-    f,axx=subplots(1,4,figsize=(13,3),constrained_layout=True,gridspec_kw=dict(width_ratios=[2,3,1,1]))
+    f,axx=subplots(1,4,figsize=(9,2.5),constrained_layout=True,gridspec_kw=dict(width_ratios=[2,3,1,1]))
 
     alf=0.75
     capi=7
@@ -121,7 +114,7 @@ def plot_base_case_simple(Ubase,Ue,plt):
 
     ylimi=20
     axx[0].set_ylim(-ylimi,ylimi)
-    ylimi=4.25
+    ylimi=4
     axx[1].set_ylim(-ylimi,ylimi)
     axx[1].bar(range(3),[Ubase[kk] for kk in ['PWS','PWN','AWN']],color=[coldic[kk] for kk in ['PWS','PWN','AWN']],yerr=[Ue[kk] for kk in ['PWS','PWN','AWN']],capsize=capi,alpha=alf)
     axx[1].plot(range(3),[U[kk] for kk in ['PWS','PWN','AWN']],'o',color='k')
@@ -153,6 +146,8 @@ def plot_base_case_simple(Ubase,Ue,plt):
 
 plot_base_case_simple(Ubase,Ue,'base')
 
+WM.sel(WM='PWS').PSAL.plot()
+
 basediff=[(kk,Ubase[kk]-U[kk]) for kk in Ubase]
 basediff
 
@@ -170,6 +165,20 @@ def get_a_b_fracs(Ubase,S):
     #fraction of FW in DWS, as a function of epsilon
     b=(epsilon*Ubase['PWN']*(S['PWN']/S['AWS']-1)+Ubase['DWS']*(S['DWS']/S['AWS']-1))/(Ubase['FW']+Ubase['SI'])
     return a,b
+
+
+
+S['PWN']/S['AWS']
+S['PWS']/S['AWS']
+S['DWS']/S['AWS']
+
+Ubase['PWS']
+Ubase['DWS']
+Ubase['PWN']*(S['PWN']/S['AWS']-1)
+Ubase['PWS']*(S['PWS']/S['AWS']-1)
+Ubase['DWS']*(S['DWS']/S['AWS']-1)
+
+(Ubase['FW']+Ubase['SI'])
 
 a={}
 b={}
@@ -448,7 +457,48 @@ lineplot_PW_salinity()
 # More heat extracted (because of more AWS I suspect)
 
 #######################################################################################
-##############  Now look at consequences of changing PW salinities for FW dist  #######
+##############  What happens if we add more FW? (Like 100mSv)  ###########################
+#######################################################################################
+Ubase['FW']
+Ubase['SI']
+
+xbase
+get_U_from_x(xbase)
+xbase
+
+fwvar={}
+for U_FW in arange(0,0.11,0.01):
+        AM=array([[1,1,1,1,1,1,1,0],\
+        [S['PWS'],S['AWS'],S['DWS'],S['PWN'],S['AWN'],S['FW'],S['SI'],0],\
+        [T['PWS'],T['AWS'],T['DWS'],T['PWN'],T['AWN'],T['FW'],T['SI'],1]])
+
+        xinit=array([-3.31214887e+00,  1.73787555e+01, -1.29083726e+01,  1.81280407e+00,
+       -3.06611941e+00,  2.50406419e-02+U_FW,  7.00406419e-02, -6.36153015e+01])
+
+        dv=-AM.dot(xinit)
+
+        Evec=hstack((5*[1],0.02,0.02,Qvar))
+        E=diag(Evec)
+        Winv=diag([1,1/Snorm,1/Tnorm])
+        Umat,D,VmatT=linalg.svd(Winv.dot(AM.dot(E)))
+
+        Lambda_inv = zeros((AM.shape[0], AM.shape[1])).T
+        Lambda_inv[:AM.shape[0], :AM.shape[0]] = diag(1/D)
+        xsol_prime=VmatT.T.dot(Lambda_inv.dot(Umat.T.dot(Winv.dot(dv))))
+        xsol_Ad=E.dot(xsol_prime)
+        fwvar[U_FW]=xinit+xsol_Ad
+
+U_fwvar=get_U_from_x(fwvar[0.05])
+a_fw,b_fw=get_a_b_fracs(U_fwvar,S)
+U['FW']+U['SI']
+Ubase['FW']+Ubase['SI']
+U_fwvar['FW']+U_fwvar['SI']
+
+pwmats
+
+U_fwvar['Q']*cp*rhow/1e6
+#######################################################################################
+##############  Now look at consequences  for FW dist  ###########################
 #######################################################################################
 a_pwmat=zeros((len(epsilon),shape(pwmats['Q'])[1],shape(pwmats['Q'])[0]))
 b_pwmat=a_pwmat.copy()
@@ -457,24 +507,30 @@ for ii,ee in enumerate(1-epsilon):
     b_pwmat[ii,:,:]=((1-ee)*pwmats['PWN'].T*((S['PWN']+PWN_Smat)/S['AWS']-1)+pwmats['DWS'].T*(S['DWS']/S['AWS']-1))/(pwmats['FW'].T+pwmats['SI'].T)
 c_pwmat=1-a_pwmat-b_pwmat
 
-def plot_adep_pw():
-    f,axx=subplots(1,2,figsize=(13,4.5),sharex=True,sharey=True)
-    # f.subplots_adjust(wspace=0.3)
-    for ii,var in enumerate([a_pwmat,b_pwmat]):
-        axx[ii].plot(1-epsilon,var[:,-2,-3],linewidth=4,color='k',label='base case',zorder=5)
-        axx[ii].plot(1-epsilon,var[:,:-2,-3],color='r',zorder=3,label='',linewidth=1)
-        axx[ii].plot(1-epsilon,var[:,-2,:-3],color='b',zorder=3,label='',linewidth=1)
-        axx[ii].plot(1-epsilon,var[:,0,-3],color='r',zorder=3,label='make PWS fresher',linewidth=1)
-        axx[ii].plot(1-epsilon,var[:,-2,0],color='b',zorder=3,label='make PWN fresher',linewidth=1)
-        axx[ii].plot(1-epsilon,var[:,0,0],color='purple',zorder=4,label='make both Polar Waters fresher',linewidth=3)
-    axx[1].legend(loc=(1.05,0.2))
-    axx[0].set_ylabel('$\mathbf{a}$, Fraction of FW in Polar Water South')
-    axx[1].set_ylabel('$\mathbf{b}$, Fraction of FW in Deep Water South')
-    for axi in axx:
-        axi.set_xlabel('$\mathbf{1-\epsilon}$\nfraction of PWN in PWS')
-        axi.axhline(0,color='k')
-        axi.set_xlim(0,1)
+epsilon=arange(0,1.1,0.1)
 
+fwcol='#43a2ca'
+
+def plot_adep_pw():
+    f,axx=subplots(1,2,figsize=(11,3.2),sharex=True)
+    f.subplots_adjust(wspace=0.3)
+    for ii,var in enumerate([a_pwmat,b_pwmat]):
+        axx[ii].plot(1-epsilon,var[:,-2,-3],linewidth=4,color='k',label='Base case',zorder=5)
+        axx[ii].plot(1-epsilon,var[:,5,5],color='purple',zorder=4,label='Freshen both Polar Waters by 0.5',linewidth=3)
+        axx[ii].set_ylim(-0.3,1.3)
+        axx[ii].set_yticks(arange(0,1.1,0.5))
+    axx[0].plot(1-epsilon,a_fw,linewidth=3,color=fwcol,label='Add 50 mSv of Fresh Water')
+    axx[1].plot(1-epsilon,b_fw,linewidth=3,color=fwcol)
+    axx[0].legend(loc=(0.25,-0.5),ncol=3)
+    axx[0].set_title('Estuarine limb',fontsize=14)
+    axx[1].set_title('Overturning limb',fontsize=14)
+    axx[0].set_ylabel('$\mathbf{\delta}}$,  FW fraction in PWS')
+    axx[1].set_ylabel('$\mathbf{\gamma}$,  FW fraction in DWS')
+    for axi in axx:
+        axi.set_xlabel('$\mathbf{1-\epsilon}$\nFraction of PWN in PWS')
+        axi.axhline(0,color='k',linestyle='--')
+        # axi.axhline(0.5,color='k',linestyle='--')
+        axi.set_xlim(0,1)
     savefig(figdir_paper+'/FWfrac_obs_pwdep.png',bbox_inches='tight')
     savefig(figdir_paper+'/FWfrac_obs_pwdep.pdf',bbox_inches='tight')
 

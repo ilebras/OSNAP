@@ -302,7 +302,6 @@ for ii in range(yrs):
 
 
 
-
 def plot_erranom(kk):
     f,axx=subplots(1,1,figsize=(12,3),constrained_layout=True)
     alf=0.85

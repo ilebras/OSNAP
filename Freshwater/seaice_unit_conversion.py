@@ -8,3 +8,11 @@ def convert_to_Sv(num):
 
 convert_to_Sv(21)
 convert_to_Sv(540)
+
+
+
+def from_km3yr_to_mSv(var):
+    ans=var/1000*31.7
+    return ans
+
+from_km3yr_to_mSv(1000)

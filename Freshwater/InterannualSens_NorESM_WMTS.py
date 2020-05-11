@@ -71,7 +71,7 @@ def plot_TS_yearly(WM,namtit,xlims,ylims,xlim2,ylim2):
     savefig(figdir_paper+'TS_split_yearly'+str(namtit)+'.png',bbox_inches='tight')
     savefig(figdir_paper+'TS_split_yearly'+str(namtit)+'.pdf',bbox_inches='tight')
 
-plot_TS_yearly(WM,'nor',[34.75,36],[3,15],[33.25,36],[-3,15])
+plot_TS_yearly(WM,'nor',[34.5,36],[3,15],[33.25,36],[-3,15])
 
 ############################################################################################
 ################### Solve inverse model with NorESM inputs #################################
@@ -286,6 +286,77 @@ for ii in range(yrs):
             xbase=x0+xsol_Ad
             Ucomb[ii][jj]=get_U_from_x(xbase)
 
+
+#######################################################################
+########## Plot the distributions #####################
+#######################################################################
+
+
+def plot_base_case_eachyear():
+    f,axx=subplots(1,4,figsize=(9,2.5),constrained_layout=True,gridspec_kw=dict(width_ratios=[2,3,1,1]))
+    alf=0.85
+    capi=7
+    xshi1=0.8
+    xshi2=1
+    xshi3=1.2
+    xwi=0.2
+    boxo1=axx[0].boxplot([array([[Ucomb[ii][jj][ll] for ii in range(yrs)] for jj in range(yrs)]).flatten() for ll in ['AWS','DWS']],patch_artist=True,notch=True,positions=(arange(2)+xshi3), showfliers=False,widths=xwi)
+    boxi1=axx[0].boxplot([[Usol[kk][ll] for kk in Usol] for ll in ['AWS','DWS']],patch_artist=True,notch=True,positions=(arange(2)+xshi2), showfliers=False,widths=xwi)
+    box1=axx[0].boxplot([U[kk] for kk in ['AWS','DWS']],patch_artist=True,notch=True,positions=(arange(2)+xshi1), showfliers=False,widths=xwi)
+    axx[0].plot(arange(2)+xshi1,[Uinit_mean[ll] for ll in ['AWS','DWS']],'wo',zorder=100,mec='k')
+    axx[0].plot(arange(2)+xshi2,[Ubase_mean[ll] for ll in ['AWS','DWS']],'w^',zorder=100,mec='k')
+    boxo2=axx[1].boxplot([array([[Ucomb[ii][jj][ll] for ii in range(yrs)] for jj in range(yrs)]).flatten() for ll in ['PWS','PWN','AWN']],patch_artist=True,notch=True,positions=(arange(3)+xshi3), showfliers=False,widths=xwi)
+    boxi2=axx[1].boxplot([[Usol[kk][ll] for kk in Usol] for ll in ['PWS','PWN','AWN']],patch_artist=True,notch=True,positions=(arange(3)+xshi2), showfliers=False,widths=xwi)
+    box2=axx[1].boxplot([U[kk] for kk in ['PWS','PWN','AWN']],patch_artist=True,notch=True,positions=(arange(3)+xshi1), showfliers=False,widths=xwi)
+    axx[1].plot(arange(3)+xshi1,[Uinit_mean[ll] for ll in ['PWS','PWN','AWN']],'wo',zorder=100,mec='k')
+    axx[1].plot(arange(3)+xshi2,[Ubase_mean[ll] for ll in ['PWS','PWN','AWN']],'w^',zorder=100,mec='k')
+    boxo3=axx[2].boxplot(array([[Ucomb[ii][jj]['FW'] for ii in range(yrs)] for jj in range(yrs)]).flatten(),patch_artist=True,notch=True,positions=(arange(1)+xshi3), showfliers=False,widths=xwi)
+    boxi3=axx[2].boxplot([Usol[kk]['FW'] for kk in Usol],patch_artist=True,notch=True,positions=(arange(1)+xshi2), showfliers=False,widths=xwi)
+    box3=axx[2].boxplot(U['FW'].values,patch_artist=True,notch=True,positions=(arange(1)+xshi1), showfliers=False,widths=xwi)
+    axx[2].plot(arange(1)+xshi1,Uinit_mean['FW'],'wo',zorder=100,mec='k')
+    axx[2].plot(arange(1)+xshi2,Ubase_mean['FW'],'w^',zorder=100,mec='k')
+    boxo4=axx[3].boxplot(array([[cp*rhow*Ucomb[ii][jj]['Q']/1e6 for ii in range(yrs)] for jj in range(yrs)]).flatten(),patch_artist=True,notch=True,positions=(arange(1)+xshi3), showfliers=False,widths=xwi)
+    boxi4=axx[3].boxplot([cp*rhow*Usol[kk]['Q']/1e6 for kk in Usol],patch_artist=True,notch=True,positions=(arange(1)+xshi2), showfliers=False,widths=xwi)
+    box4=axx[3].boxplot([cp*rhow*(U['Q'])/1e6],patch_artist=True,notch=True,positions=(arange(1)+xshi1), showfliers=False,widths=xwi)
+    axx[3].plot(arange(1)+xshi1,cp*rhow*Uinit_mean['Q']/1e6,'wo',zorder=100,mec='k')
+    axx[3].plot(arange(1)+xshi2,cp*rhow*Ubase_mean['Q']/1e6,'w^',zorder=100,mec='k')
+    ylimi=20
+    axx[0].set_ylim(-ylimi,ylimi)
+    ylimi=4
+    axx[1].set_ylim(-ylimi,ylimi)
+    fwlim=0.2
+    axx[2].set_ylim(-fwlim,fwlim)
+    axx[3].set_ylim(-300,0)
+    fsz=14
+    axx[0].set_ylabel('Volume transport [Sv]',fontsize=fsz)
+    axx[3].set_ylabel('Heat flux [TW]',fontsize=fsz)
+    for boxi in [boxo1,boxo2,boxo3,boxo4]:
+        for item in ['boxes', 'whiskers', 'fliers', 'medians', 'caps']:
+                plt.setp(boxi[item], color='#02818a')
+    for boxi in [boxi1,boxi2,boxi3,boxi4]:
+        for item in ['boxes', 'whiskers', 'fliers', 'medians', 'caps']:
+                plt.setp(boxi[item], color='magenta')
+    for boxi in [box1,box2,box3,box4]:
+        for item in ['boxes', 'whiskers', 'fliers', 'medians', 'caps']:
+                plt.setp(boxi[item], color='k')
+    for ii in range(3):
+        axx[ii].axhline(0,color='k')
+    axx[0].set_xticks(range(1,3))
+    axx[0].set_xticklabels(['AWS','DWS'])
+    axx[1].set_xticks(range(1,4))
+    axx[1].set_xticklabels(['PWS','PWN','AWN'])
+    axx[2].set_xticks(range(1,2))
+    axx[2].set_xticklabels(['FW'])
+    axx[3].set_xticks([1])
+    axx[3].set_xticklabels('Q')
+
+    savefig(figdir_paper+'InvBudSol_NorESM_eachyear.png',bbox_inches='tight')
+    savefig(figdir_paper+'InvBudSol_NorESM_eachyear.pdf',bbox_inches='tight')
+
+
+
+plot_base_case_eachyear()
+
 #######################################################################
 ########## Get the impact on fresh water partitioning #####################
 #######################################################################
@@ -302,6 +373,19 @@ for ii,ee in enumerate(1-epsilon):
         for kk in range(yrs):
                 a_pwmat[ii,jj,kk]=(ee*Ucomb[jj][kk]['PWN']*(S['PWN'][kk]/S['AWS'][jj]-1)+Ucomb[jj][kk]['PWS']*(S['PWS'][jj]/S['AWS'][jj]-1))/Ucomb[jj][kk]['FW']
                 b_pwmat[ii,jj,kk]=((1-ee)*Ucomb[jj][kk]['PWN']*(S['PWN'][kk]/S['AWS'][jj]-1)+Ucomb[jj][kk]['DWS']*(S['DWS'][jj]/S['AWS'][jj]-1))/Ucomb[jj][kk]['FW']
+
+plot((1-a_pwmat-b_pwmat).flatten())
+
+Ubase_mean['PWN']
+Ubase_mean['DWS']
+
+
+Smean['PWN']
+Smean['AWS']
+Smean['AWN']
+Smean['PWS']
+Smean['DWS']
+
 
 def plot_epsilon_dep():
     f,axx=subplots(1,2,figsize=(13,4.5),sharex=True)
@@ -328,8 +412,8 @@ def plot_epsilon_dep():
         axi.axhline(0,color='k',zorder=5)
         axi.set_xlabel('$\mathbf{1- \epsilon}$\n Fraction of PWN in PWS')
         axi.set_ylim(-0.5,1.4)
-    savefig(figdir_paper+'FWfrac_NorESM_yrdep.pdf',bbox_inches='tight')
-    savefig(figdir_paper+'FWfrac_NorESM_yrdep.png',bbox_inches='tight')
-
+    savefig(figdir+'FWfrac_NorESM_yrdep.pdf',bbox_inches='tight')
+    savefig(figdir+'FWfrac_NorESM_yrdep.png',bbox_inches='tight')
+#
 
 plot_epsilon_dep()

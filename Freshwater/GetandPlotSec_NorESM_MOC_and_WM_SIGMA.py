@@ -82,10 +82,11 @@ fs=getpsi(fs,'DZ')
 ########################################      PLOT MEAN SECTION PANELS    #######################################################
 ################################################################################################################################
 ################################################################################################################################
-sigmax=osnap.SIGMEAN.values
+
 
 # oslim=-42.4 #shelf only
-oslim=-38 #generous
+oslim=-40 #just a little more
+# oslim=-38 #generous
 
 fslim=2
 ############################################################################################
@@ -97,21 +98,20 @@ DWS={}
 AWN={}
 PWN={}
 
-pws_depth=100
-
+# pws_depth=100
+# sigmax=osnap.SIGMEAN.values
 # xray=osnap
 # for var in ['TRANS','PSAL','PTMP','PDEN']:
 #     if var=='TRANS':
-#         DWS[var]=xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN>=sigmax).sum(dim='DZ').sum(dim='LONGITUDE')
-#         PWS[var]=xray['TRANS'].where(xray.LONGITUDE<oslim).sum(dim='DZ').sum(dim='LONGITUDE')
+#         DWS[var]=xray['TRANS'].where(xray.LONGITUDE>=-42.4).where(xray.PDEN>=sigmax).sum(dim='DZ').sum(dim='LONGITUDE')
+#         PWS[var]=xray['TRANS'].where(xray.LONGITUDE<-42.4).sum(dim='DZ').sum(dim='LONGITUDE')+xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DZ').sum(dim='LONGITUDE')
 #         AWS[var]=xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DZ').sum(dim='LONGITUDE')
 #
 #     else:
-#         DWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE>=oslim).where(xray.PDEN>=sigmax).sum(dim='DZ').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN>=sigmax).sum(dim='DZ').sum(dim='LONGITUDE')
-#         PWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE<oslim).sum(dim='DZ').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE<oslim).sum(dim='DZ').sum(dim='LONGITUDE')
+#         DWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE>=-42.4).where(xray.PDEN>=sigmax).sum(dim='DZ').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE>=-42.4).where(xray.PDEN>=sigmax).sum(dim='DZ').sum(dim='LONGITUDE')
+#         PWS[var]=((xray[var]*xray['TRANS']).where(xray.LONGITUDE<-42.4).sum(dim='DZ').sum(dim='LONGITUDE')+(xray[var]*xray['TRANS']).where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DZ').sum(dim='LONGITUDE'))/PWS['TRANS']
 #         AWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DZ').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DZ').sum(dim='LONGITUDE')
-
-
+#
 xray=osnap
 for var in ['TRANS','PSAL','PTMP','PDEN']:
     if var=='TRANS':
@@ -127,7 +127,6 @@ for var in ['TRANS','PSAL','PTMP','PDEN']:
 #split up FS into PW and AW using definition in Tsubouchi et al. 2018, which is boundary between "EGC" + "Middle", 2W
 # Here I'm using 4E, as it better maximizes transport...? Check on this...
 #call all BSO water AW.
-
 
 xray=fs
 for var in ['TRANS','PSAL','PTMP','PDEN']:
@@ -148,6 +147,12 @@ def plot_WMN():
 
 plot_WMN()
 
+PWN['TRANS'].mean()
+
+PWS['TRANS'].mean()
+
+PWN['TRANS'].plot()
+PWS['TRANS'].plot()
 
 ##### Compare with diagnostics quickly
 startyear=2000
