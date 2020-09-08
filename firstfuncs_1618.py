@@ -39,6 +39,10 @@ rc('ytick',labelsize='Large')
 rc('axes', labelsize='Large')
 
 
+def date_from_matlab(matdate):
+    pydate=array([datetime.datetime.fromordinal(int(matlab_datenum)) + datetime.timedelta(days=matlab_datenum%1) - datetime.timedelta(days = 366) for matlab_datenum in matdate])
+    return pydate
+
 ##################################################################################
 ##### bathymetry/distance/direction
 ##################################################################################

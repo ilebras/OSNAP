@@ -31,9 +31,14 @@ def add_SA_CT_PT(xray):
     xray['PDEN']=(('date','depth'),PD_out)
 
 
+d16,d18=load_mcat(5)
 
+d16.PSAL.sel(DEPTH=750).plot()
+d16.PSAL.sel(DEPTH=1000).plot(label='1000m')
+d16.PSAL.sel(DEPTH=1300).plot(label='1300m')
+legend()
 
-for moornum in [6]:
+for moornum in range(1,9):
     d16,d18=load_mcat(moornum)
     if 'LATITUDE' in d18:
         d18=d18.drop('LATITUDE').drop('LONGITUDE')
@@ -43,7 +48,7 @@ for moornum in [6]:
 
     #create depth grid:
     dmax=float(dat['depth_tvar'].max())
-    dpthgrid=arange(0,dmax,10)
+    dpthgrid=arange(0,dmax,2)
     prsgrid=gsw.p_from_z(-dpthgrid,dat.LATITUDE.values)
 
     dat_grid=xr.Dataset(coords={'date': dat.TIME.values,'depth':dpthgrid,'lon':dat.LONGITUDE.values,'lat':dat.LATITUDE.values,})
@@ -77,4 +82,6 @@ for moornum in [6]:
     figure()
     dat_grid.PDEN.plot()
 
-    dat_grid.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CF'+str(moornum)+'_mcat_vertgrid_daily.nc','w',format='netCDF4')
+    dat_grid.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CF'+str(moornum)+'_mcat_vertgrid_daily_2m.nc','w',format='netCDF4')
+
+dat_grid

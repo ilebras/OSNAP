@@ -1,6 +1,8 @@
 from firstfuncs_1618 import *
 
-dat=xr.open_dataset(datadir+'OSNAP_CFgridded_2014-2018/CFall_gridded_bymoor.nc')
+dat=xr.open_dataset(datadir+'OSNAP_CFgridded_2014-2018/CFall_gridded_bymoor_2m.nc')
+
+
 dat['across track velocity']=dat.UCUR*cos(theta)+dat.VCUR*sin(theta)
 dat['along track velocity']=-dat.UCUR*sin(theta)+dat.VCUR*cos(theta)
 
@@ -8,7 +10,7 @@ dat=dat.rename({'PSAL':'salinity','PDEN':'potential density','PTMP': 'temperatur
 dat=dat.drop('UCUR').drop('VCUR').drop('ASAL').drop('CTMP')
 dat=dat.transpose('distance','depth','date','lat','lon')
 
-dat.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CFall_gridded_bymoor_rotnewfieldnames.nc','w',format='netCDF4')
+dat.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CFall_gridded_bymoor_rotnewfieldnames_2m.nc','w',format='netCDF4')
 
 fcor=sw.f(60)
 
@@ -96,27 +98,29 @@ xtenddown['across track velocity'].mean(dim='date').plot()
 
 # 3. regrid horizontally (linearly) at finer mesh for each time step
 # dold,zold=meshgrid(xtenddown.distance,xtenddown.depth)
-for vv in dat:
-    for tt,adate in enumerate(dat.date):
-        for zz in range(len(dat.depth)):
-            nonanind=~isnan(xtenddown[vv][:,zz,tt])
-            if sum(nonanind)>1:
-                dinterp=interpolate.interp1d(newdist[nonanind],xtenddown[vv][:,zz,tt][nonanind],bounds_error=False)
-                newgrid[vv][:,zz,tt]=dinterp(newdist)
+newgrid=xtenddown.interpolate_na(dim='distance')
+# for vv in dat:
+#     for tt,adate in enumerate(dat.date):
+#         for zz in range(len(dat.depth)):
+#             nonanind=~isnan(xtenddown[vv][:,zz,tt])
+#             if sum(nonanind)>1:
+#                 dinterp=interpolate.interp1d(newdist[nonanind],xtenddown[vv][:,zz,tt][nonanind],bounds_error=False)
+#                 newgrid[vv][:,zz,tt]=dinterp(newdist)
 
 newgrid['salinity'].mean(dim='date').plot()
 
 newgrid['across track velocity'].mean(dim='date').plot()
 
 # 4. now interpolate vertically once more to fill in bottom triangles...
-for vv in dat:
-    if vv[0]!='d':
-        for tt,adate in enumerate(dat.date):
-            for dd in range(len(newgrid.distance)):
-                nonanind=~isnan(newgrid[vv][dd,:,tt])
-                if sum(nonanind)>1:
-                    dinterp=interpolate.interp1d(newgrid.depth[nonanind],newgrid[vv][dd,:,tt][nonanind],bounds_error=False)
-                    newgrid[vv][dd,:,tt]=dinterp(newgrid.depth)
+newgrid=newgrid.interpolate_na(dim='depth')
+# for vv in dat:
+#     if vv[0]!='d':
+#         for tt,adate in enumerate(dat.date):
+#             for dd in range(len(newgrid.distance)):
+#                 nonanind=~isnan(newgrid[vv][dd,:,tt])
+#                 if sum(nonanind)>1:
+#                     dinterp=interpolate.interp1d(newgrid.depth[nonanind],newgrid[vv][dd,:,tt][nonanind],bounds_error=False)
+#                     newgrid[vv][dd,:,tt]=dinterp(newgrid.depth)
 
 
 newgrid['salinity'].mean(dim='date').plot()
@@ -124,4 +128,4 @@ newgrid['salinity'].mean(dim='date').plot()
 newgrid['across track velocity'].mean(dim='date').plot()
 
 
-newgrid.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CFall_finergrid.nc','w',format='netCDF4')
+newgrid.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CFall_finergrid_2m.nc','w',format='netCDF4')

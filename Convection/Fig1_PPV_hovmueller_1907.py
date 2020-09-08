@@ -189,11 +189,11 @@ def SimpleMap():
     map.drawparallels(arange(lat_start,lat_end+2,5),labels=[1,0,0,0],linewidth=0.0001,fontsize=12)
 
     # [map.plot(ooi_lon[ll],ooi_lat[ll],'o',latlon=True) for ll in ooi_lat]
-    map.plot(dat.lon.values,dat.lat.values,'ko',latlon=True)
+    # map.plot(dat.lon.values,dat.lat.values,'ko',latlon=True)
     return map
 
 
-
+SimpleMap()
 
 def pltveldensec(axx,draw_moors='yes'):
         vel=axx.contourf(-osnap.LONGITUDE,osnap.DEPTH,osnap.VELO.sel(TIME=slice('2014-8-1','2015-8-1')).mean(dim='TIME'),20,cmap=cm.RdBu_r,vmin=-0.4,vmax=0.4)

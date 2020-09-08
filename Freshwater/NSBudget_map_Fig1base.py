@@ -55,6 +55,11 @@ def map_setup():
     ax.plot(ns.LONGITUDE,ns.LATITUDE,linewidth=lwi,color=nscol,transform=data_crs,zorder=1)
     ax.plot(bso.LONGITUDE,bso.LATITUDE,linewidth=lwi,color=nscol,transform=data_crs,zorder=1)
     ax.plot(osnap.LONGITUDE,osnap.LATITUDE,linewidth=lwi,color=nscol,transform=data_crs,zorder=1)
+    minlat=58
+    maxlat=70
+    minlon=-45
+    maxlon=-25
+    ax.plot([minlon,maxlon,maxlon,minlon,minlon],[minlat,minlat,maxlat,maxlat,minlat],linewidth=lwi,color='r',transform=data_crs,zorder=1)
     ax.set_facecolor('#c6dbef')
     savefig(figdir+'NordicSea_Map_newcol.png',bbox_inches='tight')
     savefig(figdir+'NordicSea_Map_newcol.pdf',bbox_inches='tight')

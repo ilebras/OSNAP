@@ -71,7 +71,8 @@ dat['pe_tot']=(dat['pe'].where(dat.OSNAP_mask==1)*dat['parea']).sum(dim='lon_idx
 
 for xray in [east_dat,west_dat,dat]:
     for var in ['pe','si','ro']:
-        xray[var+'_tot']=(xray[var]*xray['parea']).sum(dim='lon_idx').sum(dim='lat_idx')/1e3/1e6/(60**2*24)
+        xray[var+'_tot']=(xray[var].where(dat.OSNAP_mask==1)*dat['parea']).sum(dim='lon_idx').sum(dim='lat_idx')/1e3/1e6/(60**2*24)
+
 
 """Get the etopo1 data"""
 from map_funcs import *
@@ -118,6 +119,18 @@ def map_FW():
     savefig(figdir_paper+'EastWest_Fresh_Map.pdf',bbox_inches='tight')
 
 map_FW()
+41+5+1
+30+12+10
+
+newtot=xr.Dataset()
+for var in ['pe_tot','si_tot','ro_tot']:
+    newtot[var]=east_dat[var]+west_dat[var]
+
+for var in newtot:
+    newtot[var]=-newtot[var]
+newtot=newtot.rename({'pe_tot':'ep_int','si_tot':'mltfrz','ro_tot':'runoff'})
+
+newtot.to_netcdf(datadir+'NorESM/NorESM_freshwater_fromspatial.nc','w')
 
 ########################### save
 

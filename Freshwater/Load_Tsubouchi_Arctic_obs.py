@@ -1,15 +1,16 @@
 from firstfuncs_1618 import *
 import bottleneck
 
-figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/???/'
+figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/Tsubouchi_analyze/'
 
 ################################################################################################################################
 ################################################################################################################################
 ###########################################      LOAD     #######################################################
 ################################################################################################################################
 ################################################################################################################################
-datlist=glob.glob(datadir+'aux_data/Tsubouchi-etal-2018/section*')
+datlist=sort(glob.glob(datadir+'aux_data/Tsubouchi-et-al-2020/section*.nc'))
 
+# datlist=sort(glob.glob(datadir+'aux_data/Tsubouchi-etal-2018/section*.nc'))
 def load_convert():
     dat=xr.open_dataset(sort(datlist)[0])
     timvec=dat.data_time
@@ -19,7 +20,8 @@ def load_convert():
         dat=xr.concat([dat,dat_tmp],dim='data_time')
         timvec=hstack((timvec,dat_tmp.data_time))
 
-    timvec=[datetime.datetime(2005,9,15)+datetime.timedelta(days=30.5*ii) for ii in range(12)]
+    timvec=[datetime.datetime(2004,10,15)+datetime.timedelta(days=30.5*ii) for ii in range(68)]
+    # timvec=[datetime.datetime(2005,9,15)+datetime.timedelta(days=30.5*ii) for ii in range(12)]
 
     dat=dat.rename({'data_time':'TIME'})
     dat['TIME']=timvec
@@ -37,7 +39,11 @@ def load_convert():
     dat=dat.rename({'ptmp':'PTMP','sal':'PSAL','temp':'TEMP'})
     return dat
 
+
 dat=load_convert()
+
+# dat_old=load_convert()
+
 
 def map_split():
     plot(dat.LONGITUDE,dat.LATITUDE,'o');
@@ -49,7 +55,7 @@ def map_split():
 map_split()
 
 
-def get_section(minlat,maxlat):
+def get_section(dat,minlat,maxlat):
     latind=(dat.LATITUDE>minlat)& (dat.LATITUDE<=maxlat)
     mlind=(dat.MLAT>minlat)& (dat.MLAT<=maxlat)
     sec=xr.Dataset({'PTMP':(['TIME','LONGITUDE','DEPTH'],dat.PTMP.values[:,latind,:]),
@@ -67,18 +73,21 @@ def get_section(minlat,maxlat):
 
 
 
-fs=get_section(78,82)
-bso=get_section(68,78)
+fs=get_section(dat,78,82)
+bso=get_section(dat,68,78)
+
+# fs_old=get_section(dat_old,78,82)
+# bso_old=get_section(dat_old,68,78)
 
 
 fs=fs.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
 bso=bso.transpose('TIME','DEPTH','LONGITUDE','LON_LONG')
 
-
-
 ind=10
 plot(fs.LONGITUDE[:ind],fs.VELO.mean('DEPTH').mean('TIME')[:ind],'o')
 plot(fs.LONGITUDE[:ind],fs.PSAL.mean('DEPTH').mean('TIME')[:ind],'o')
+fs.PSAL.mean('DEPTH').plot()
+
 plot(fs.LON_LONG[:ind],fs.LAT_LONG[:ind],'x')
 
 ind=-20
@@ -99,6 +108,7 @@ def get_AREA_TRANS(sec):
 
 fs=get_AREA_TRANS(fs)
 bso=get_AREA_TRANS(bso)
+
 fs.AREA.mean(dim='TIME').plot()
 
 fs.TRANS.where(isnan(fs.PTMP)).mean(dim='TIME').plot()
@@ -109,16 +119,10 @@ bso['PTMP']=bso.PTMP.ffill(dim='DEPTH')
 bso['PSAL']=bso.PSAL.ffill(dim='DEPTH')
 
 
-sec=bso
-
-plot(sec.LAT_LONG.values,sec.LON_LONG.values,'o')
-
-sw.dist(sec.LAT_LONG.values,sec.LON_LONG.values)[0]*1e3
-
-bso.DISTDIFF.plot()
-
 fs.TRANS.sum('DEPTH').sum('LONGITUDE').plot()
 bso.TRANS.sum('DEPTH').sum('LONGITUDE').plot()
+(fs.TRANS.sum('DEPTH').sum('LONGITUDE')+bso.TRANS.sum('DEPTH').sum('LONGITUDE')).plot()
+
 
 def add_PDEN(xray):
     if 'PRES' in list(xray.data_vars):
@@ -137,10 +141,12 @@ def add_PDEN(xray):
     CT_out=gsw.CT_from_pt(SA_out,PT_out)
     PD_out=gsw.sigma0(SA_out,CT_out)
     xray['PDEN']=(('TIME','DEPTH','LONGITUDE'),PD_out)
+    xray['SA']=(('TIME','DEPTH','LONGITUDE'),SA_out)
+    xray['CT']=(('TIME','DEPTH','LONGITUDE'),CT_out)
     return xray
 
 fs=add_PDEN(fs)
 bso=add_PDEN(bso)
 
-fs.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_fs_xray_2004.nc')
-bso.to_netcdf(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_bso_xray_2004.nc')
+fs.to_netcdf(datadir+'aux_data/Tsubouchi-et-al-2020/Tsubouchi2020_fs_xray_2008.nc')
+bso.to_netcdf(datadir+'aux_data/Tsubouchi-et-al-2020/Tsubouchi2020_bso_xray_2008.nc')

@@ -79,6 +79,7 @@ mt['trans']=daily.xport.where((daily['potential density']>=d3)&(daily['potential
 
 dat=xr.open_dataset(datadir+'OSNAP2016recovery/gridded_CF-OOI/gridded_props_cf5-oom_5m_wML.nc')
 
+
 #### smooth out the PV and density fields for plotting purposes
 dat['PV_sm']=NaN*dat['PV']
 dat['pden_sm']=NaN*dat['pden']
@@ -144,12 +145,11 @@ dat_area_deep=(((dat_thick_deep[:1,:].values+dat_thick_deep[1:2,:].values)/2*dis
 
 dat['PV_interp']=(['distance','depth','date'],dat.PV_sm.interp(mid_depth=dat.depth.values).values)
 dat_thick_upper_PV=(datones.where((dat['pden']<d2)&(dat['pden']>=d1)&(log10(dat['PV_interp'])<logPVlim))*depthdiff).sum('depth')
-
 dat_area_upper_PV=(((dat_thick_upper_PV[:1,:].values+dat_thick_upper_PV[1:2,:].values)/2*distdiff[0]+(dat_thick_upper_PV[1:2,:].values+dat_thick_upper_PV[2:3,:].values)/2*distdiff[1])/1e3).flatten()
 
 dat_thick_deep_PV=(datones.where((dat['pden']<d3)&(dat['pden']>=d2)&(log10(dat['PV_interp'])<logPVlim))*depthdiff).sum('depth')
 dat_area_deep_PV=(((dat_thick_deep_PV[:1,:].values+dat_thick_deep_PV[1:2,:].values)/2*distdiff[0]+(dat_thick_deep_PV[1:2,:].values+dat_thick_deep_PV[2:3,:].values)/2*distdiff[1])/1e3).flatten()
-#
+
 # def compareas():
 #     figure(figsize=(15,5))
 #     uIIW['area'].plot()

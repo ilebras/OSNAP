@@ -1,22 +1,22 @@
 from firstfuncs_1618 import *
+from map_funcs import *
+
 figdir='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/NorESM/'
 figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwater/paperfigs/'
 # import cmocean
 
 ################################################################################################################################
 ###########################################    Load OBS    #######################################################
-# osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004.nc')
-# fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_18yrs_2004.nc')
-# bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_18yrs_2004.nc')
-# ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_18yrs_2004.nc')
-#
-# # # #### load osnap data and cut out the eastern portion
-# lonbnd=-44
-# dat=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.nc')
-# osnap_obs=dat.sel(LONGITUDE=slice(lonbnd,0))
-# osnap_obs['LATITUDE']=dat['LATITUDE'].values[dat.LONGITUDE>lonbnd]
+osnap=xr.open_dataset(datadir+'NorESM/NorESM_osnap_xray_18yrs_2004.nc')
+fs=xr.open_dataset(datadir+'NorESM/NorESM_fs_xray_18yrs_2004.nc')
+bso=xr.open_dataset(datadir+'NorESM/NorESM_bso_xray_18yrs_2004.nc')
+ns=xr.open_dataset(datadir+'NorESM/NorESM_ns_xray_18yrs_2004.nc')
 
-io.loadmat(datadir+'OAproduct/OSNAP_All_2014-2018_0325T2.mat')
+# # #### load osnap data and cut out the eastern portion
+lonbnd=-44
+dat=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_full.nc')
+osnap_obs=dat.sel(LONGITUDE=slice(lonbnd,0))
+osnap_obs['LATITUDE']=dat['LATITUDE'].values[dat.LONGITUDE>lonbnd]
 
 fs_obs=xr.open_dataset(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_fs_xray_2004.nc')
 bso_obs=xr.open_dataset(datadir+'aux_data/Tsubouchi-etal-2018/Tsubouchi2018_bso_xray_2004.nc')
@@ -48,7 +48,6 @@ def getpsi(east):
 
     return east
 
-
 osnap=getpsi(osnap)
 osnap_obs=getpsi(osnap_obs)
 bso=getpsi(bso)
@@ -74,7 +73,11 @@ def plot_comp_psi(which,whichobs,name):
 plot_comp_psi(osnap,osnap_obs,'OSNAP')
 plot_comp_psi(fs,fs_obs,'Fram Strait')
 plot_comp_psi(bso,bso_obs,'Barents Sea Opening')
-#
+
+
+
+
+
 # def MOC_comp():
 #     osnap.MOC.plot()
 #     osnap.MOCMEAN.plot()
@@ -105,7 +108,7 @@ sigmax_obs=osnap_obs.SIGMEAN.values
 sigmax
 sigmax_obs
 
-oslim=-38
+oslim=-40
 oslim_obs=-40
 
 fslim=2
@@ -147,17 +150,84 @@ coldic={'AWS':'red','DWS':'grey','PWS':'royalblue','PWN':'purple','AWN':'orange'
 
 fsdplim=250
 
+################################################################################################################################
+########################################      MAP PORTION    #######################################################
+################################################################################################################################
+
+
+def SimpleMap():
+
+    lat_start=50
+    lat_end  =75
+    lon_start=-45
+    lon_end =70
+    lon_0= -10
+    lat_0=60
+
+    """Get the etopo1 data"""
+    etopo1name=predir+'ETOPO1_Ice_g_gmt4.grd'
+    etopo1 = Dataset(etopo1name,'r')
+
+    lons = etopo1.variables["x"][:]
+    lats = etopo1.variables["y"][:]
+
+    res = findSubsetIndices(lat_start-5,90,lon_start-40,lon_end+10,lats,lons)
+
+    lon,lat=np.meshgrid(lons[int(res[0]):int(res[1])],lats[int(res[2]):int(res[3])])
+    bathy = etopo1.variables["z"][int(res[2]):int(res[3]),int(res[0]):int(res[1])]
+    bathySmoothed = laplace_filter(bathy,M=None)
+
+    map = Basemap(lat_0=lat_0,lon_0=lon_0,llcrnrlat=lat_start,urcrnrlat=lat_end,
+                llcrnrlon=lon_start,urcrnrlon=lon_end,
+                resolution='l',projection='stere')
+
+    x, y = map(lon,lat)
+    CS0 = map.contour(x,y,bathySmoothed,[-2000,-1000],colors='grey')
+    # map.drawcoastlines()
+    map.fillcontinents('darkgrey')
+    map.drawmeridians(range(-100,lon_end+11,20),labels=[0,0,0,1],linewidth=0.5,fontsize=12)
+    map.drawparallels(arange(lat_start,90,5),labels=[1,0,0,0],linewidth=0.5,fontsize=12)
+
+    lwi=3
+    c1='darkgreen'
+    map.plot(fs_obs.LONGITUDE.values,fs_obs.LATITUDE.values,linewidth=lwi,color=c1,latlon=True,zorder=1000,label='Observations')
+    map.plot(bso_obs.LONGITUDE.values,bso_obs.LATITUDE.values,linewidth=lwi,color=c1,latlon=True,zorder=1000,label='')
+    map.plot(osnap_obs.LONGITUDE.values,osnap_obs.LATITUDE.values,linewidth=lwi,color=c1,latlon=True,zorder=1000,label='')
+    nscol='limegreen'
+    map.plot(fs.LONGITUDE.values,fs.LATITUDE.values,linewidth=lwi,color=nscol,latlon=True,zorder=1000,label='Model')
+    map.plot(bso.LONGITUDE.values,bso.LATITUDE.values,linewidth=lwi,color=nscol,latlon=True,zorder=1000,label='')
+    map.plot(osnap.LONGITUDE.values,osnap.LATITUDE.values,linewidth=lwi,color=nscol,latlon=True,zorder=1000,label='')
+    legend(loc=(0.1,-0.2),ncol=2)
+
+    return map
+
+def maponly():
+    f,axx0=subplots(1,1)
+    map=SimpleMap()
+    xo,yo=map(-10,60)
+    axx0.text(xo,yo,'OSNAP East',backgroundcolor='w')
+    xo,yo=map(-55,77)
+    axx0.text(xo,yo,'Fram Strait',backgroundcolor='w')
+    xo,yo=map(20,74)
+    axx0.text(xo,yo,'Barents\nSea Opening',backgroundcolor='w')
+    savefig(figdir_paper+'Section_map.png',bbox_inches='tight')
+    savefig(figdir_paper+'Section_map.pdf',bbox_inches='tight')
+
+
+maponly()
+
 def sections_obs_only():
-    fig = plt.figure(figsize=(12, 9), constrained_layout=False)
-    grd_outer = fig.add_gridspec(2,2, hspace=0.4)
-    ax1=grd_outer[0,:]
-    ax2=grd_outer[1,0]
-    ax3=grd_outer[1,1]
+    fig = plt.figure(figsize=(12,9), constrained_layout=False)
+    grd_outer = fig.add_gridspec(2,2,hspace=0.3)
+
+    ax1=grd_outer[1,:]
+    ax2=grd_outer[0,0]
+    ax3=grd_outer[0,1]
     fsz=16
     for i,axi in enumerate([ax1,ax2,ax3]):
         tit=titvec[i]
         obs=obsvec[i]
-        grd = axi.subgridspec(2,1, wspace=0.1, hspace=0.0,height_ratios=[1,5])
+        grd = axi.subgridspec(2,1, wspace=0.1, hspace=0,height_ratios=[1,5])
         axx={}
         axx[0,0]=fig.add_subplot(grd[0])
         axx[1,0]=fig.add_subplot(grd[1])
@@ -174,20 +244,22 @@ def sections_obs_only():
             axx[1,0].text(-40,1500,'DWS',color='k',fontsize=fsz,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$E]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
-            axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz+5)
+            axx[1,0].text(-19,2750,tit,color='white',fontsize=fsz+3)
+
         elif 'Fram' in tit:
-            axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz+5)
+            axx[1,0].text(-18,2600,tit,color='white',fontsize=fsz+3)
             axx[1,0].text(0,700,'AWN',color='k',fontsize=fsz,weight='bold')
             axx[1,0].text(-8,-200,'PWN',color='k',fontsize=fsz,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$E]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
             axx[0,0].contour(obs_x,fs_obs.DEPTH,fs_obs['PTMP'].where(~isnan(fs_obs['VELO'])).mean(dim='TIME'),levels=[0],colors='r',linewidths=4)
+            # axx[0,0].axvline(-6)
             # axx[0,0].plot([fslim_obs,fslim_obs],[0,fsdplim],color='purple',linewidth=3)
             # axx[0,0].plot([-20,fslim_obs],[fsdplim,fsdplim],color='purple',linewidth=3)
             # axx[0,0].plot([-20,-20],[0,fsdplim],color='purple',linewidth=3)
 
         else:
-            axx[1,0].text(74,450,'Barents Sea\nOpening',color='white',fontsize=fsz+5)
+            axx[1,0].text(74,450,'Barents Sea\nOpening',color='white',fontsize=fsz+3)
             axx[1,0].text(72,150,'AWN',color='k',fontsize=fsz,weight='bold')
             axx[1,0].set_xlabel('Latitude [$^\circ$N]',fontsize=fsz)
     xc=0.95
@@ -199,6 +271,8 @@ def sections_obs_only():
     savefig(figdir_paper+'Sections_obs_only.pdf',bbox_inches='tight')
 
 sections_obs_only()
+
+sigmax=28
 
 def sections_model_only():
     fig = plt.figure(figsize=(12,9), constrained_layout=False)
@@ -237,6 +311,7 @@ def sections_model_only():
             axx[1,0].text(-8,-150,'PWN',color='k',fontsize=fsz,weight='bold')
             axx[1,0].set_xlabel('Longitude [$^\circ$E]',fontsize=fsz)
             axx[1,0].set_ylabel('depth [m]',fontsize=fsz)
+            axx[0,0].contour(obs_x,fs.DEPTH,fs['PTMP'].where(~isnan(fs['VELO'])).mean(dim='TIME'),levels=[0],colors='r',linewidths=4)
         else:
             axx[1,0].text(73.5,450,'Barents Sea\nOpening',color='white',fontsize=fsz+5)
             axx[1,0].text(72,150,'AWN',color='k',fontsize=fsz,weight='bold')
@@ -255,62 +330,62 @@ def sections_model_only():
 sections_model_only()
 
 
-############################################################################################
-################  NORESM  WATER MASS PARTITIONING   #############################################
-
-AWS={}
-PWS={}
-DWS={}
-AWN={}
-PWN={}
-
-pws_depth=100
-
-
-xray=osnap
-for var in ['TRANS','PSAL','PTMP','PDEN']:
-    if var=='TRANS':
-        DWS[var]=xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        PWS[var]=xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        AWS[var]=xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-
-    else:
-        DWS[var]=(xray[var]*xray['TRANS']).where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        PWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        AWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-
-#split up FS into PW and AW using definition in Tsubouchi et al. 2018, which is boundary between "EGC" + "Middle", 2W
-# Here I'm using 4E, as it better maximizes transport...? Check on this...
-#call all BSO water AW.
-
-
-xray=fs
-for var in ['TRANS','PSAL','PTMP','PDEN']:
-    if var=='TRANS':
-        PWN[var]=-fs['TRANS'].where(fs.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
-        AWN[var]=-fs['TRANS'].where(fs.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')
-    else:
-        PWN[var]=-(fs[var]*fs['TRANS']).where(fs.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/PWN['TRANS']
-        AWN[var]=-((fs[var]*fs['TRANS']).where(fs.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')+(bso[var]*bso['TRANS']).sum(dim='DEPTH').sum(dim='LONGITUDE'))/AWN['TRANS']
-
-
-# for var in ['PSAL','PTMP','PDEN','TRANS']:
-#     if var=='TRANS':
-#         PWN[var]=-fs['TRANS'].where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')
-#         AWN[var]=-fs['TRANS'].where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')
-#     else:
-#         PWN[var]=(fs[var]*fs['TRANS']).where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')/fs['TRANS'].where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')
-#         AWN[var]=((fs[var]*fs['TRANS']).where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')+(bso[var]*bso['TRANS']).sum(dim='DEPTH').sum(dim='LONGITUDE'))/(fs['TRANS'].where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')+bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE'))
+# ############################################################################################
+# ################  NORESM  WATER MASS PARTITIONING   #############################################
+# oslim
+# AWS={}
+# PWS={}
+# DWS={}
+# AWN={}
+# PWN={}
 #
-
-
-def plot_WMN():
-    scatter(PWN['PSAL'].groupby('TIME.month').mean('TIME').values,PWN['PTMP'].groupby('TIME.month').mean('TIME').values,color='purple')
-    scatter(AWN['PSAL'].groupby('TIME.month').mean('TIME').values,AWN['PTMP'].groupby('TIME.month').mean('TIME').values,color='orange')
-    xlim(34,35.5)
-    ylim(-2,12)
-
-plot_WMN()
+# pws_depth=100
+#
+#
+# xray=osnap
+# for var in ['TRANS','PSAL','PTMP','PDEN']:
+#     if var=='TRANS':
+#         DWS[var]=xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+#         PWS[var]=xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+#         AWS[var]=xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+#
+#     else:
+#         DWS[var]=(xray[var]*xray['TRANS']).where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+#         PWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE<oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+#         AWS[var]=(xray[var]*xray['TRANS']).where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/xray['TRANS'].where(xray.LONGITUDE>=oslim).where(xray.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+#
+# #split up FS into PW and AW using definition in Tsubouchi et al. 2018, which is boundary between "EGC" + "Middle", 2W
+# # Here I'm using 4E, as it better maximizes transport...? Check on this...
+# #call all BSO water AW.
+#
+#
+# xray=fs
+# for var in ['TRANS','PSAL','PTMP','PDEN']:
+#     if var=='TRANS':
+#         PWN[var]=-fs['TRANS'].where(fs.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')
+#         AWN[var]=-fs['TRANS'].where(fs.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')
+#     else:
+#         PWN[var]=-(fs[var]*fs['TRANS']).where(fs.PDEN<sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')/PWN['TRANS']
+#         AWN[var]=-((fs[var]*fs['TRANS']).where(fs.PDEN>=sigmax).sum(dim='DEPTH').sum(dim='LONGITUDE')+(bso[var]*bso['TRANS']).sum(dim='DEPTH').sum(dim='LONGITUDE'))/AWN['TRANS']
+#
+#
+# # for var in ['PSAL','PTMP','PDEN','TRANS']:
+# #     if var=='TRANS':
+# #         PWN[var]=-fs['TRANS'].where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')
+# #         AWN[var]=-fs['TRANS'].where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')-bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE')
+# #     else:
+# #         PWN[var]=(fs[var]*fs['TRANS']).where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')/fs['TRANS'].where(fs.LONGITUDE<fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')
+# #         AWN[var]=((fs[var]*fs['TRANS']).where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')+(bso[var]*bso['TRANS']).sum(dim='DEPTH').sum(dim='LONGITUDE'))/(fs['TRANS'].where(fs.LONGITUDE>=fslim).sum(dim='DEPTH').sum(dim='LONGITUDE')+bso['TRANS'].sum(dim='DEPTH').sum(dim='LONGITUDE'))
+# #
+#
+#
+# def plot_WMN():
+#     scatter(PWN['PSAL'].groupby('TIME.month').mean('TIME').values,PWN['PTMP'].groupby('TIME.month').mean('TIME').values,color='purple')
+#     scatter(AWN['PSAL'].groupby('TIME.month').mean('TIME').values,AWN['PTMP'].groupby('TIME.month').mean('TIME').values,color='orange')
+#     xlim(34,35.5)
+#     ylim(-2,12)
+#
+# plot_WMN()
 
 ############################################################################################
 ################  OBS WATER MASS PARTITIONING   #############################################
@@ -323,6 +398,7 @@ def get_obs_WMS(trans_var):
     AWN_obs_fs={}
     AWN_obs_bso={}
     PWN_obs={}
+    PWN_obs_shelf={}
 
     xray=osnap_obs
     sigmax_obs=osnap_obs.SIGMEAN.values
@@ -343,16 +419,23 @@ def get_obs_WMS(trans_var):
             AWN_obs_fs[var]=-fs_obs[trans_var].where(xray.PDEN>=sigmax_obs).sum(dim='DEPTH').sum(dim='LONGITUDE')
             AWN_obs_bso[var]=-bso_obs[trans_var].sum(dim='DEPTH').sum(dim='LONGITUDE')
             AWN_obs[var]=AWN_obs_fs[var]+AWN_obs_bso[var]
+            PWN_obs_shelf[var]=-fs_obs[trans_var].where(xray.PDEN<sigmax_obs).where(xray.LONGITUDE<-6).sum(dim='DEPTH').sum(dim='LONGITUDE')
         else:
             PWN_obs[var]=-(fs_obs[var]*fs_obs[trans_var]).where(xray.PDEN<sigmax_obs).sum(dim='DEPTH').sum(dim='LONGITUDE')/PWN_obs['TRANS']
             AWN_obs_fs[var]=(fs_obs[var]*fs_obs[trans_var]).where(xray.PDEN>=sigmax_obs).sum(dim='DEPTH').sum(dim='LONGITUDE')/fs_obs[trans_var].where(xray.PDEN>=sigmax_obs).sum(dim='DEPTH').sum(dim='LONGITUDE')
             AWN_obs_bso[var]=(bso_obs[var]*bso_obs[trans_var]).sum(dim='DEPTH').sum(dim='LONGITUDE')/bso_obs[trans_var].sum(dim='DEPTH').sum(dim='LONGITUDE')
             AWN_obs[var]=(AWN_obs_fs[var]*AWN_obs_fs['TRANS']+AWN_obs_bso[var]*AWN_obs_bso['TRANS'])/AWN_obs['TRANS']
 
-    return AWS_obs,PWS_obs,DWS_obs,AWN_obs,PWN_obs
+    return AWS_obs,PWS_obs,DWS_obs,AWN_obs,PWN_obs,PWN_obs_shelf
 
-AWS_obs,PWS_obs,DWS_obs,AWN_obs,PWN_obs=get_obs_WMS('TRANS')
+AWS_obs,PWS_obs,DWS_obs,AWN_obs,PWN_obs,PWN_obs_shelf=get_obs_WMS('TRANS')
 
+PWN_obs_shelf['TRANS'].mean(dim='TIME')
+PWN_obs['TRANS'].mean(dim='TIME')
+0.6/1.9
+0.5/1.8
+
+1.1/2.1
 
 def plot_WMN():
     scatter(PWN_obs['PSAL'].groupby('TIME.month').mean('TIME').values,PWN_obs['PTMP'].groupby('TIME.month').mean('TIME').values,color='purple')

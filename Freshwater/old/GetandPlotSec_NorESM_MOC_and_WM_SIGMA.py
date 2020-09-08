@@ -99,7 +99,9 @@ AWN={}
 PWN={}
 
 # pws_depth=100
-# sigmax=osnap.SIGMEAN.values
+sigmax=osnap.SIGMEAN.values
+
+sigmax
 # xray=osnap
 # for var in ['TRANS','PSAL','PTMP','PDEN']:
 #     if var=='TRANS':

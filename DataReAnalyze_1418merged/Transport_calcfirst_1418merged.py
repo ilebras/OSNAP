@@ -8,7 +8,7 @@
 
 from firstfuncs_1618 import *
 
-daily=xr.open_dataset(datadir+'OSNAP_CFgridded_2014-2018/CFall_finergrid.nc')
+daily=xr.open_dataset(datadir+'OSNAP_CFgridded_2014-2018/CFall_finergrid_2m.nc')
 daily['across track velocity']=-1*daily['across track velocity']
 daily=daily.where(daily['across track velocity']!=0)
 daily=daily.sel(date=slice('2014-8-15','2018-9-1')) #just to avoid some zeros at the beginning which mess up filtering.
@@ -105,6 +105,8 @@ egic['sal']=(daily['xport over 27.8'][sep:,:-1,:]*daily['salinity'][sep:,:-1,:])
 egic['tmp']=(daily['xport over 27.8'][sep:,:-1,:]*daily['temperature'][sep:,:-1,:]).sum('distance').sum('depth')/egic['trans']
 egic['den']=(daily['xport over 27.8'][sep:,:-1,:]*daily['potential density'][sep:,:-1,:]).sum('distance').sum('depth')/egic['trans']
 egic['meanvel']=egic['trans']/egic['area']
+
+egic['trans'].to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/analyzed/EGIC_trans_2014-2018.nc')
 
 ic={}
 ic['trans']=daily['xport over 27.8'][sep:,:,:].where(daily.salinity>srefb).sum('depth').sum('distance')

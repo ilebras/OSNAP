@@ -4,7 +4,13 @@ figdir_paper='/home/isabela/Documents/projects/OSNAP/figures_OSNAPwide/Freshwate
 
 # WM_nor=xr.open_dataset(datadir+'NorESM/NorESM_WMs_18yrs_2004.nc')
 WM_obs=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_2004.nc')
+WM_obs_new=xr.open_dataset(datadir+'FW_WM/OSNAP2014-18_Tsub2020_WM_2008.nc')
 # WM_mb=xr.open_dataset(datadir+'OSNAP2016recovery/pickles/gridded/OSNAP2014-16_WM_mb_2004.nc')
+
+
+WM_obs.PTMP.sel(WM='AWN').plot()
+WM_obs_new.CT.sel(WM='AWN').plot()
+axhline(0)
 
 #copied over from GetandPlotSec...
 sigmax=27.6
@@ -33,25 +39,25 @@ WM_obs['TRANS'].groupby('TIME.month').mean('TIME').mean('month')
 
 def plot_TS_splitboth(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
     f,[ax1,ax2]=subplots(1,2,figsize=(10,3.75))
+    tscale=100
     for wm in ['AWS','PWS','DWS']:
-        ax1.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,
-                s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100,alpha=0.8)
+        # ax1.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,
+                # s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100,alpha=0.8)
         ax1.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,
-                s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values**2*4,linewidth=3,label='',color='k',zorder=100)
+                s=abs(WM_obs['TRANS'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values)*tscale,linewidth=3,alpha=0.8,label=wm,color=coldic[wm],zorder=100)
         if ('AWS' in wm):
             ax1.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'+',markersize=12,color='w',zorder=101)
         else:
             ax1.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'_',markersize=12,color='w',zorder=101)
     for wm in ['AWN','PWN']:
-        ax2.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,
-                s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100,alpha=0.8)
+        # ax2.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').sel(WM=wm).values,
+                # s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').sel(WM=wm).values**2*4,linewidth=3,label=wm,color=coldic[wm],zorder=100,alpha=0.8)
         ax2.scatter(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,
-                s=WM_obs['TRANS'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values**2*4,linewidth=3,label='',color='k',zorder=100)
+                s=abs(WM_obs['TRANS'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values)*tscale,linewidth=3,label=wm,alpha=0.8,color=coldic[wm],zorder=100)
         if ('PWN' in wm):
             ax2.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'+',markersize=12,color='w',zorder=101)
         else:
             ax2.plot(WM_obs['PSAL'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,WM_obs['PTMP'].groupby('TIME.month').mean('TIME').mean('month').sel(WM=wm).values,'_',markersize=12,color='w',zorder=101)
-
     ax1.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
     ax1.contour(salvec,tmpvec,pdenmat,colors='k',levels=[sigmax],zorder=500)
     ax2.contour(salvec,tmpvec,pdenmat,colors='grey',levels=arange(sigmax-2,sigmax+2,0.2),zorder=5,alpha=0.5)
@@ -62,9 +68,11 @@ def plot_TS_splitboth(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
     ax2.set_xlim(xlim2)
     ax1.set_ylim(ylims)
     ax2.set_ylim(ylim2)
-    lgnd=f.legend(loc='center right')
+    ax2.scatter(0,0,s=1*tscale,color='k',label='1 Sv')
+    ax2.scatter(0,0,s=5*tscale,color='k',label='5 Sv')
+    lgnd=f.legend(loc=(0.9,0.25),fontsize=14)
     for ii in range(5):
-        lgnd.legendHandles[ii]._sizes = [60]
+        lgnd.legendHandles[ii]._sizes = [150]
     # f.suptitle('Transport-weighted water mass properties\n\n',fontsize=16)
     ax1.set_title('Southern boundary',fontsize=16)
     ax2.set_title('Northern boundary',fontsize=16)
@@ -74,7 +82,7 @@ def plot_TS_splitboth(WM_obs,namtit,xlims,ylims,xlim2,ylim2):
     savefig(figdir_paper+'TS_split_'+str(namtit)+'.pdf',bbox_inches='tight')
 
 
-plot_TS_splitboth(WM_obs,'obs',[33.25,35.5],[-2,12],[33.25,35.5],[-2,12])
+plot_TS_splitboth(WM_obs,'obs',[33.5,35.5],[-1.5,10.5],[33.25,35.5],[-2,12])
 
 # plot_TS_splitboth(WM_mb,'mb',[33.25,35.5],[-2,12],[33.25,35.5],[-2,17.5])
 #

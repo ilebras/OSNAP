@@ -15,7 +15,7 @@ def load_vel(moornum):
     return dat16,dat18
 
 
-for moornum in range(8,9):
+for moornum in range(1,9):
     d16,d18=load_vel(moornum)
     if 'LATITUDE' in d18:
         d18=d18.drop('LATITUDE').drop('LONGITUDE')
@@ -33,7 +33,7 @@ for moornum in range(8,9):
 
     #create depth grid:
     dmax=float(dat['depth_tvar'].max())
-    dpthgrid=arange(0,dmax,10)
+    dpthgrid=arange(0,dmax,2)
     prsgrid=gsw.p_from_z(-dpthgrid,mean(dat.LATITUDE.values))
 
     dat_grid=xr.Dataset(coords={'date': dat.TIME.values,'depth':dpthgrid,'lon':dat.LONGITUDE.values,'lat':dat.LATITUDE.values,})
@@ -67,6 +67,4 @@ for moornum in range(8,9):
     title('CF'+str(moornum)+': w/ dropped bin')
     savefig(figdir+'pressure_overview_vel/CF'+str(moornum)+'_vcur_dropadcpbin.png',bbox_inches='tight')
 
-    dat_grid.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CF'+str(moornum)+'_vel_vertgrid_daily.nc','w',format='netCDF4')
-
-dat_grid
+    dat_grid.to_netcdf(datadir+'OSNAP_CFgridded_2014-2018/CF'+str(moornum)+'_vel_vertgrid_daily_2m.nc','w',format='netCDF4')

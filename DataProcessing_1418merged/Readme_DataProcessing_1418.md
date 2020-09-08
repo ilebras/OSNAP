@@ -24,7 +24,7 @@ Plots and outcomes are described in /OSNAP/data_processing_records/Merged_1418_d
 
 ## "GridVertically" scripts
 
-* Here I get all the data onto a uniform 10m grid (note the switch to depth)
+* Here I get all the data onto a uniform 2m grid (note the switch to depth)
 * For mcat data -- extend to surface using top 20m gradient in psal and ptmp -- then derive density. Extend bottomost measurement downward as needed.
 * For vel data -- extend top measurement to surface, bottommost to deepest.
 * The two occupations are merged at this point - output is stored in data/OSNAP_CFgridded_2014-2018

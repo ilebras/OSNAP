@@ -9,13 +9,13 @@ profile.attributes
 profile.attributes['datetime']
 profile.keys()
 
-obase=profile['oxygen_ml_L'].data
-
-nanind=obase>1
-
-prsvec=range(2,2*prslen+1,2)
-array(prsvec)[nanind]
-obase[nanind]
+# obase=profile['oxygen_ml_L'].data
+#
+# nanind=obase>1
+#
+# prsvec=range(2,2*prslen+1,2)
+# array(prsvec)[nanind]
+# obase[nanind]
 
 prslen=1614
 stanum=len(bin_list)
@@ -74,12 +74,12 @@ def loadCTD_bin(datalist):
 
 grdat=loadCTD_bin(bin_list)
 
-plot(grdat.o2);
-
-for ss in seclab:
+for ss in ['section 2']:
     plot(grdat.lon[seclab[ss]],grdat.lat[seclab[ss]],'o',label=ss)
     plot(grdat.lon[startsec[ss]],grdat.lat[startsec[ss]],'kx',label='')
     legend(loc=(1.05,0))
+    figure()
+    plot(grdat.sta[seclab[ss]],grdat.dist[seclab[ss]],'.')
 
 # uni['dendiff']={}
 # uni['dendiff']['cmap']=turn_map

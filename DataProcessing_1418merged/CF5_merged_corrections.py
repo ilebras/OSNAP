@@ -59,7 +59,7 @@ def zoominbot(d1,d2,dlist):
 zoominbot(dat16,dat18,[750,1000,1300])
 savefig(figdir+'merging_overview/CF5_precorr_bottom_overview.png')
 
-#Troubling drift in the 1000m instrument -- take our that data, will interpolate over it.
+#Troubling drift in the 1000m instrument -- take out that data, will interpolate over it :(
 dat18_corr=dat18.copy()
 dat18_corr=dat18_corr.where(dat18_corr.DEPTH!=1000).dropna(dim='DEPTH')
 

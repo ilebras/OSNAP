@@ -2,6 +2,8 @@ from firstfuncs_1618 import *
 
 dat=xr.open_dataset('../data/OSNAP2016recovery/pickles/xarray/CFmoorings_notid_1804.nc')
 
+dat
+
 zeta_test=0.6/1e4
 zeta_test
 sw.f(60)
@@ -61,7 +63,6 @@ def plot_pv_comps(moornum):
     savefig(figdir+'SI/PV_tseries_CF'+str(moornum+1)+'_'+str(dind*2)+'m.png',bbox_inches='tight')
     xlim([datetime.datetime(2015,2,1),datetime.datetime(2015,7,1)])
     savefig(figdir+'SI/PV_tseries_CF'+str(moornum+1)+'_'+str(dind*2)+'m_zoom.png',bbox_inches='tight')
-
 
 
 plot_pv_comps(4)
